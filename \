@@ -1,0 +1,23 @@
+import pandas as pd
+import awkward as ak
+import glob
+
+path="/depot/cms/users/minxi/NanoAOD_study/hmumu-coffea/output/2016_test_march/vbf_powheg_dipole/*.parquet"
+files=glob.glob(path)
+aks=[]
+
+for _file in files:
+	
+	aks.append(ak.from_parquet(_file))
+	
+data=ak.concatenate(aks)
+df=ak.to_pandas(data['dimuon_mass'])
+hist=df.hist(bins=100)
+
+
+
+
+
+
+
+

@@ -3,7 +3,7 @@ import os
 import argparse
 import traceback
 import tqdm
-
+import datetime
 import coffea.processor as processor
 from coffea.processor import dask_executor, run_uproot_job
 from python.dimuon_processor_pandas import DimuonProcessor
@@ -13,7 +13,7 @@ from config.parameters import parameters as pars
 import dask
 import dask.dataframe as dd
 from dask.distributed import Client
-dask.config.set({"temporary-directory": "/depot/cms/hmm/dask-temp/"})
+dask.config.set({"temporary-directory": "/depot/cms/users/minxi/dask-temp/"})
 
 parser = argparse.ArgumentParser()
 # Slurm cluster IP to use. If not specified, will create a local cluster
@@ -33,9 +33,7 @@ parser.add_argument("-ch", "--chunksize", dest="chunksize",
 parser.add_argument("-mch", "--maxchunks", dest="maxchunks", default=-1,
                     action='store',
                     help='Max. number of chunks')
-parser.add_argument("-jec", "--jec", dest="jec_unc", default=False,
-                    action='store_true',
-                    help='Enable JEC/JER uncertainties')
+
 
 args = parser.parse_args()
 
@@ -51,23 +49,16 @@ else:
     slurm_cluster_ip = f'{node_ip}:{args.slurm_port}'
 
 mch = None if int(args.maxchunks) < 0 else int(args.maxchunks)
-if args.jec_unc:
-    pt_variations = (
-        ['nominal'] +
-        pars['jec_variations'][args.year] +
-        pars['jer_variations'][args.year]
-    )
-else:
-    pt_variations = ['nominal']
-
+dt=datetime.datetime.now()
+local_time=str(dt.year)+'_'+str(dt.month)+'_'+str(dt.day)+'_'+str(dt.hour)+'_'+str(dt.minute)+'_'+str(dt.second)
 parameters = {
     'year': args.year,
     'label': args.label,
-    'global_out_path': '/depot/cms/hmm/coffea/',
-    'out_path': f'{args.year}_{args.label}',
-    'server': 'root://xrootd.rcac.purdue.edu/',
-    'datasets_from': 'purdue',
-    'pt_variations': pt_variations,
+    'global_out_path': '/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/output/',
+    'out_path': f'{args.year}_{args.label}_{local_time}',
+    #'server': 'root://xrootd.rcac.purdue.edu/',
+    'server': 'root://cmsxrootd.fnal.gov//',
+    'datasets_from': 'Zprime',
     'chunksize': int(args.chunksize),
     'maxchunks': mch,
     'save_output': True,
@@ -86,7 +77,7 @@ def load_sample(dataset, parameters):
         'year': parameters['year'],
         'out_path': parameters['out_path'],
         'server': parameters['server'],
-        'datasets_from': 'purdue',
+        'datasets_from': 'Zprime',
         'debug': False,
         'xrootd': xrootd,
         'timeout': 120
@@ -102,7 +93,7 @@ def load_samples(datasets, parameters):
         'year': parameters['year'],
         'out_path': parameters['out_path'],
         'server': parameters['server'],
-        'datasets_from': 'purdue',
+        'datasets_from': 'Zprime',
         'debug': False
     }
     samp_info_total = SamplesInfo(**args)
@@ -139,8 +130,6 @@ def submit_job(arg_set, parameters):
     processor_args = {
         'samp_info': parameters['samp_infos'],
         'do_timer': False,
-        'do_btag_syst': False,
-        'pt_variations': parameters['pt_variations']
     }
     try:
         output = run_uproot_job(parameters['samp_infos'].fileset, 'Events',
@@ -152,20 +141,18 @@ def submit_job(arg_set, parameters):
     except Exception as e:
         tb = traceback.format_exc()
         return 'Failed: '+str(e)+' '+tb
-
+    print("start compute")
     df = output.compute()
+    print("finish")
+    print(df)
     if df.count().sum() == 0:
         return 'Nothing to save!'
-    print(df)
 
     if parameters['save_output']:
 
         mkdir(parameters['out_dir'])
 
-        if parameters['pt_variations'] == ['nominal']:
-            out_dir = f"{parameters['out_dir']}/"
-        else:
-            out_dir = f"{parameters['out_dir']}_jec/"
+        out_dir = f"{parameters['out_dir']}/"
 
         mkdir(out_dir)
 
@@ -192,42 +179,48 @@ if __name__ == "__main__":
             'data_B',
             'data_C',
             'data_D',
-            'data_E',
-            'data_F',
-            'data_G',
-            'data_H',
+            #'data_E',
+            #'data_F',
+            #'data_G',
+            #'data_H',
             ],
-        'signal': [
-            'ggh_amcPS',
-            'vbf_powhegPS',
-            'vbf_powheg_herwig',
-            'vbf_powheg_dipole'
-            ],
-        'main_mc': [
-            'dy_m105_160_amc',
-            'dy_m105_160_vbf_amc',
-            'ewk_lljj_mll105_160_py',
-            'ewk_lljj_mll105_160_ptj0',
-            'ewk_lljj_mll105_160_py_dipole',
-            'ttjets_dl',
-            ],
-        'other_mc': [
-            'ttjets_sl', 'ttz', 'ttw',
-            'st_tw_top', 'st_tw_antitop',
-            'ww_2l2nu', 'wz_2l2q',
-            'wz_3lnu',
-            'wz_1l1nu2q',
-            'zz',
-        ],
+        #'signal': [
+        #    'ggh_amcPS',
+        #    'vbf_powhegPS',
+        #    'vbf_powheg_herwig',
+        #    'vbf_powheg_dipole'
+        #    ],
+        #'main_mc': [
+        #    'dy_m105_160_amc',
+        #    'dy_m105_160_vbf_amc',
+        #    'ewk_lljj_mll105_160_py',
+        #    'ewk_lljj_mll105_160_ptj0',
+        #    'ewk_lljj_mll105_160_py_dipole',
+        #    'ttjets_dl',
+        #    ],
+        #'other_mc': [
+        #    'ttjets_sl', 'ttz', 'ttw',
+        #    'st_tw_top', 'st_tw_antitop',
+        #    'ww_2l2nu', 'wz_2l2q',
+        #    'wz_3lnu',
+        #    'wz_1l1nu2q',
+        #    'zz',
+        #],
+        'Zprime':[
+                  'Zprime120to200','Zprime200to400','Zprime400to800',
+                  'Zprime800to1400','Zprime1400to2300','Zprime2300to3500',
+                  'Zprime3500to4500','Zprime4500to6000','Zprime6000toInf',
+                  
+                 ],
     }
 
     if parameters['local_cluster']:
         parameters['client'] = dask.distributed.Client(
-                                    processes=True,
-                                    n_workers=40,
-                                    dashboard_address=dash_local,
+                                   processes=True,
+                                    n_workers=48,
+                                    #dashboard_address=dash_local,
                                     threads_per_worker=1,
-                                    memory_limit='8GB',
+                                    memory_limit='2.9GB',
                                 )
     else:
         parameters['client'] = Client(
@@ -239,7 +232,9 @@ if __name__ == "__main__":
     datasets_data = []
     for group, samples in smp.items():
         for sample in samples:
-            if sample != 'vbf_powheg_dipole':
+            #if sample != 'Zprime120to200':
+            #    continue
+            if group != 'data':
                 continue
             if group == 'data':
                 datasets_data.append(sample)

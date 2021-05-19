@@ -9,10 +9,14 @@ from config.cross_sections import cross_sections
 
 
 def read_via_xrootd(server, path):
-    command = f"xrdfs {server} ls -R {path} | grep '.root'"
+    #command = f"xrdfs {server} ls -R {path} | grep '.root'"
+    command = 'dasgoclient --query=="file dataset= %s" '% path
+    #print(command)
     proc = subprocess.Popen(command, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, shell=True)
     result = proc.stdout.readlines()
+    #print(proc.stderr.readlines())
+    #print(proc.stdout.readlines())
     if proc.stderr.readlines():
         print("Loading error! Check VOMS proxy.")
     result = [server + r.rstrip().decode("utf-8") for r in result]
@@ -27,7 +31,7 @@ class SamplesInfo(object):
         self.server = kwargs.pop('server', 'root://xrootd.rcac.purdue.edu/')
         self.timeout = kwargs.pop('timeout', 60)
         self.debug = kwargs.pop('debug', False)
-        datasets_from = kwargs.pop('datasets_from', 'purdue')
+        datasets_from = kwargs.pop('datasets_from', 'Zprime')
 
         self.parameters = {k: v[self.year] for k, v in parameters.items()}
 
@@ -37,7 +41,8 @@ class SamplesInfo(object):
             from config.datasets import datasets, lumi_data
         elif 'pisa' in datasets_from:
             from config.datasets_pisa import datasets, lumi_data
-
+        elif 'Zprime' in datasets_from:
+            from config.datasets_Zprime import datasets, lumi_data
         self.paths = datasets[self.year]
         self.lumi_data = lumi_data
 
@@ -58,9 +63,11 @@ class SamplesInfo(object):
         self.metadata = {}
 
         # --- Define regions and channels used in the analysis ---#
-        self.regions = ['z-peak', 'h-sidebands', 'h-peak']
+        #self.regions = ['z-peak', 'h-sidebands', 'h-peak']
+        self.regions = ['bb', 'be']
         # self.channels = ['ggh_01j', 'ggh_2j', 'vbf']
-        self.channels = ['vbf', 'vbf_01j', 'vbf_2j']
+        #self.channels = ['vbf', 'vbf_01j', 'vbf_2j']
+        self.channels = ['mumu']
 
         self.lumi_weights = {}
 
@@ -107,6 +114,7 @@ class SamplesInfo(object):
 
         if self.xrootd:
             all_files = read_via_xrootd(self.server, self.paths[sample])
+            #all_files = [self.server + _file for _file in self.paths[sample]]
         elif self.paths[sample].endswith('.root'):
             all_files = [self.paths[sample]]
         else:

@@ -37,12 +37,12 @@ class Timer(object):
                 "Selected jets", "Filled jet variables",
                 "Completed JEC loop"]
         for action in list(self.time_dict.keys()):
-            if action in muons:
-                action_groups.append("Muon selection")
-            elif action in jets:
-                action_groups.append("Jet selection")
-            else:
-                action_groups.append(action)
+            #if action in muons:
+            #    action_groups.append("Muon selection")
+            #elif action in jets:
+            #    action_groups.append("Jet selection")
+            #else:
+            action_groups.append(action)
         summary = pd.DataFrame(columns=columns)
         total_time = round(sum(list(self.time_dict.values())), 5)
         summary[columns[0]] = np.array(action_groups)

@@ -6,15 +6,18 @@ def for_all_years(value):
 parameters = {}
 
 parameters["lumimask"] = {
-    "2016": "data/lumimasks/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt",
-    "2017": "data/lumimasks/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_v1.txt",
-    "2018": "data/lumimasks/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt"
+    #"2016": "data/lumimasks/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt",
+    #"2017": "data/lumimasks/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_v1.txt",
+    #"2018": "data/lumimasks/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt",
+    "2016": "data/lumimasks/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON_MuonPhys.txt",
+    "2017": "data/lumimasks/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_MuonPhys.txt",
+    "2018": "data/lumimasks/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt"
 }
 
 parameters["hlt"] = {
-    "2016": ['IsoMu24', 'IsoTkMu24'],
-    "2017": ['IsoMu27'],
-    "2018": ['IsoMu24']
+    "2016": ['Mu50','TkMu50'],
+    "2017": ['Mu50','TkMu100','OldMu100'],
+    "2018": ['Mu50','TkMu100','OldMu100']
 }
 
 parameters["roccor_file"] = {
@@ -345,17 +348,20 @@ parameters.update({
          'HBHENoiseFilter', 'HBHENoiseIsoFilter',
          'globalSuperTightHalo2016Filter', 'goodVertices',
          'BadChargedCandidateFilter']),
-    "do_l1prefiring_wgts": {"2016": True, "2017": True, "2018": False}})
+    "do_l1prefiring_wgts": {"2016": True, "2017": True, "2018": False},
+    "3dangle":for_all_years(-0.9998)})
 
 parameters.update({
-    "muon_pt_cut": for_all_years(20.),
+    "muon_pt_cut": for_all_years(53.),
     "muon_eta_cut": for_all_years(2.4),
-    "muon_iso_cut": for_all_years(0.25),  # medium iso
-    "muon_id": for_all_years("mediumId"),
+    "muon_iso_cut": for_all_years(0.3),  # medium iso
+    "muon_id": for_all_years("highPtId"),
+    "muon_dxy":for_all_years(0.2),
+    "muon_ptErr/pt":for_all_years(0.3),
     # "muon_flags": for_all_years(["isGlobal", "isTracker"]),
     "muon_flags": for_all_years([]),
 
-    "muon_leading_pt": {"2016": 26., "2017": 29., "2018": 26.},
+    "muon_leading_pt": {"2016": 53., "2017": 53., "2018": 53.},
     "muon_trigmatch_iso": for_all_years(0.15),  # tight iso
     "muon_trigmatch_dr": for_all_years(0.1),
     "muon_trigmatch_id": for_all_years("tightId"),
@@ -423,11 +429,16 @@ event_flags = ['Flag_BadPFMuonFilter',
                'Flag_globalSuperTightHalo2016Filter', 'Flag_goodVertices',
                'Flag_BadChargedCandidateFilter']
 
-branches_2016 = ['HLT_IsoMu24', 'HLT_IsoTkMu24', 'L1PreFiringWeight_Nom',
-                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
-branches_2017 = ['HLT_IsoMu27', 'L1PreFiringWeight_Nom',
-                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
-branches_2018 = ['HLT_IsoMu24']
+#branches_2016 = ['HLT_IsoMu24', 'HLT_IsoTkMu24', 'L1PreFiringWeight_Nom',
+#                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
+#branches_2017 = ['HLT_IsoMu27', 'L1PreFiringWeight_Nom',
+#                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
+#branches_2018 = ['HLT_IsoMu24']
+
+branches_2016 = ['Mu50', 'TkMu50']
+branches_2017 = ['Mu50','TkMu100','OldMu100']
+branches_2018 = ['Mu50','TkMu100','OldMu100']
+
 
 proc_columns = event_branches + muon_branches + fsr_branches +\
     jet_branches + genjet_branches + sajet_branches + vtx_branches +\
