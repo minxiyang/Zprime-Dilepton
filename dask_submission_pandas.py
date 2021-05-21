@@ -37,7 +37,7 @@ parser.add_argument("-mch", "--maxchunks", dest="maxchunks", default=-1,
 
 args = parser.parse_args()
 
-node_ip = '128.211.149.133'
+node_ip = '128.211.149.135'
 dash_local = f'{node_ip}:34875'
 
 
@@ -80,9 +80,10 @@ def load_sample(dataset, parameters):
         'datasets_from': 'Zprime',
         'debug': False,
         'xrootd': xrootd,
-        'timeout': 120
+        'timeout': 1200
     }
     samp_info = SamplesInfo(**args)
+    #print(dataset)
     samp_info.load(dataset, use_dask=True, client=parameters['client'])
     samp_info.finalize()
     return {dataset: samp_info}
@@ -198,16 +199,16 @@ if __name__ == "__main__":
         #    'ewk_lljj_mll105_160_py_dipole',
         #    'ttjets_dl',
         #    ],
-        #'other_mc': [
-        #    'ttjets_sl', 'ttz', 'ttw',
-        #    'st_tw_top', 'st_tw_antitop',
-        #    'ww_2l2nu', 'wz_2l2q',
-        #    'wz_3lnu',
-        #    'wz_1l1nu2q',
-        #    'zz',
-        #],
+        'other_mc': ['WZ', 'WZ3LNu', 'WZ2L2Q', 
+                     'ZZ', 'ZZ2L2Nu', 'ZZ2L2Nu_ext', 'ZZ2L2Q', 'ZZ4L', 'ZZ4L_ext', 
+                     'WWinclusive', 'WW200to600', 'WW600to1200', 'WW1200to2500', 'WW2500',
+                     'dyInclusive50', 'Wjets', 
+                     'ttbar_lep', 'ttbar_lep_500to800_ext', 'ttbar_lep_500to800', 'ttbar_lep_800to1200', 'ttbar_lep_1200to1800', 'ttbar_lep_1800toInf', 
+                     'Wantitop', 'tW'
+                     ],
         'Zprime':[
-                  'Zprime120to200','Zprime200to400','Zprime400to800',
+                  'Zprime120to200',
+		  'Zprime200to400','Zprime400to800',
                   'Zprime800to1400','Zprime1400to2300','Zprime2300to3500',
                   'Zprime3500to4500','Zprime4500to6000','Zprime6000toInf',
                   
@@ -232,10 +233,10 @@ if __name__ == "__main__":
     datasets_data = []
     for group, samples in smp.items():
         for sample in samples:
-            #if sample != 'Zprime120to200':
-            #    continue
-            if group != 'data':
+            if sample != 'Zprime120to200':
                 continue
+            #if group != 'Zprime':
+            #    continue
             if group == 'data':
                 datasets_data.append(sample)
             else:
