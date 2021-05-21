@@ -15,6 +15,7 @@ def read_via_xrootd(server, path):
     proc = subprocess.Popen(command, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, shell=True)
     result = proc.stdout.readlines()
+    #print(result)
     #print(proc.stderr.readlines())
     #print(proc.stdout.readlines())
     if proc.stderr.readlines():
@@ -43,6 +44,9 @@ class SamplesInfo(object):
             from config.datasets_pisa import datasets, lumi_data
         elif 'Zprime' in datasets_from:
             from config.datasets_Zprime import datasets, lumi_data
+        #print(self.year)
+        #print(datasets_from)
+        #print(datasets)
         self.paths = datasets[self.year]
         self.lumi_data = lumi_data
 
@@ -76,7 +80,7 @@ class SamplesInfo(object):
 
         if 'data' in sample:
             self.is_mc = False
-
+        #print('check')
         res = self.load_sample(sample, use_dask, client)
 
         self.sample = sample
@@ -104,14 +108,14 @@ class SamplesInfo(object):
 
     def load_sample(self, sample, use_dask=False, client=None):
         if sample not in self.paths:
-            # print(f"Couldn't load {sample}! Skipping.")
+            print(f"Couldn't load {sample}! Skipping.")
             return {'sample': sample, 'metadata': {},
                     'files': {}, 'data_entries': 0, 'is_missing': True}
 
         all_files = []
         metadata = {}
         data_entries = 0
-
+        #print(self.xroot)
         if self.xrootd:
             all_files = read_via_xrootd(self.server, self.paths[sample])
             #all_files = [self.server + _file for _file in self.paths[sample]]
@@ -147,17 +151,17 @@ class SamplesInfo(object):
         else:
             for f in all_files:
                 if 'data' in sample:
-                    tree = uproot.open(f)['Events']
+                    tree = uproot.open(f, timeout=self.timeout)['Events']
                     data_entries += tree.num_entries
                 else:
-                    tree = uproot.open(f)['Runs']
+                    tree = uproot.open(f, timeout=self.timeout)['Runs']
                     if (('NanoAODv6' in self.paths[sample]) or
                             ('NANOV10' in self.paths[sample])):
-                        sumGenWgts += tree.array('genEventSumw_')[0]
-                        nGenEvts += tree.array('genEventCount_')[0]
+                        sumGenWgts += tree['genEventSumw_'].array()[0]
+                        nGenEvts += tree['genEventCount_'].array()[0]
                     else:
-                        sumGenWgts += tree.array('genEventSumw')[0]
-                        nGenEvts += tree.array('genEventCount')[0]
+                        sumGenWgts += tree['genEventSumw'].array()[0]
+                        nGenEvts += tree['genEventCount'].array()[0]
         metadata['sumGenWgts'] = sumGenWgts
         metadata['nGenEvts'] = nGenEvts
 
