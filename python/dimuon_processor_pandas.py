@@ -532,6 +532,13 @@ class DimuonProcessor(processor.ProcessorABC):
             if (wgt!='nominal'):
                 continue
             output[f'wgt_{wgt}'] = weights.get_weight(wgt)
+        
+        NNPDFFac = 0.919027 + (5.98337e-05)*mass + (2.56077e-08)*mass**2 + (-2.82876e-11)*mass**3 + (9.2782e-15)*mass**4 + (-7.77529e-19)*mass**5
+        print(NNPDFFac.head())
+        NNPDFFac_bb = 0.911563 + (0.000113313)*mass + (-2.35833e-08)*mass**2 + (-1.44584e-11)*mass*3 + (8.41748e-15)*mass**4 + (-8.16574e-19)*mass**5
+        NNPDFFac_be = 0.934502 + (2.21259e-05)*mass + (4.14656e-08)*mass**2 + (-2.26011e-11)*mass**3 + (5.58804e-15)*mass**4 + (-3.92687e-19)*mass**5
+        output.loc[((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)) ,'wgt_nominal'] = output.loc[((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)) ,'wgt_nominal'] * NNPDFFac_bb
+        output.loc[((output.mu1_eta > 1.2) | (output.mu2_eta > 1.2)) ,'wgt_nominal'] = output.loc[((output.mu1_eta > 1.2) | (output.mu2_eta > 1.2)) ,'wgt_nominal'] * NNPDFFac_be
         #print('p 5')
         #print(output['wgt_nominal'].values)        
         output = output.loc[output.event_selection, :]
