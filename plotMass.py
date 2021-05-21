@@ -69,6 +69,8 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         axs[1].set_ylabel("(Data-Bkg)/Bkg", fontsize=16)
         axs[1].set_xlim(frame.xRange)
         axs[0].set_ylim(frame.yRange)
+        axs[0].set_xscale('log')
+        axs[0].set_yscale('log')
         axs[1].set_ylim([-1,1])
         axs[1].set_xticks([200, 300, 1000, 2000])
         axs[1].get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
@@ -86,14 +88,12 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         ax_signal.get_yaxis().set_major_locator(locmaj)
         ax_signal.yaxis.set_minor_locator(locmin)
         ax_signal.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
-        
-        if frame.islogx:
-                axs[0].set_xscale('log')
-        if frame.islogy:
-                axs[0].set_yscale('log')
-
-
-
+        axs[0].set_yticks([1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6])
+        axs[0].set_xticks([])
+        #locmaj = LogLocator(base=10.0, subs=(1.0,), numticks=100)
+        axs[0].get_yaxis().set_major_locator(locmaj)
+        axs[0].yaxis.set_minor_locator(locmin)
+        axs[0].yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
 
 
         MC_mass = MC[variable].compute()
@@ -106,7 +106,6 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         #s = s[::-1]
         #for i in s:
         #    print("run %i with mass %f"%(run[i], m[i]))
-
 
         MC_entries = MC_mass.values
         data_entries = data_mass.values
@@ -137,10 +136,17 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         Zprime = Zprime*lumi/140.
         G_RS = G_RS*lumi/140.
         
+        #stat_err_opts = {'step': 'post', 'label': 'Stat. unc.',
+        #             'hatch': '//////', 'facecolor': 'none',
+        #             'edgecolor': (0, 0, 0, .5), 'linewidth': 0}
+
+        
+        
+ 
         hep.histplot(data_vals, bins, ax=axs[0], color='black', histtype='errorbar',label="Data", yerr=data_errs)
         hep.histplot(MC_vals, bins, ax=axs[0], color=frame.color, histtype='fill', label="$\gamma/\mathrm{Z}\\rightarrow \mu^{+}\mu^{-}$", edgecolor=(0,0,0))
         bins_mid = (bins[1:]+bins[:-1])/2
-        axs[0].fill_between(x=bins_mid, y1=MC_vals-MC_errs, y2=MC_vals+MC_errs, interpolate=True, color='skyblue', alpha=0.3) 
+        ax_signal.fill_between(x=bins[:-1], y1=MC_vals-MC_errs, y2=MC_vals+MC_errs, interpolate=False, color='skyblue', alpha=0.3, step='post') 
         hep.histplot(G_RS, bins, ax=ax_signal, color='green', histtype='step', label='$G_{RS}, k/\\bar{M}_{Pl}$ = 0.01, M = 2 TeV')
         hep.histplot(Zprime, bins, ax=ax_signal, color='magenta', histtype='step', label="$Z'_{SSM}$, M = 5 TeV", linestyle='dashed')
         axs[0].legend(loc=(0.35,0.7))
@@ -170,11 +176,13 @@ if __name__=="__main__":
 
 #load data 
     DY_paths = glob.glob(path_DY)
+    #DY_paths = [p for p in DY_paths if '5' in p]
     with ProcessPoolExecutor(max_workers=48) as executor:
         DY_dfs = list(executor.map(dd.read_parquet, DY_paths))
     DY_df=dd.concat(DY_dfs)
 
     data_paths = glob.glob(path_data)
+    #data_paths = [p for p in data_paths if '5' in p]
     with ProcessPoolExecutor(max_workers=48) as executor:
         data_dfs = list(executor.map(dd.read_parquet, data_paths))
     data_df=dd.concat(data_dfs)
