@@ -89,7 +89,7 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         ax_signal.yaxis.set_minor_locator(locmin)
         ax_signal.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
         axs[0].set_yticks([1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6])
-        axs[0].set_xticks([])
+        #axs[0].set_xticks([])
         #locmaj = LogLocator(base=10.0, subs=(1.0,), numticks=100)
         axs[0].get_yaxis().set_major_locator(locmaj)
         axs[0].yaxis.set_minor_locator(locmin)
@@ -147,7 +147,7 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         hep.histplot(MC_vals, bins, ax=axs[0], color=frame.color, histtype='fill', label="$\gamma/\mathrm{Z}\\rightarrow \mu^{+}\mu^{-}$", edgecolor=(0,0,0))
         bins_mid = (bins[1:]+bins[:-1])/2
         ax_signal.fill_between(x=bins[:-1], y1=MC_vals-MC_errs, y2=MC_vals+MC_errs, interpolate=False, color='skyblue', alpha=0.3, step='post') 
-        hep.histplot(G_RS, bins, ax=ax_signal, color='green', histtype='step', label='$G_{RS}, k/\\bar{M}_{Pl}$ = 0.01, M = 2 TeV')
+        hep.histplot(G_RS, bins, ax=ax_signal, color='green', histtype='step', label='$G_{KK}, k/\\bar{M}_{Pl}$ = 0.05, M = 3.5 TeV')
         hep.histplot(Zprime, bins, ax=ax_signal, color='magenta', histtype='step', label="$Z'_{SSM}$, M = 5 TeV", linestyle='dashed')
         axs[0].legend(loc=(0.35,0.7))
         ax_signal.legend(loc=(0.45,0.55),fontsize='xx-small')
@@ -176,13 +176,13 @@ if __name__=="__main__":
 
 #load data 
     DY_paths = glob.glob(path_DY)
-    #DY_paths = [p for p in DY_paths if '5' in p]
+    #DY_paths = [p for p in DY_paths if '3' in p]
     with ProcessPoolExecutor(max_workers=48) as executor:
         DY_dfs = list(executor.map(dd.read_parquet, DY_paths))
     DY_df=dd.concat(DY_dfs)
 
     data_paths = glob.glob(path_data)
-    #data_paths = [p for p in data_paths if '5' in p]
+    #data_paths = [p for p in data_paths if '3' in p]
     with ProcessPoolExecutor(max_workers=48) as executor:
         data_dfs = list(executor.map(dd.read_parquet, data_paths))
     data_df=dd.concat(data_dfs)
