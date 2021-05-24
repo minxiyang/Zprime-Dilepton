@@ -39,6 +39,7 @@ class frame:
                 self.year = year
 #cfg
 path_DY="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/output/DY/*/*.parquet"
+other_path="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/output/other/*/*.parquet"
 path_data="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/output/data/*/*.parquet"
 path_save="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/plots/"
 path_signal="/depot/cms/users/minxi/NanoAOD_study/dileptonmassplots/inputs/paperPlotInputs_DimuonMass_Run2.root"
@@ -60,7 +61,7 @@ hep.set_style(style)
 
 # def function
 
-def plot(MC, data, Zprime, G_RS, variable, path_save):
+def plot(DY, other, data, Zprime, G_RS, variable, path_save):
         fig, axs = plt.subplots(2, sharex=True, sharey=False, gridspec_kw={'height_ratios': [4, 1], })
         plt.subplots_adjust(hspace=0.07)
         frame = frames[variable]
@@ -96,7 +97,8 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         axs[0].yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
 
 
-        MC_mass = MC[variable].compute()
+        DY_mass = DY[variable].compute()
+        other_mass = other[variable].compute()
         data_mass = data[variable].compute()
 
         #data_run = data['run'].compute()
@@ -107,24 +109,41 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         #for i in s:
         #    print("run %i with mass %f"%(run[i], m[i]))
 
-        MC_entries = MC_mass.values
-        data_entries = data_mass.values
-        weight=(MC['wgt_nominal'].compute()).values
-        MC_vals, bins  = np.histogram(MC_entries, bins=frame.bins, weights=weight)
-        MC_vals2, bins  = np.histogram(MC_entries, bins=frame.bins, weights=weight**2)
-        data_vals, bins  = np.histogram(data_entries, bins=frame.bins)
-        MC_errs = np.sqrt(MC_vals2)
-        data_errs = np.sqrt(data_vals)
-        binSize = np.diff(bins)
-        MC_vals = MC_vals/binSize
-        data_vals = data_vals/binSize
-        MC_errs = MC_errs/binSize
-        data_errs = data_errs/binSize
+        DY_tree = DY_mass.values
+        other_tree = other_mass.values
+        data_tree = data_mass.values
+        DY_weight=(DY['wgt_nominal'].compute()).values
+        DY_weight[DY_weight<0]=0
+        DY_vals, bins  = np.histogram(DY_tree, bins=frame.bins, weights=DY_weight)
+        DY_vals2, bins  = np.histogram(DY_tree, bins=frame.bins, weights=DY_weight**2)
+        DY_errs = np.sqrt(DY_vals2)
         
+        other_weight=(other['wgt_nominal'].compute()).values
+        other_weight[other_weight<0]=0
+        other_vals, bins  = np.histogram(other_tree, bins=frame.bins, weights=other_weight)
+        other_vals2, bins  = np.histogram(other_tree, bins=frame.bins, weights=other_weight**2)
+        other_errs = np.sqrt(other_vals2)
+
+        data_vals, bins  = np.histogram(data_tree, bins=frame.bins)
+        data_errs = np.sqrt(data_vals)
+        #print(DY_vals)
+        #print(other_vals)
+        #print(data_vals) 
+        binSize = np.diff(bins)
+        DY_vals = DY_vals/binSize
+        other_vals = other_vals/binSize
+        data_vals = data_vals/binSize
+        DY_errs = DY_errs/binSize
+        other_errs = other_errs/binSize
+        data_errs = data_errs/binSize
+        MC_errs = np.sqrt(other_errs**2+DY_errs**2)
+        MC_vals = DY_vals+other_vals
         r_vals = data_vals/MC_vals
         r_errs = r_vals*np.sqrt((data_errs/data_vals)**2+(MC_errs/MC_vals)**2)
         r_MCerrs = MC_errs/MC_vals
-
+        print(DY_vals)
+        print(other_vals)
+        print(data_vals)
         #MC_errR = coffea.hist.poisson_interval(MC_vals, MC_vals2)
         #print(MC_errR)
         #lower = np.array(MC_errR[0])
@@ -143,8 +162,8 @@ def plot(MC, data, Zprime, G_RS, variable, path_save):
         
         
  
-        hep.histplot(data_vals, bins, ax=axs[0], color='black', histtype='errorbar',label="Data", yerr=data_errs)
-        hep.histplot(MC_vals, bins, ax=axs[0], color=frame.color, histtype='fill', label="$\gamma/\mathrm{Z}\\rightarrow \mu^{+}\mu^{-}$", edgecolor=(0,0,0))
+        hep.histplot(data_vals, bins, ax=axs[0], color='black', histtype='errorbar',label="$Data$", yerr=data_errs)
+        hep.histplot([other_vals, DY_vals], bins, ax=axs[0], stack=True, color=['orangered' ,frame.color], histtype='fill', label=["$t\\bar{\mathrm{t}}}, tW, WW, WZ, ZZ, \\tau\\tau$" ,"$\gamma/\mathrm{Z}\\rightarrow \mu^{+}\mu^{-}$"], edgecolor=(0,0,0))
         bins_mid = (bins[1:]+bins[:-1])/2
         ax_signal.fill_between(x=bins[:-1], y1=MC_vals-MC_errs, y2=MC_vals+MC_errs, interpolate=False, color='skyblue', alpha=0.3, step='post') 
         hep.histplot(G_RS, bins, ax=ax_signal, color='green', histtype='step', label='$G_{KK}, k/\\bar{M}_{Pl}$ = 0.05, M = 3.5 TeV')
@@ -180,6 +199,13 @@ if __name__=="__main__":
     with ProcessPoolExecutor(max_workers=48) as executor:
         DY_dfs = list(executor.map(dd.read_parquet, DY_paths))
     DY_df=dd.concat(DY_dfs)
+    #print(DY_df.shape)
+    
+    other_paths = glob.glob(other_path)
+    #other_paths = [p for p in other_paths if '3' in p]
+    with ProcessPoolExecutor(max_workers=48) as executor:
+        other_dfs = list(executor.map(dd.read_parquet, other_paths))
+    other_df=dd.concat(other_dfs)
 
     data_paths = glob.glob(path_data)
     #data_paths = [p for p in data_paths if '3' in p]
@@ -187,7 +213,7 @@ if __name__=="__main__":
         data_dfs = list(executor.map(dd.read_parquet, data_paths))
     data_df=dd.concat(data_dfs)
 
-    plot(DY_df, data_df, Zprime, G_RS, variables_plot, path_save)
+    plot(DY_df, other_df, data_df, Zprime, G_RS, variables_plot, path_save)
 
 
 

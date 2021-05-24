@@ -264,7 +264,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 ].product(axis=1)
             #print('check 8')
             # Define baseline muon selection (applied to pandas DF!)
-            muons['selection'] = (
+            muons['selection'] =  (
                 (muons.pt_raw > self.parameters["muon_pt_cut"]) &
                 (abs(muons.eta_raw) <
                  self.parameters["muon_eta_cut"]) &
@@ -307,7 +307,7 @@ class DimuonProcessor(processor.ProcessorABC):
             #print("two muons")
             #print(nmuons.values)
            
-            output['event_selection'] = (
+            output['event_selection'] = (mask &
                 (hlt > 0) &
                 (flags > 0) &
                 (nmuons >= 2) &
@@ -324,47 +324,21 @@ class DimuonProcessor(processor.ProcessorABC):
             #print('check 11')
             # Find pT-leading and subleading muons
             muons = muons[muons.selection & (nmuons >= 2)&(abs(sum_charge)<nmuons)]
+            #print(muons.columns)
+            #if muons.shape[0] !=0:
+                #output = output[output['event_selection']]
+                #print (output.shape)
+                #return output
+            #print(muons.shape)
             if self.timer:
                     self.timer.add_checkpoint("muon object selection")
             #print('check 12')
-            result = muons.groupby('entry').apply(find_dimuon)
-            #import sys
-            #sys.exit()
-            #print('flag1')
-            dimuon=pd.DataFrame(result.to_list(),columns=['idx1','idx2','mass'])
-            #print(dimuon.shape)
-            #print(muons.shape)
-            #print(dimuon)
-            #print(muons)
-            #print(sum_charge.head())
-            #print('flag2')
-            mu1=muons.loc[dimuon.idx1.values,:]
-            #print('flag3')
-            mu2=muons.loc[dimuon.idx2.values,:]
-            #print('flag4')
-            mu1.index = mu1.index.droplevel('subentry')
-            #print('flag5')
-            mu2.index = mu2.index.droplevel('subentry')
-            if self.timer:
-                    self.timer.add_checkpoint("dimuon pair selection")
-            #print('flag6')
-            #import sys
-            #sys.exit() 
-            #print("check 13")
-            output['bbangle'] = bbangle(mu1, mu2)
-            #print("finish")
-            output['event_selection'] = (
-                output.event_selection & (output.bbangle>self.parameters['3dangle'])
-            )
-            if self.timer:
-                    self.timer.add_checkpoint("back back angle calculation")
-            dimuon_mass=dimuon.mass
             mu1_variable_names = [
-                'mu1_pt', 'mu1_pt_over_mass',
+                'mu1_pt', 'mu1_pt_over_mass', 'mu1_ptErr',
                 'mu1_eta', 'mu1_phi', 'mu1_iso'
             ]
             mu2_variable_names = [
-                'mu2_pt', 'mu2_pt_over_mass',
+                'mu2_pt', 'mu2_pt_over_mass', 'mu2_ptErr',
                 'mu2_eta', 'mu2_phi', 'mu2_iso'
             ]
             dimuon_variable_names = [
@@ -374,19 +348,54 @@ class DimuonProcessor(processor.ProcessorABC):
                 'dimuon_pt', 'dimuon_pt_log',
                 'dimuon_eta', 'dimuon_phi',
                 'dimuon_dEta', 'dimuon_dPhi',
-                'dimuon_dR', 'dimuon_rap',
-                'dimuon_cos_theta_cs', 'dimuon_phi_cs'
+                'dimuon_dR', 'dimuon_rap', 'bbangle',
+                'dimuon_cos_theta_cs', 'dimuon_phi_cs', 'wgt_nominal'
             ]
             v_names = (
                 mu1_variable_names +
                 mu2_variable_names +
                 dimuon_variable_names
             )
-
+            output['r'] = None
+            output['s'] = dataset
+            output['year'] = int(self.year)
+            #print(output.shape[1])
             # Initialize columns for muon variables
             #print("check 14")
             for n in (v_names):
                 output[n] = 0.0
+
+            if muons.shape[0] == 0:
+                output = output.reindex(sorted(output.columns), axis=1)
+                #print('p 6')
+                output = output[output.r.isin(self.regions)]
+
+                return output
+
+
+            #print(muons.shape)
+            result = muons.groupby('entry').apply(find_dimuon)
+            dimuon=pd.DataFrame(result.to_list(),columns=['idx1','idx2','mass'])
+            mu1=muons.loc[dimuon.idx1.values,:]
+            mu2=muons.loc[dimuon.idx2.values,:]
+            mu1.index = mu1.index.droplevel('subentry')
+            mu2.index = mu2.index.droplevel('subentry')
+            if self.timer:
+                self.timer.add_checkpoint("dimuon pair selection")
+            #print('flag6')
+            #import sys
+            #sys.exit() 
+            #print("check 13")
+            output['bbangle'] = bbangle(mu1, mu2)
+            #print("finish")
+            output['event_selection'] = (
+                output.event_selection & (output.bbangle>self.parameters['3dangle'])
+            )
+  
+            if self.timer:
+                self.timer.add_checkpoint("back back angle calculation")
+
+            dimuon_mass=dimuon.mass
 
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
@@ -406,14 +415,15 @@ class DimuonProcessor(processor.ProcessorABC):
             #    output.event_selection  & (bbangle(mu1, mu2) < self.parameters['3dangle'] )
             #)
 
-            if self.timer:
-                self.timer.add_checkpoint("Applied trigger matching")
+            #if self.timer:
+            #    self.timer.add_checkpoint("Applied trigger matching")
 
             # --------------------------------------------------------#
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
             # Fill single muon variables
             #print("check 15")
+
             for v in ['pt', 'ptErr', 'eta', 'phi']:
                 output[f'mu1_{v}'] = mu1[v]
                 output[f'mu2_{v}'] = mu2[v]
@@ -521,11 +531,11 @@ class DimuonProcessor(processor.ProcessorABC):
         #print ("p 4")
         mass = output.dimuon_mass
         #print("check 21")
-        output['r'] = None
+        #output['r'] = None
         output.loc[((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)), 'r'] = "bb"
         output.loc[((output.mu1_eta > 1.2) | (output.mu2_eta > 1.2)), 'r'] = "be"
-        output['s'] = dataset
-        output['year'] = int(self.year)
+        #output['s'] = dataset
+        #output['year'] = int(self.year)
         #print("check 22")
         for wgt in weights.df.columns:
             #print(wgt)
@@ -534,7 +544,7 @@ class DimuonProcessor(processor.ProcessorABC):
             output[f'wgt_{wgt}'] = weights.get_weight(wgt)
         
         NNPDFFac = 0.919027 + (5.98337e-05)*mass + (2.56077e-08)*mass**2 + (-2.82876e-11)*mass**3 + (9.2782e-15)*mass**4 + (-7.77529e-19)*mass**5
-        print(NNPDFFac.head())
+        #print(NNPDFFac.head())
         NNPDFFac_bb = 0.911563 + (0.000113313)*mass + (-2.35833e-08)*mass**2 + (-1.44584e-11)*mass*3 + (8.41748e-15)*mass**4 + (-8.16574e-19)*mass**5
         NNPDFFac_be = 0.934502 + (2.21259e-05)*mass + (4.14656e-08)*mass**2 + (-2.26011e-11)*mass**3 + (5.58804e-15)*mass**4 + (-3.92687e-19)*mass**5
         output.loc[((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)) ,'wgt_nominal'] = output.loc[((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)) ,'wgt_nominal'] * NNPDFFac_bb
