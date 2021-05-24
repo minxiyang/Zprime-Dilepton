@@ -42,8 +42,10 @@ class SamplesInfo(object):
             from config.datasets import datasets, lumi_data
         elif 'pisa' in datasets_from:
             from config.datasets_pisa import datasets, lumi_data
-        elif 'Zprime' in datasets_from:
-            from config.datasets_Zprime import datasets, lumi_data
+        elif 'mu' in datasets_from:
+            from config.datasets_muon import datasets, lumi_data
+        elif 'el' in datasets_from:
+            from config.datasets_electron import datasets, lumi_data
         #print(self.year)
         #print(datasets_from)
         #print(datasets)

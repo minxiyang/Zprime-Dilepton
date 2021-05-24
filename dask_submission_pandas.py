@@ -6,7 +6,8 @@ import tqdm
 import datetime
 import coffea.processor as processor
 from coffea.processor import dask_executor, run_uproot_job
-from python.dimuon_processor_pandas import DimuonProcessor
+#from python.dimuon_processor_pandas import DimuonProcessor
+#from python.dielectron_processor_pandas import DielectronProcessor
 from python.samples_info import SamplesInfo
 from config.parameters import parameters as pars
 
@@ -33,6 +34,9 @@ parser.add_argument("-ch", "--chunksize", dest="chunksize",
 parser.add_argument("-mch", "--maxchunks", dest="maxchunks", default=-1,
                     action='store',
                     help='Max. number of chunks')
+parser.add_argument("-cl", "--channel", dest="channel", default="mu",
+                    action='store',
+                    help='the flavor of the final state dilepton')
 
 
 args = parser.parse_args()
@@ -65,6 +69,7 @@ parameters = {
     'local_cluster': local_cluster,
     'slurm_cluster_ip': slurm_cluster_ip,
     'client': None,
+    'channel':args.channel,
 }
 
 parameters['out_dir'] = f"{parameters['global_out_path']}/"\
@@ -77,7 +82,7 @@ def load_sample(dataset, parameters):
         'year': parameters['year'],
         'out_path': parameters['out_path'],
         'server': parameters['server'],
-        'datasets_from': 'Zprime',
+        'datasets_from':parameters['channel'],
         'debug': False,
         'xrootd': xrootd,
         'timeout': 1200
@@ -94,7 +99,7 @@ def load_samples(datasets, parameters):
         'year': parameters['year'],
         'out_path': parameters['out_path'],
         'server': parameters['server'],
-        'datasets_from': 'Zprime',
+        'datasets_from':parameters['channel'],
         'debug': False
     }
     samp_info_total = SamplesInfo(**args)
@@ -121,6 +126,12 @@ def mkdir(path):
 
 
 def submit_job(arg_set, parameters):
+    if parameters['channel'] == 'mu':
+        from python.dimuon_processor_pandas import DimuonProcessor as event_processor
+    elif parameters['channel'] == 'el':
+        from python.dielectron_processor_pandas import DielectronProcessor as event_processor
+    else:
+        print('wrong channel input')    
     executor = dask_executor
     executor_args = {
         'client': parameters['client'],
@@ -134,7 +145,7 @@ def submit_job(arg_set, parameters):
     }
     try:
         output = run_uproot_job(parameters['samp_infos'].fileset, 'Events',
-                                DimuonProcessor(**processor_args),
+                                event_processor(**processor_args),
                                 executor, executor_args=executor_args,
                                 chunksize=parameters['chunksize'],
                                 maxchunks=parameters['maxchunks'])
@@ -147,7 +158,14 @@ def submit_job(arg_set, parameters):
     print("finish")
     print(df)
     if df.count().sum() == 0:
+    #if output.shape[1]!= 39:
         return 'Nothing to save!'
+
+    #print("start compute")
+    #df = output.compute()
+    print("finish")
+    print(df)
+    #if df.count().sum() == 0:
 
     if parameters['save_output']:
 
@@ -206,11 +224,11 @@ if __name__ == "__main__":
                      'ttbar_lep', 'ttbar_lep_500to800_ext', 'ttbar_lep_500to800', 'ttbar_lep_800to1200', 'ttbar_lep_1200to1800', 'ttbar_lep_1800toInf', 
                      'Wantitop', 'tW'
                      ],
-        'Zprime':[
-                  'Zprime120to200',
-		  'Zprime200to400','Zprime400to800',
-                  'Zprime800to1400','Zprime1400to2300','Zprime2300to3500',
-                  'Zprime3500to4500','Zprime4500to6000','Zprime6000toInf',
+        'dy':[
+                  'dy120to200',
+		  'dy200to400','dy400to800',
+                  'dy800to1400','dy1400to2300','dy2300to3500',
+                  'dy3500to4500','dy4500to6000','dy6000toInf',
                   
                  ],
     }
@@ -233,10 +251,12 @@ if __name__ == "__main__":
     datasets_data = []
     for group, samples in smp.items():
         for sample in samples:
-            if sample != 'Zprime120to200':
+            if sample in ['WZ', 'tW', 'WZ2L2Q', 'Wantitop']:
                 continue
-            #if group != 'Zprime':
-            #    continue
+            if group != 'dy':
+                continue
+            if sample != 'dy120to200':
+                continue
             if group == 'data':
                 datasets_data.append(sample)
             else:
