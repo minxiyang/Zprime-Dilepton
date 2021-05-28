@@ -195,10 +195,6 @@ class DielectronProcessor(processor.ProcessorABC):
             output['s'] = dataset
             output['year'] = int(self.year)
             #print(output.shape[1])
-            # Initialize columns for electron variables
-
-            for n in (v_names):
-                output[n] = 0.0
 
             if electrons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
@@ -223,7 +219,7 @@ class DielectronProcessor(processor.ProcessorABC):
             if self.timer:
                 self.timer.add_checkpoint("back back angle calculation")
 
-            dielectron_mass=dielectron.mass
+            output.dielectron_mass=dielectron.mass  
 
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
@@ -250,9 +246,7 @@ class DielectronProcessor(processor.ProcessorABC):
             # Fill dielectron and electron variables
             # --------------------------------------------------------#
             
-            fill_muons(self, output, e1, e2, is_mc)
-
-            output.dielectron_mass=dielectron_mass            
+            fill_muons(self, output, e1, e2, is_mc)          
         
             if self.timer:
                     self.timer.add_checkpoint("all electron variables")

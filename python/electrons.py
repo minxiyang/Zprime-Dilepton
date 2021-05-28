@@ -44,6 +44,10 @@ def fill_electrons(processor, output, e1, e2, is_mc):
         dielectron_variable_names
     )
 
+    # Initialize columns for electron variables
+    for n in (v_names):
+        output[n] = 0.0
+
     # Fill single electron variables
     for v in ['pt', 'eta', 'phi']:
         output[f'e1_{v}'] = e1[v]

@@ -127,7 +127,6 @@ def fill_muons(processor, output, mu1, mu2, is_mc):
         output[f'mu2_{v}'] = mu2[v]
     output['mu1_iso'] = mu1.tkRelIso
     output['mu2_iso'] = mu2.tkRelIso
-    output.dimuon_mass=dimuon_mass
     output['mu1_pt_over_mass'] = output.mu1_pt.values / output.dimuon_mass.values
     output['mu2_pt_over_mass'] = output.mu2_pt.values / output.dimuon_mass.values
 
