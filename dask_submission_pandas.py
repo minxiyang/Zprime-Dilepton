@@ -4,6 +4,7 @@ import argparse
 import traceback
 import tqdm
 import datetime
+from functools import partial
 import coffea.processor as processor
 from coffea.processor import dask_executor, run_uproot_job
 from python.preprocessor import load_samples
@@ -108,6 +109,7 @@ def submit_job(arg_set, parameters):
         'client': parameters['client'],
         'schema': processor.NanoAODSchema,
         'use_dataframes': True,
+        'apply_to_output': partial(saving_func, out_dir=out_dir)
         'retries': 0
     }
     processor_args = {
