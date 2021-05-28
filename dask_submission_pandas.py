@@ -6,8 +6,8 @@ import tqdm
 import datetime
 import coffea.processor as processor
 from coffea.processor import dask_executor, run_uproot_job
-#from python.dimuon_processor_pandas import DimuonProcessor
-#from python.dielectron_processor_pandas import DielectronProcessor
+#from python.dimuon_processor import DimuonProcessor
+#from python.dielectron_processor import DielectronProcessor
 from python.samples_info import SamplesInfo
 from config.parameters import parameters as pars
 
@@ -127,9 +127,9 @@ def mkdir(path):
 
 def submit_job(arg_set, parameters):
     if parameters['channel'] == 'mu':
-        from python.dimuon_processor_pandas import DimuonProcessor as event_processor
+        from python.dimuon_processor import DimuonProcessor as event_processor
     elif parameters['channel'] == 'el':
-        from python.dielectron_processor_pandas import DielectronProcessor as event_processor
+        from python.dielectron_processor import DielectronProcessor as event_processor
     else:
         print('wrong channel input')    
     executor = dask_executor
