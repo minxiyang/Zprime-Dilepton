@@ -61,6 +61,7 @@ parameters = {
     #'server': 'root://xrootd.rcac.purdue.edu/',
     'server': 'root://cmsxrootd.fnal.gov//',
     'datasets_from': 'Zprime',
+    'from_das': True,
     'chunksize': int(args.chunksize),
     'maxchunks': mch,
     'save_output': True,

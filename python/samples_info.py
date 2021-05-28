@@ -21,7 +21,10 @@ def load_sample(dataset, parameters):
     }
     samp_info = SamplesInfo(**args)
     #print(dataset)
-    samp_info.load(dataset, use_dask=True, client=parameters['client'])
+    samp_info.load(
+        dataset, from_das=parameters['from_das'],
+        use_dask=True, client=parameters['client']
+    )
     samp_info.finalize()
     return {dataset: samp_info}
 
@@ -50,18 +53,18 @@ def load_samples(datasets, parameters):
     return samp_info_total
 
 
-def read_via_xrootd(server, path):
-    #command = f"xrdfs {server} ls -R {path} | grep '.root'"
-    command = 'dasgoclient --query=="file dataset= %s" '% path
-    #print(command)
+def read_via_xrootd(server, path, from_das=False):
+    if from_das:
+        command = f'dasgoclient --query=="file dataset={path}"'
+    else:
+        command = f"xrdfs {server} ls -R {path} | grep '.root'"
     proc = subprocess.Popen(command, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, shell=True)
     result = proc.stdout.readlines()
-    #print(result)
-    #print(proc.stderr.readlines())
-    #print(proc.stdout.readlines())
     if proc.stderr.readlines():
-        print("Loading error! Check VOMS proxy.")
+        print("Loading error! This may help:")
+        print("    voms-proxy-init --voms cms")
+        print("    source /cvmfs/cms.cern.ch/cmsset_default.sh")
     result = [server + r.rstrip().decode("utf-8") for r in result]
     return result
 
@@ -106,11 +109,11 @@ class SamplesInfo(object):
 
         self.lumi_weights = {}
 
-    def load(self, sample, use_dask, client=None):
+    def load(self, sample, from_das, use_dask, client=None):
         if 'data' in sample:
             self.is_mc = False
 
-        res = self.load_sample(sample, use_dask, client)
+        res = self.load_sample(sample, from_das, use_dask, client)
 
         self.sample = sample
         self.samples = [sample]
@@ -120,7 +123,7 @@ class SamplesInfo(object):
         self.data_entries = res['data_entries']
 
 
-    def load_sample(self, sample, use_dask=False, client=None):
+    def load_sample(self, sample, from_das=False, use_dask=False, client=None):
         if sample not in self.paths:
             print(f"Couldn't load {sample}! Skipping.")
             return {'sample': sample, 'metadata': {},
@@ -131,7 +134,7 @@ class SamplesInfo(object):
         data_entries = 0
         #print(self.xroot)
         if self.xrootd:
-            all_files = read_via_xrootd(self.server, self.paths[sample])
+            all_files = read_via_xrootd(self.server, self.paths[sample], from_das)
             #all_files = [self.server + _file for _file in self.paths[sample]]
         elif self.paths[sample].endswith('.root'):
             all_files = [self.paths[sample]]
