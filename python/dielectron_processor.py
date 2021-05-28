@@ -56,10 +56,6 @@ class DielectronProcessor(processor.ProcessorABC):
         return self._columns
 
     def process(self, df):
-        # ------------------------------------------------------------#
-        # Filter out events not passing HLT or having
-        # less than 2 muons.
-        # ------------------------------------------------------------#
 
         # Initialize timer
         if self.timer:
@@ -70,7 +66,6 @@ class DielectronProcessor(processor.ProcessorABC):
         
         is_mc = 'data' not in dataset
 
-        #print(df.values)
         # ------------------------------------------------------------#
         # Apply HLT, lumimask, genweights, PU weights
         # and L1 prefiring weights
@@ -135,36 +130,24 @@ class DielectronProcessor(processor.ProcessorABC):
         df['Electron', 'pt_raw'] = df.Electron.pt
         df['Electron', 'eta_raw'] = df.Electron.eta
         df['Electron', 'phi_raw'] = df.Electron.phi
-        #df['Muon', 'tkRelIso'] = df.Muon.tkRelIso
 
 
         # for ...
-        if True:  # indent reserved for loop over muon pT variations
-            # According to HIG-19-006, these variations have negligible
-            # effect on significance, but it's better to have them
-            # implemented in the future
+        if True:  # indent reserved for loop over pT variations
 
             # --- conversion from awkward to pandas --- #
-            # TODO: convert only relevant fields to improve memory usage
             el_branches = ['pt_raw','pt', 'eta', 'eta_raw', 'phi', 'phi_raw', 'mass','cutBased_HEEP','charge']
             electrons = ak.to_pandas(df.Electron[el_branches])
             if self.timer:
-                    self.timer.add_checkpoint("load muon data")
+                    self.timer.add_checkpoint("load electron data")
+
             # --------------------------------------------------------#
-            # Select muons that pass pT, eta, isolation cuts,
-            # muon ID and quality flags
-            # Select events with 2 OS muons, no electrons,
-            # passing quality cuts and at least one good PV
+            # Electron selection
             # --------------------------------------------------------#
 
             # Apply event quality flag
             flags = ak.to_pandas(df.Flag)
             flags = flags[self.parameters["event_flags"]].product(axis=1)
-            electrons['pass_flags'] = True
-            #if self.parameters["muon_flags"]:
-            #    muons['pass_flags'] = muons[
-            #        self.parameters["muon_flags"]
-            #    ].product(axis=1)
 
             # Define baseline muon selection (applied to pandas DF!)
             electrons['selection'] =  (
@@ -172,34 +155,16 @@ class DielectronProcessor(processor.ProcessorABC):
                 (abs(electrons.eta_raw) <
                  self.parameters["electron_eta_cut"]) &
                 (np.min(electrons.eta_raw) < 1.442) &
-                #(muons.tkRelIso <
-                # self.parameters["muon_iso_cut"]) &
                 (electrons[self.parameters["electron_id"]]>0) 
-                #(muons.dxy <
-                # self.parameters["muon_dxy"])&
-                #((muons.ptErr.values/muons.pt.values)<
-                # self.parameters["muon_ptErr/pt"]) &
-
-                #muons.pass_flags
             )
 
-            # Count muons
+            # Count electrons
             nelectrons = electrons[electrons.selection].reset_index()\
                 .groupby('entry')['subentry'].nunique()
 
             # Find opposite-sign muons
             #sum_charge = muons.loc[muons.selection, 'charge']\
             #    .groupby('entry').sum()
-
-            # Veto events with good quality electrons
-            #electrons = df.Electron[
-            #    (df.Electron.pt > self.parameters["electron_pt_cut"]) &
-            #    (abs(df.Electron.eta) <
-            #     self.parameters["electron_eta_cut"]) &
-            #    (df.Electron[self.parameters["electron_id"]] == 1)
-            #]
-
-            #electron_veto = ak.to_numpy(ak.count(electrons.pt, axis=1) == 0)
 
             # Find events with at least one good primary vertex
             #good_pv = ak.to_pandas(df.PV).npvsGood > 0
@@ -218,24 +183,18 @@ class DielectronProcessor(processor.ProcessorABC):
                 #(abs(sum_charge)<nmuons) &
                 #good_pv
             )
-            #output=output[muons.selection & (nmuons >= 2) & (abs(sum_charge)<nmuons)]
+
             if self.timer:
-                self.timer.add_checkpoint("Selected events and muons")
+                self.timer.add_checkpoint("Selected events and electrons")
 
             # --------------------------------------------------------#
-            # Initialize muon variables
+            # Initialize electron variables
             # --------------------------------------------------------#
 
-            # Find pT-leading and subleading muons
             electrons = electrons[electrons.selection & (nelectrons >= 2)]
-            #print(muons.columns)
-            #if muons.shape[0] !=0:
-                #output = output[output['event_selection']]
-                #print (output.shape)
-                #return output
-            #print(muons.shape)
+
             if self.timer:
-                    self.timer.add_checkpoint("muon object selection")
+                    self.timer.add_checkpoint("electron object selection")
 
             e1_variable_names = [
                 'e1_pt',
@@ -264,20 +223,16 @@ class DielectronProcessor(processor.ProcessorABC):
             output['s'] = dataset
             output['year'] = int(self.year)
             #print(output.shape[1])
-            # Initialize columns for muon variables
+            # Initialize columns for electron variables
 
             for n in (v_names):
                 output[n] = 0.0
 
-            #if muons.shape[0] == 0:
-            #    output = output.reindex(sorted(output.columns), axis=1)
-                #print('p 6')
-            #    output = output[output.r.isin(self.regions)]
+            if electrons.shape[0] == 0:
+                output = output.reindex(sorted(output.columns), axis=1)
+                output = output[output.r.isin(self.regions)]
+                return output
 
-            #    return output
-
-
-            #print(muons.shape)
             result = electrons.groupby('entry').apply(find_dielectron)
             dielectron=pd.DataFrame(result.to_list(),columns=['idx1','idx2','mass'])
             e1=electrons.loc[dielectron.idx1.values,:]
@@ -285,10 +240,7 @@ class DielectronProcessor(processor.ProcessorABC):
             e1.index = e1.index.droplevel('subentry')
             e2.index = e2.index.droplevel('subentry')
             if self.timer:
-                self.timer.add_checkpoint("dimuon pair selection")
-            #print('flag6')
-            #import sys
-            #sys.exit() 
+                self.timer.add_checkpoint("dielectron pair selection")
 
             #output['bbangle'] = bbangle(mu1, mu2)
             #print("finish")
@@ -323,32 +275,28 @@ class DielectronProcessor(processor.ProcessorABC):
             #    self.timer.add_checkpoint("Applied trigger matching")
 
             # --------------------------------------------------------#
-            # Fill dimuon and muon variables
+            # Fill dielectron and electron variables
             # --------------------------------------------------------#
-            # Fill single muon variables
+            # Fill single electron variables
 
 
             for v in ['pt', 'eta', 'phi']:
                 output[f'e1_{v}'] = e1[v]
                 output[f'e2_{v}'] = e2[v]
-            #output['mu1_iso'] = mu1.tkRelIso
-            #output['mu2_iso'] = mu2.tkRelIso
-            output.dielectron_mass=dielectron_mass
-            #output['mu1_pt_over_mass'] = output.mu1_pt.values / output.dimuon_mass.values
-            #output['mu2_pt_over_mass'] = output.mu2_pt.values / output.dimuon_mass.values
-            
+
+            output.dielectron_mass=dielectron_mass            
         
             if self.timer:
-                    self.timer.add_checkpoint("all muon variables")
-            # Fill dimuon variables
+                    self.timer.add_checkpoint("all electron variables")
+
+            # Fill dielectron variables
 
             mm = p4_sum(e1, e2)
             for v in ['pt', 'eta', 'phi', 'mass', 'rap']:
                 name = f'dielectron_{v}'
                 output[name] = mm[v]
                 output[name] = output[name].fillna(-999.)
-            #print("dimuon pt")
-            #print(output.dimuon_pt.values)
+
             output['dielectron_pt_log'] = np.log(output.dielectron_pt[output.dielectron_pt>0])
             output.loc[output.dielectron_pt<0, 'dielectron_pt_log']=-999.
             #print("finish")
@@ -363,17 +311,8 @@ class DielectronProcessor(processor.ProcessorABC):
             output['dielectron_dPhi'] = mm_dphi
             output['dielectron_dR'] = mm_dr
 
-            #output['dimuon_ebe_mass_res'] = mass_resolution_purdue(
-            #                                    is_mc,
-            #                                    self.evaluator,
-            #                                    output,
-            #                                    self.year
-            #                                )
-            #output['dimuon_ebe_mass_res_rel'] = (
-            #    output.dimuon_ebe_mass_res / output.dimuon_mass
-            #)
             if self.timer:
-                    self.timer.add_checkpoint("add dimuon variable")
+                    self.timer.add_checkpoint("add dielectron variables")
 
             output['dielectron_cos_theta_cs'],\
                 output['dielectron_phi_cs'] = cs_variables(e1, e2)
@@ -384,10 +323,9 @@ class DielectronProcessor(processor.ProcessorABC):
         # Calculate other event weights
         # ------------------------------------------------------------#
 
+        """
         if is_mc:
-            # do_zpt = ('dy' in dataset)
-
-            """
+            do_zpt = ('dy' in dataset)
             if do_zpt:
                 zpt_weight = np.ones(numevents, dtype=float)
                 zpt_weight[two_muons] =\
@@ -395,15 +333,15 @@ class DielectronProcessor(processor.ProcessorABC):
                         output['dimuon_pt'][two_muons]
                     ).flatten()
                 weights.add_weight('zpt_wgt', zpt_weight)
-            """
 
         if self.timer:
             self.timer.add_checkpoint("Computed event weights")
+        """
 
         # ------------------------------------------------------------#
         # Fill outputs
         # ------------------------------------------------------------#
-        #print ("p 4")
+
         mass = output.dielectron_mass
 
         #output['r'] = None
@@ -428,9 +366,9 @@ class DielectronProcessor(processor.ProcessorABC):
         #print(output['wgt_nominal'].values)        
         output = output.loc[output.event_selection, :]
         output = output.reindex(sorted(output.columns), axis=1)
-        #print('p 6')
+
         output = output[output.r.isin(self.regions)]
-        #print('p 7')  
+
         if self.timer:
             self.timer.add_checkpoint("Filled outputs")
             self.timer.summary()

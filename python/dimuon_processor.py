@@ -194,7 +194,6 @@ class DimuonProcessor(processor.ProcessorABC):
                     self.timer.add_checkpoint("GeoFit correction")
 
             # --- conversion from awkward to pandas --- #
-            # TODO: convert only relevant fields to improve memory usage
             mu_branches = ['pt_raw','pt', 'eta', 'eta_raw', 'phi', 'phi_raw','charge','ptErr','highPtId','tkRelIso','mass','dxy']
             muons = ak.to_pandas(df.Muon[mu_branches])
             if self.timer:
@@ -239,16 +238,6 @@ class DimuonProcessor(processor.ProcessorABC):
             sum_charge = muons.loc[muons.selection, 'charge']\
                 .groupby('entry').sum()
 
-            # Veto events with good quality electrons
-            electrons = df.Electron[
-                (df.Electron.pt > self.parameters["electron_pt_cut"]) &
-                (abs(df.Electron.eta) <
-                 self.parameters["electron_eta_cut"]) &
-                (df.Electron[self.parameters["electron_id"]] == 1)
-            ]
-
-            electron_veto = ak.to_numpy(ak.count(electrons.pt, axis=1) == 0)
-
             # Find events with at least one good primary vertex
             good_pv = ak.to_pandas(df.PV).npvsGood > 0
 
@@ -266,7 +255,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 (abs(sum_charge)<nmuons) &
                 good_pv
             )
-            #output=output[muons.selection & (nmuons >= 2) & (abs(sum_charge)<nmuons)]
+
             if self.timer:
                 self.timer.add_checkpoint("Selected events and muons")
 
@@ -276,12 +265,7 @@ class DimuonProcessor(processor.ProcessorABC):
 
             # Find pT-leading and subleading muons
             muons = muons[muons.selection & (nmuons >= 2)&(abs(sum_charge)<nmuons)]
-            #print(muons.columns)
-            #if muons.shape[0] !=0:
-                #output = output[output['event_selection']]
-                #print (output.shape)
-                #return output
-            #print(muons.shape)
+
             if self.timer:
                     self.timer.add_checkpoint("muon object selection")
 
@@ -311,7 +295,7 @@ class DimuonProcessor(processor.ProcessorABC):
             output['r'] = None
             output['s'] = dataset
             output['year'] = int(self.year)
-            #print(output.shape[1])
+
             # Initialize columns for muon variables
 
             for n in (v_names):
@@ -319,13 +303,10 @@ class DimuonProcessor(processor.ProcessorABC):
 
             if muons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
-                #print('p 6')
                 output = output[output.r.isin(self.regions)]
 
                 return output
 
-
-            #print(muons.shape)
             result = muons.groupby('entry').apply(find_dimuon)
             dimuon=pd.DataFrame(result.to_list(),columns=['idx1','idx2','mass'])
             mu1=muons.loc[dimuon.idx1.values,:]
@@ -334,12 +315,9 @@ class DimuonProcessor(processor.ProcessorABC):
             mu2.index = mu2.index.droplevel('subentry')
             if self.timer:
                 self.timer.add_checkpoint("dimuon pair selection")
-            #print('flag6')
-            #import sys
-            #sys.exit() 
-
+ 
             output['bbangle'] = bbangle(mu1, mu2)
-            #print("finish")
+
             output['event_selection'] = (
                 output.event_selection & (output.bbangle>self.parameters['3dangle'])
             )
@@ -433,10 +411,8 @@ class DimuonProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
 
         if is_mc:
-            # do_zpt = ('dy' in dataset)
-            do_musf = True
-
             """
+            do_zpt = ('dy' in dataset)
             if do_zpt:
                 zpt_weight = np.ones(numevents, dtype=float)
                 zpt_weight[two_muons] =\
@@ -446,6 +422,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 weights.add_weight('zpt_wgt', zpt_weight)
             """
 
+            do_musf = True
             if do_musf:
                 muID, muIso, muTrig = musf_evaluator(
                     self.musf_lookup,
@@ -478,7 +455,7 @@ class DimuonProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
         # Fill outputs
         # ------------------------------------------------------------#
-        #print ("p 4")
+
         mass = output.dimuon_mass
 
         #output['r'] = None
