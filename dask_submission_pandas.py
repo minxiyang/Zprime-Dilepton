@@ -255,8 +255,8 @@ if __name__ == "__main__":
                 continue
             if group != 'dy':
                 continue
-            if sample != 'dy120to200':
-                continue
+            #if sample in ['dy200to400','dy800to1400']:
+            #    continue
             if group == 'data':
                 datasets_data.append(sample)
             else:
