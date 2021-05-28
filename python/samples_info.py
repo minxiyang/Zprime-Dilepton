@@ -22,8 +22,8 @@ def load_sample(dataset, parameters):
     samp_info = SamplesInfo(**args)
     #print(dataset)
     samp_info.load(
-        dataset, from_das=parameters['from_das'],
-        use_dask=True, client=parameters['client']
+        dataset, use_dask=True,
+        from_das=parameters['from_das'], client=parameters['client']
     )
     samp_info.finalize()
     return {dataset: samp_info}
@@ -109,7 +109,7 @@ class SamplesInfo(object):
 
         self.lumi_weights = {}
 
-    def load(self, sample, from_das, use_dask, client=None):
+    def load(self, sample, use_dask, from_das=False, client=None):
         if 'data' in sample:
             self.is_mc = False
 
