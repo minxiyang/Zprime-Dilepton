@@ -15,7 +15,7 @@ __all__ = ['Client']
 
 
 def almost_equal(a, b):
-    return (abs(a - b) < 10e-6)
+    return (abs(a - b) < 10e-8)
 
 
 if __name__ == "__main__":
@@ -61,5 +61,7 @@ if __name__ == "__main__":
     print(f'Finished everything in {elapsed} s.')
 
     diele_mass = df.loc[df.event == 8001, 'dielectron_mass'].values[0]
+    wgt = df.loc[df.event == 8001, 'wgt_nominal'].values[0]
     assert(df.shape[0] == 5035)
     assert(almost_equal(diele_mass, 2473.15505815))
+    assert(almost_equal(wgt, 0.000108786717997054))
