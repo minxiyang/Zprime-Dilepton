@@ -8,7 +8,7 @@ import coffea.processor as processor
 from coffea.lookup_tools import extractor
 from coffea.lumi_tools import LumiMask
 
-from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dielectron, bbangle
+from python.utils import p4_sum, delta_r, rapidity, cs_variables, bbangle
 from python.timer import Timer
 from python.weights import Weights
 
@@ -16,6 +16,8 @@ from config.parameters import parameters
 
 from python.corrections.pu_reweight import pu_lookups, pu_evaluator
 from python.corrections.l1prefiring_weights import l1pf_weights
+
+from python.electrons import find_dielectron, fill_electrons
 
 class DielectronProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
@@ -189,29 +191,6 @@ class DielectronProcessor(processor.ProcessorABC):
             if self.timer:
                     self.timer.add_checkpoint("electron object selection")
 
-            e1_variable_names = [
-                'e1_pt',
-                'e1_eta', 'e1_phi'
-            ]
-            e2_variable_names = [
-                'e2_pt', 
-                'e2_eta', 'e2_phi'
-            ]
-            dielectron_variable_names = [
-                'dielectron_mass',
-                'dielectron_mass_res', 'dielectron_mass_res_rel',
-                'dielectron_ebe_mass_res', 'dielectron_ebe_mass_res_rel',
-                'dielectron_pt', 'dielectron_pt_log',
-                'dielectron_eta', 'dielectron_phi',
-                'dielectron_dEta', 'dielectron_dPhi',
-                'dielectron_dR', 'dielectron_rap',
-                'dielecron_cos_theta_cs', 'dielectron_phi_cs', 'wgt_nominal','pu_wgt'
-            ]
-            v_names = (
-                e1_variable_names +
-                e2_variable_names +
-                dielectron_variable_names
-            )
             output['r'] = None
             output['s'] = dataset
             output['year'] = int(self.year)
@@ -270,47 +249,14 @@ class DielectronProcessor(processor.ProcessorABC):
             # --------------------------------------------------------#
             # Fill dielectron and electron variables
             # --------------------------------------------------------#
-            # Fill single electron variables
-
-
-            for v in ['pt', 'eta', 'phi']:
-                output[f'e1_{v}'] = e1[v]
-                output[f'e2_{v}'] = e2[v]
+            
+            fill_muons(self, output, e1, e2, is_mc)
 
             output.dielectron_mass=dielectron_mass            
         
             if self.timer:
                     self.timer.add_checkpoint("all electron variables")
 
-            # Fill dielectron variables
-
-            mm = p4_sum(e1, e2)
-            for v in ['pt', 'eta', 'phi', 'mass', 'rap']:
-                name = f'dielectron_{v}'
-                output[name] = mm[v]
-                output[name] = output[name].fillna(-999.)
-
-            output['dielectron_pt_log'] = np.log(output.dielectron_pt[output.dielectron_pt>0])
-            output.loc[output.dielectron_pt<0, 'dielectron_pt_log']=-999.
-            #print("finish")
-            mm_deta, mm_dphi, mm_dr = delta_r(
-                e1.eta, e2.eta,
-                e1.phi, e2.phi
-            )
-            output['dielectron_pt'] = mm.pt
-            output['dielectron_eta'] = mm.eta
-            output['dielectron_phi'] = mm.phi
-            output['dielectron_dEta'] = mm_deta
-            output['dielectron_dPhi'] = mm_dphi
-            output['dielectron_dR'] = mm_dr
-
-            if self.timer:
-                    self.timer.add_checkpoint("add dielectron variables")
-
-            output['dielectron_cos_theta_cs'],\
-                output['dielectron_phi_cs'] = cs_variables(e1, e2)
-            if self.timer:
-                self.timer.add_checkpoint("Calculate CS angle")
 
         # ------------------------------------------------------------#
         # Calculate other event weights

@@ -20,7 +20,7 @@ from python.corrections.fsr_recovery import fsr_recovery
 from python.corrections.geofit import apply_geofit
 from python.corrections.l1prefiring_weights import l1pf_weights
 
-from python.muons import fill_muons, find_dimuon
+from python.muons import find_dimuon, fill_muons
 
 from config.parameters import parameters
 

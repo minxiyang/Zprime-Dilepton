@@ -1,24 +1,5 @@
 import numpy as np
 import pandas as pd
-import math
-
-
-def find_dielectron(objs):
-    
-    objs['el_idx'] = objs.index
-    idx1=objs.iloc[0].el_idx
-    idx2=objs.iloc[1].el_idx
-    px1_ = objs.iloc[0].pt * np.cos(objs.iloc[0].phi)
-    py1_ = objs.iloc[0].pt * np.sin(objs.iloc[0].phi)
-    pz1_ = objs.iloc[0].pt * np.sinh(objs.iloc[0].eta)
-    e1_ = np.sqrt(px1_**2 + py1_**2 + pz1_**2 + objs.iloc[0].mass**2)
-    px2_ = objs.iloc[1].pt * np.cos(objs.iloc[1].phi)
-    py2_ = objs.iloc[1].pt * np.sin(objs.iloc[1].phi)
-    pz2_ = objs.iloc[1].pt * np.sinh(objs.iloc[1].eta)
-    e2_ = np.sqrt(px2_**2 + py2_**2 + pz2_**2 + objs.iloc[1].mass**2)
-    m2 = (e1_+e2_)**2-(px1_+px2_)**2-(py1_+py2_)**2-(pz1_+pz2_)**2
-    mass=math.sqrt(max(0,m2))
-    return [idx1, idx2, mass]
 
 
 def p4_sum(obj1, obj2):
