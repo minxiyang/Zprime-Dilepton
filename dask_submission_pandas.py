@@ -1,8 +1,6 @@
 import time
-import os
 import argparse
 import traceback
-import tqdm
 import datetime
 from functools import partial
 import coffea.processor as processor
@@ -11,7 +9,6 @@ from python.preprocessor import load_samples
 from python.utils import mkdir
 
 import dask
-import dask.dataframe as dd
 from dask.distributed import Client
 dask.config.set({"temporary-directory": "/depot/cms/users/minxi/dask-temp/"})
 
