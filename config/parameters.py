@@ -451,7 +451,7 @@ proc_columns_mu = event_branches + muon_branches + fsr_branches +\
     jet_branches + genjet_branches + sajet_branches + vtx_branches +\
     genpart_branches + trigobj_branches + ele_branches + other_branches +\
     event_flags
-parameters["proc_columns_mu"] = {
+parameters["proc_columns"] = {
     "2016": proc_columns_mu + branches_mu_2016,
     "2017": proc_columns_mu + branches_mu_2017,
     "2018": proc_columns_mu + branches_mu_2018,

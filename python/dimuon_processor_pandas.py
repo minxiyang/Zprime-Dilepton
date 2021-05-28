@@ -46,7 +46,7 @@ class DimuonProcessor(processor.ProcessorABC):
 
         self.timer = Timer('global') if do_timer else None
 
-        self._columns = self.parameters["proc_columns_mu"]
+        self._columns = self.parameters["proc_columns"]
 
         self.regions = self.samp_info.regions
         self.channels = self.samp_info.channels
