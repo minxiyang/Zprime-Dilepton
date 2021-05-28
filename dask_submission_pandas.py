@@ -157,8 +157,8 @@ if __name__ == "__main__":
         'dy':[
             'dy120to200',
             'dy200to400','dy400to800',
-            #'dy800to1400','dy1400to2300','dy2300to3500',
-            #'dy3500to4500','dy4500to6000','dy6000toInf',
+            'dy800to1400','dy1400to2300','dy2300to3500',
+            'dy3500to4500','dy4500to6000','dy6000toInf',
 
         ],
     }
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         for sample in samples:
             if sample in ['WZ', 'tW', 'WZ2L2Q', 'Wantitop']:
                 continue
-            if group != 'dy':
+            if group != 'other_mc':
                 continue
             #if sample in ['dy200to400','dy800to1400']:
             #    continue
