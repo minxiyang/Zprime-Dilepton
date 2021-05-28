@@ -38,11 +38,7 @@ class SamplesInfo(object):
 
         self.is_mc = True
 
-        if 'purdue' in datasets_from:
-            from config.datasets import datasets
-        elif 'pisa' in datasets_from:
-            from config.datasets_pisa import datasets
-        elif 'mu' in datasets_from:
+        if 'mu' in datasets_from:
             from config.datasets_muon import datasets
         elif 'el' in datasets_from:
             from config.datasets_electron import datasets
@@ -57,8 +53,7 @@ class SamplesInfo(object):
             self.lumi = 41530.
         elif '2018' in self.year:
             self.lumi = 59970.
-        # print('year: ', self.year)
-        # print('Default lumi: ', self.lumi)
+ 
 
         self.data_entries = 0
         self.sample = ''
@@ -66,13 +61,6 @@ class SamplesInfo(object):
 
         self.fileset = {}
         self.metadata = {}
-
-        # --- Define regions and channels used in the analysis ---#
-        #self.regions = ['z-peak', 'h-sidebands', 'h-peak']
-        self.regions = ['bb', 'be']
-        # self.channels = ['ggh_01j', 'ggh_2j', 'vbf']
-        #self.channels = ['vbf', 'vbf_01j', 'vbf_2j']
-        self.channels = ['mumu']
 
         self.lumi_weights = {}
 

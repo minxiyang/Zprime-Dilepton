@@ -49,8 +49,8 @@ class DimuonProcessor(processor.ProcessorABC):
 
         self._columns = self.parameters["proc_columns"]
 
-        self.regions = self.samp_info.regions
-        self.channels = self.samp_info.channels
+        self.regions = ['bb', 'be']
+        self.channels = ['mumu']
 
         self.lumi_weights = self.samp_info.lumi_weights
 
