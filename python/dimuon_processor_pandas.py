@@ -20,6 +20,7 @@ from python.corrections_.lepton_sf import musf_lookup, musf_evaluator
 from python.corrections_.rochester import apply_roccor
 from python.corrections_.fsr_recovery import fsr_recovery
 from python.corrections_.geofit import apply_geofit
+from python.corrections_.l1prefiring_weights import l1pf_weights
 
 from config.parameters import parameters
 #from config.variables import variables
@@ -40,6 +41,7 @@ class DimuonProcessor(processor.ProcessorABC):
         self.do_roccor = False
         self.do_fsr = False
         self.do_geofit = False
+        self.do_l1pw = False  # L1 prefiring weights
 
         self.parameters = {
             k: v[self.year] for k, v in parameters.items()}
@@ -148,11 +150,17 @@ class DimuonProcessor(processor.ProcessorABC):
                     'pu_wgt', pu_wgts['nom'], pu_wgts['up'], pu_wgts['down']
                 )
             weights.add_weight('lumi', self.lumi_weights[dataset])
-            #l1pfw = ak.to_pandas(df.L1PreFiringWeight)
-            #if self.parameters["do_l1prefiring_wgts"]:
-            #    weights.add_weight_with_variations(
-            #        'l1prefiring_wgt', l1pfw.Nom, l1pfw.Up, l1pfw.Dn
-            #    )
+            if self.do_l1pw:
+                if self.parameters["do_l1prefiring_wgts"]:
+                    if 'L1PreFiringWeight' in df.fields:
+                        l1pfw = l1pf_weights(df)
+                        weights.add_weight_with_variations(
+                            'l1prefiring_wgt', l1pfw['nom'], l1pfw['up'], l1pfw['down']
+                        )
+                    else:
+                        weights.add_dummy_weight_with_variations(
+                            'l1prefiring_wgt'
+                        )
 
         else:
             # For Data: apply Lumi mask
