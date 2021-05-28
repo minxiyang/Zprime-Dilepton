@@ -12,7 +12,6 @@ from coffea.lumi_tools import LumiMask
 from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dielectron, bbangle
 from python.timer import Timer
 from python.weights import Weights
-from python.corrections import fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
 from config.parameters import parameters
@@ -32,8 +31,6 @@ class DielectronProcessor(processor.ProcessorABC):
         self.do_pu = True
         self.auto_pu = True
         self.year = self.samp_info.year
-        self.do_fsr = False
-        self.do_geofit = False
 
         self.parameters = {
             k: v[self.year] for k, v in parameters.items()}
@@ -160,12 +157,6 @@ class DielectronProcessor(processor.ProcessorABC):
         if self.timer:
             self.timer.add_checkpoint("Applied HLT and lumimask")
 
-        # ------------------------------------------------------------#
-        # Update muon kinematics with Rochester correction,
-        # FSR recovery and GeoFit correction
-        # Raw pT and eta are stored to be used in event selection
-        # ------------------------------------------------------------#
-
         # Save raw variables before computing any corrections
         df['Electron', 'pt_raw'] = df.Electron.pt
         df['Electron', 'eta_raw'] = df.Electron.eta
@@ -178,29 +169,6 @@ class DielectronProcessor(processor.ProcessorABC):
             # According to HIG-19-006, these variations have negligible
             # effect on significance, but it's better to have them
             # implemented in the future
-
-            # FSR recovery
-            if self.do_fsr:
-                has_fsr = fsr_recovery(df)
-                df['Muon', 'pt'] = df.Muon.pt_fsr
-                df['Muon', 'eta'] = df.Muon.eta_fsr
-                df['Muon', 'phi'] = df.Muon.phi_fsr
-                df['Muon', 'pfRelIso04_all'] = df.Muon.iso_fsr
-
-                if self.timer:
-                    self.timer.add_checkpoint("FSR recovery")
-
-            # if FSR was applied, 'pt_fsr' will be corrected pt
-            # if FSR wasn't applied, just copy 'pt' to 'pt_fsr'
-            df['Muon', 'pt_fsr'] = df.Muon.pt
-
-            # GeoFit correction
-            if self.do_geofit and ('dxybs' in df.Muon.fields):
-                apply_geofit(df, self.year, ~has_fsr)
-                df['Muon', 'pt'] = df.Muon.pt_fsr
-
-                if self.timer:
-                    self.timer.add_checkpoint("GeoFit correction")
 
             # --- conversion from awkward to pandas --- #
             # TODO: convert only relevant fields to improve memory usage
