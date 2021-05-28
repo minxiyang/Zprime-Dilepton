@@ -13,11 +13,12 @@ from coffea.lumi_tools import LumiMask
 from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dimuon, bbangle
 from python.timer import Timer
 from python.weights import Weights
-from python.corrections import musf_lookup, musf_evaluator, pu_lookup
+#from python.corrections import musf_lookup, musf_evaluator, pu_lookup
 from python.corrections import apply_roccor, fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
 from python.corrections_.pu_reweight import pu_lookups, pu_evaluator
+from python.corrections_.lepton_sf import musf_lookup, musf_evaluator
 
 from config.parameters import parameters
 #from config.variables import variables
@@ -61,7 +62,7 @@ class DimuonProcessor(processor.ProcessorABC):
         self.roccor_lookup = rochester_lookup.rochester_lookup(
             rochester_data
         )
-        self.musf_lookup = musf_lookup(self.parameters)
+        #self.musf_lookup = musf_lookup(self.parameters)
 
         # Prepare evaluator for corrections that can be loaded together
         zpt_filename = self.parameters['zpt_weights_file']
@@ -483,14 +484,31 @@ class DimuonProcessor(processor.ProcessorABC):
             """
 
             if do_musf:
-                #print("check 19")
+                muID, muIso, muTrig = musf_evaluator(
+                    self.musf_lookup,
+                    self.year,
+                    numevents,
+                    mu1, mu2
+                )
+                weights.add_weight_with_variations(
+                    'muID', muID['nom'],
+                    muID['up'], muID['down']
+                )
+                weights.add_weight_with_variations(
+                    'muIso', muIso['nom'],
+                    muIso['up'], muIso['down']
+                )
+                weights.add_weight_with_variations(
+                    'muTrig', muTrig['nom'],
+                    muTrig['up'], muTrig['down']
+                )
+                """
                 sf = musf_evaluator(
                     self.musf_lookup,
                     self.year,
                     numevents,
                     mu1, mu2
                 )
-
                 weights.add_weight_with_variations(
                     'muID', sf['muID_nom'],
                     sf['muID_up'], sf['muID_down']
@@ -503,6 +521,7 @@ class DimuonProcessor(processor.ProcessorABC):
                     'muTrig', sf['muTrig_nom'],
                     sf['muTrig_up'], sf['muTrig_down']
                 )
+                """
             else:
                 #print("check 20")
                 weights.add_dummy_weight_with_variations('muID')
@@ -561,10 +580,10 @@ class DimuonProcessor(processor.ProcessorABC):
         self.roccor_lookup = rochester_lookup.rochester_lookup(
             rochester_data
         )
+        """
 
         # Muon scale factors
         self.musf_lookup = musf_lookup(self.parameters)
-        """
         # Pile-up reweighting
         self.pu_lookups = pu_lookups(self.parameters)
         

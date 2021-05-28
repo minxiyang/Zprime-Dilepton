@@ -13,7 +13,6 @@ from coffea.lumi_tools import LumiMask
 from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dielectron, bbangle
 from python.timer import Timer
 from python.weights import Weights
-from python.corrections import musf_lookup, musf_evaluator, pu_lookup
 from python.corrections import apply_roccor, fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
@@ -60,7 +59,6 @@ class DielectronProcessor(processor.ProcessorABC):
         self.roccor_lookup = rochester_lookup.rochester_lookup(
             rochester_data
         )
-        self.musf_lookup = musf_lookup(self.parameters)
 
         # Prepare evaluator for corrections that can be loaded together
         zpt_filename = self.parameters['zpt_weights_file']
@@ -470,7 +468,6 @@ class DielectronProcessor(processor.ProcessorABC):
 
         if is_mc:
             # do_zpt = ('dy' in dataset)
-            do_musf = False
 
             """
             if do_zpt:
@@ -481,34 +478,6 @@ class DielectronProcessor(processor.ProcessorABC):
                     ).flatten()
                 weights.add_weight('zpt_wgt', zpt_weight)
             """
-
-            if do_musf:
-                #print("check 19")
-                sf = musf_evaluator(
-                    self.musf_lookup,
-                    self.year,
-                    numevents,
-                    mu1, mu2
-                )
-
-                weights.add_weight_with_variations(
-                    'muID', sf['muID_nom'],
-                    sf['muID_up'], sf['muID_down']
-                )
-                weights.add_weight_with_variations(
-                    'muIso', sf['muIso_nom'],
-                    sf['muIso_up'], sf['muIso_down']
-                )
-                weights.add_weight_with_variations(
-                    'muTrig', sf['muTrig_nom'],
-                    sf['muTrig_up'], sf['muTrig_down']
-                )
-            else:
-                #print("check 20")
-                weights.add_dummy_weight_with_variations('muID')
-                weights.add_dummy_weight_with_variations('muIso')
-                weights.add_dummy_weight_with_variations('muTrig')
-
 
         if self.timer:
             self.timer.add_checkpoint("Computed event weights")
@@ -560,10 +529,8 @@ class DielectronProcessor(processor.ProcessorABC):
         self.roccor_lookup = rochester_lookup.rochester_lookup(
             rochester_data
         )
-
-        # Muon scale factors
-        self.musf_lookup = musf_lookup(self.parameters)
         """
+
         # Pile-up reweighting
         self.pu_lookups = pu_lookups(self.parameters)
         
