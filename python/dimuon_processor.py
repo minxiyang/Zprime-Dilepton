@@ -9,7 +9,7 @@ from coffea.lookup_tools import extractor
 from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
 
-from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dimuon, bbangle
+from python.utils import p4_sum, delta_r, rapidity, cs_variables, bbangle
 from python.timer import Timer
 from python.weights import Weights
 
@@ -20,7 +20,7 @@ from python.corrections.fsr_recovery import fsr_recovery
 from python.corrections.geofit import apply_geofit
 from python.corrections.l1prefiring_weights import l1pf_weights
 
-from python.muons import fill_muons
+from python.muons import fill_muons, find_dimuon
 
 from config.parameters import parameters
 

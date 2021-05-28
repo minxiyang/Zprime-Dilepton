@@ -1,89 +1,6 @@
 import numpy as np
 import pandas as pd
 import math
-def find_dimuon(objs):
-
-    objs1=objs[objs.charge>0]
-    objs2=objs[objs.charge<0]
-    objs1['mu_idx'] = objs1.index
-    objs2['mu_idx'] = objs2.index
-    '''px1 = objs1.pt * np.cos(objs1.phi)
-    py1 = objs1.pt * np.sin(objs1.phi)
-    pz1 = objs1.pt * np.sinh(objs1.eta)
-    e1 = np.sqrt(px1**2 + py1**2 + pz1**2 + objs1.mass**2)
-    px2 = objs2.pt * np.cos(objs2.phi)
-    py2 = objs2.pt * np.sin(objs2.phi)
-    pz2 = objs2.pt * np.sinh(objs2.eta)
-    e2 = np.sqrt(px2**2 + py2**2 + pz2**2 + objs2.mass**2)
-
-    pairs_m = 2*(0.511**2 + (np.array([e1]).T).dot([e2]) - (np.array([px1]).T).dot([px2]) - (np.array([py1]).T).dot([py2]) - (np.array([pz1]).T).dot([pz2]))
-    pairs_m = np.sqrt(pairs_m)
-    n = len(e1)+len(e2)
-    if n == 2:
-        return [objs1.iloc[0].mu_idx, objs2.iloc[0].mu_idx, pairs_m]
-
-    ind = np.argmin(np.abs(pairs_m - 91.1876))
-    ind = np.unravel_index(ind, pairs_m.shape)
-    mass = pairs_m[ind]
-    if abs(mass-91.1876) < 20:
-        return [objs1.iloc[ind[0]].mu_idx, objs2.iloc[ind[1]].mu_idx, mass]
-    else:
-        idx1=objs1.pt.idxmax()
-        idx2=objs2.pt.idxmax()
-        #mass = pairs_m[(idx1[1],idx)] 
-        return [idx1, idx2, mass]
-    #if objs1.shape[0]==0:
-    #    print("obj1 empty")
-    #if objs2.shape[0]==0:
-    #    print("obj2 empty")'''
-
-    dmass=20.
-    for i in range(objs1.shape[0]):
-        for j in range(objs2.shape[0]):
-           #print(objs1.iloc[i].pt)
-           #print(objs2.iloc[j].pt)
-           px1_ = objs1.iloc[i].pt * np.cos(objs1.iloc[i].phi) 
-           py1_ = objs1.iloc[i].pt * np.sin(objs1.iloc[i].phi) 
-           pz1_ = objs1.iloc[i].pt * np.sinh(objs1.iloc[i].eta)
-           e1_ = np.sqrt(px1_**2 + py1_**2 + pz1_**2 + objs1.iloc[i].mass**2)
-           px2_ = objs2.iloc[j].pt * np.cos(objs2.iloc[j].phi)
-           py2_ = objs2.iloc[j].pt * np.sin(objs2.iloc[j].phi)
-           pz2_ = objs2.iloc[j].pt * np.sinh(objs2.iloc[j].eta)
-           e2_ = np.sqrt(px2_**2 + py2_**2 + pz2_**2 + objs2.iloc[j].mass**2)
-           m2 = (e1_+e2_)**2-(px1_+px2_)**2-(py1_+py2_)**2-(pz1_+pz2_)**2
-           mass=math.sqrt(max(0,m2))
-           if abs(mass-91.1876)<dmass:
-               dmass=abs(mass-91.1876)
-               obj1_selected=objs1.iloc[i]
-               obj2_selected=objs2.iloc[j]
-               idx1=objs1.iloc[i].mu_idx
-               #print("        idx1=",idx1)
-               idx2=objs2.iloc[j].mu_idx
-               dimuon_mass=mass
-    if dmass==20:
-        obj1 = objs1.loc[objs1.pt.idxmax()]         
-        obj2 = objs2.loc[objs2.pt.idxmax()]
-        px1_ = obj1.pt * np.cos(obj1.phi)    
-        py1_ = obj1.pt * np.sin(obj1.phi)  
-        pz1_ = obj1.pt * np.sinh(obj1.eta)
-        e1_ = np.sqrt(px1_**2 + py1_**2 + pz1_**2 + obj1.mass**2)
-        px2_ = obj2.pt * np.cos(obj2.phi)
-        py2_ = obj2.pt * np.sin(obj2.phi)
-        pz2_ = obj2.pt * np.sinh(obj2.eta)
-        e2_ = np.sqrt(px2_**2 + py2_**2 + pz2_**2 + obj2.mass**2)
-        m2 = (e1_+e2_)**2-(px1_+px2_)**2-(py1_+py2_)**2-(pz1_+pz2_)**2
-        mass=math.sqrt(max(0,m2))
-        dimuon_mass=mass
-        obj1_selected = obj1
-        obj2_selected = obj2
-        idx1=objs1.pt.idxmax()
-        idx2=objs2.pt.idxmax()
-    if obj1_selected.pt>obj2_selected.pt:
-        #return pd.Series([idx1,idx2,dimuon_mass],index=['idx1','idx2', 'mass'])
-         return [idx1,idx2,dimuon_mass]
-    else:
-        #return pd.Series([idx2,idx1,dimuon_mass],index=['idx1','idx2', 'mass'])
-         return [idx2,idx1,dimuon_mass] 
 
 
 def find_dielectron(objs):
@@ -102,6 +19,7 @@ def find_dielectron(objs):
     m2 = (e1_+e2_)**2-(px1_+px2_)**2-(py1_+py2_)**2-(pz1_+pz2_)**2
     mass=math.sqrt(max(0,m2))
     return [idx1, idx2, mass]
+
 
 def p4_sum(obj1, obj2):
     result = pd.DataFrame(
