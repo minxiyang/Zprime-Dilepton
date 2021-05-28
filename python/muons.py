@@ -90,7 +90,7 @@ def find_dimuon(objs):
          return [idx2,idx1,dimuon_mass] 
 
 
-def fill_muons(processor, output, mu1, mu2, is_mc):
+def fill_muons(processor, output, mu1, mu2, dimuon_mass, is_mc):
     mu1_variable_names = [
         'mu1_pt', 'mu1_pt_over_mass', 'mu1_ptErr',
         'mu1_eta', 'mu1_phi', 'mu1_iso'
@@ -127,6 +127,7 @@ def fill_muons(processor, output, mu1, mu2, is_mc):
         output[f'mu2_{v}'] = mu2[v]
     output['mu1_iso'] = mu1.tkRelIso
     output['mu2_iso'] = mu2.tkRelIso
+    output.dimuon_mass=dimuon_mass
     output['mu1_pt_over_mass'] = output.mu1_pt.values / output.dimuon_mass.values
     output['mu2_pt_over_mass'] = output.mu2_pt.values / output.dimuon_mass.values
 
@@ -154,9 +155,9 @@ def fill_muons(processor, output, mu1, mu2, is_mc):
 
     output['dimuon_ebe_mass_res'] = mass_resolution(
         is_mc,
-        self.evaluator,
+        processor.evaluator,
         output,
-        self.year
+        processor.year
     )
     output['dimuon_ebe_mass_res_rel'] = (
         output.dimuon_ebe_mass_res / output.dimuon_mass

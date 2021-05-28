@@ -292,7 +292,7 @@ class DimuonProcessor(processor.ProcessorABC):
             if self.timer:
                 self.timer.add_checkpoint("back back angle calculation")
 
-            output.dimuon_mass=dimuon.mass
+            dimuon_mass=dimuon.mass
 
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
@@ -319,7 +319,7 @@ class DimuonProcessor(processor.ProcessorABC):
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
             
-            fill_muons(self, output, mu1, mu2, is_mc)
+            fill_muons(self, output, mu1, mu2, dimuon_mass, is_mc)
 
         # ------------------------------------------------------------#
         # Calculate other event weights

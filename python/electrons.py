@@ -1,6 +1,8 @@
 import numpy as np
 import math
 
+from python.utils import p4_sum, delta_r, cs_variables
+
 
 def find_dielectron(objs):
     objs['el_idx'] = objs.index
@@ -19,7 +21,7 @@ def find_dielectron(objs):
     return [idx1, idx2, mass]
 
 
-def fill_electrons(processor, output, e1, e2, is_mc):
+def fill_electrons(output, e1, e2, dielectron_mass, is_mc):
     e1_variable_names = [
         'e1_pt',
         'e1_eta', 'e1_phi'
@@ -52,9 +54,9 @@ def fill_electrons(processor, output, e1, e2, is_mc):
     for v in ['pt', 'eta', 'phi']:
         output[f'e1_{v}'] = e1[v]
         output[f'e2_{v}'] = e2[v]
-        
             
     # Fill dielectron variables
+    output.dielectron_mass=dielectron_mass
     ee = p4_sum(e1, e2)
     for v in ['pt', 'eta', 'phi', 'mass', 'rap']:
         name = f'dielectron_{v}'

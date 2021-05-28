@@ -219,7 +219,7 @@ class DielectronProcessor(processor.ProcessorABC):
             if self.timer:
                 self.timer.add_checkpoint("back back angle calculation")
 
-            output.dielectron_mass=dielectron.mass  
+            dielectron_mass=dielectron.mass
 
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
@@ -246,7 +246,7 @@ class DielectronProcessor(processor.ProcessorABC):
             # Fill dielectron and electron variables
             # --------------------------------------------------------#
             
-            fill_muons(self, output, e1, e2, is_mc)          
+            fill_electrons(output, e1, e2, dielectron_mass, is_mc)          
         
             if self.timer:
                     self.timer.add_checkpoint("all electron variables")
