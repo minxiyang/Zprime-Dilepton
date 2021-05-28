@@ -11,7 +11,6 @@ from coffea.lumi_tools import LumiMask
 from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dielectron, bbangle
 from python.timer import Timer
 from python.weights import Weights
-from python.mass_resolution import mass_resolution_purdue
 
 from config.parameters import parameters
 

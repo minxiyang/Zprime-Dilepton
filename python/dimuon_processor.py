@@ -12,7 +12,6 @@ from coffea.lumi_tools import LumiMask
 from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dimuon, bbangle
 from python.timer import Timer
 from python.weights import Weights
-from python.mass_resolution import mass_resolution_purdue
 
 from python.corrections.pu_reweight import pu_lookups, pu_evaluator
 from python.corrections.lepton_sf import musf_lookup, musf_evaluator
@@ -20,6 +19,8 @@ from python.corrections.rochester import apply_roccor
 from python.corrections.fsr_recovery import fsr_recovery
 from python.corrections.geofit import apply_geofit
 from python.corrections.l1prefiring_weights import l1pf_weights
+
+from python.muons import fill_muons
 
 from config.parameters import parameters
 
@@ -263,37 +264,9 @@ class DimuonProcessor(processor.ProcessorABC):
             if self.timer:
                     self.timer.add_checkpoint("muon object selection")
 
-            mu1_variable_names = [
-                'mu1_pt', 'mu1_pt_over_mass', 'mu1_ptErr',
-                'mu1_eta', 'mu1_phi', 'mu1_iso'
-            ]
-            mu2_variable_names = [
-                'mu2_pt', 'mu2_pt_over_mass', 'mu2_ptErr',
-                'mu2_eta', 'mu2_phi', 'mu2_iso'
-            ]
-            dimuon_variable_names = [
-                'dimuon_mass',
-                'dimuon_mass_res', 'dimuon_mass_res_rel',
-                'dimuon_ebe_mass_res', 'dimuon_ebe_mass_res_rel',
-                'dimuon_pt', 'dimuon_pt_log',
-                'dimuon_eta', 'dimuon_phi',
-                'dimuon_dEta', 'dimuon_dPhi',
-                'dimuon_dR', 'dimuon_rap', 'bbangle',
-                'dimuon_cos_theta_cs', 'dimuon_phi_cs', 'wgt_nominal'
-            ]
-            v_names = (
-                mu1_variable_names +
-                mu2_variable_names +
-                dimuon_variable_names
-            )
             output['r'] = None
             output['s'] = dataset
             output['year'] = int(self.year)
-
-            # Initialize columns for muon variables
-
-            for n in (v_names):
-                output[n] = 0.0
 
             if muons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
@@ -345,60 +318,8 @@ class DimuonProcessor(processor.ProcessorABC):
             # --------------------------------------------------------#
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
-            # Fill single muon variables
-
-
-            for v in ['pt', 'ptErr', 'eta', 'phi']:
-                output[f'mu1_{v}'] = mu1[v]
-                output[f'mu2_{v}'] = mu2[v]
-            output['mu1_iso'] = mu1.tkRelIso
-            output['mu2_iso'] = mu2.tkRelIso
-            output.dimuon_mass=dimuon_mass
-            output['mu1_pt_over_mass'] = output.mu1_pt.values / output.dimuon_mass.values
-            output['mu2_pt_over_mass'] = output.mu2_pt.values / output.dimuon_mass.values
             
-        
-            if self.timer:
-                    self.timer.add_checkpoint("all muon variables")
-            # Fill dimuon variables
-
-            mm = p4_sum(mu1, mu2)
-            for v in ['pt', 'eta', 'phi', 'mass', 'rap']:
-                name = f'dimuon_{v}'
-                output[name] = mm[v]
-                output[name] = output[name].fillna(-999.)
-            #print("dimuon pt")
-            #print(output.dimuon_pt.values)
-            output['dimuon_pt_log'] = np.log(output.dimuon_pt[output.dimuon_pt>0])
-            output.loc[output.dimuon_pt<0, 'dimuon_pt_log']=-999.
-            #print("finish")
-            mm_deta, mm_dphi, mm_dr = delta_r(
-                mu1.eta, mu2.eta,
-                mu1.phi, mu2.phi
-            )
-            #output['dimuon_pt'] = mm.pt
-            #output['dimuon_eta'] = mm.eta
-            #output['dimuon_phi'] = mm.phi
-            output['dimuon_dEta'] = mm_deta
-            output['dimuon_dPhi'] = mm_dphi
-            output['dimuon_dR'] = mm_dr
-
-            output['dimuon_ebe_mass_res'] = mass_resolution_purdue(
-                                                is_mc,
-                                                self.evaluator,
-                                                output,
-                                                self.year
-                                            )
-            output['dimuon_ebe_mass_res_rel'] = (
-                output.dimuon_ebe_mass_res / output.dimuon_mass
-            )
-            if self.timer:
-                    self.timer.add_checkpoint("add dimuon variable")
-
-            output['dimuon_cos_theta_cs'],\
-                output['dimuon_phi_cs'] = cs_variables(mu1, mu2)
-            if self.timer:
-                self.timer.add_checkpoint("Calculate CS angle")
+            fill_muons(self, output, mu1, mu2, is_mc)
 
         # ------------------------------------------------------------#
         # Calculate other event weights
@@ -425,8 +346,8 @@ class DimuonProcessor(processor.ProcessorABC):
                     mu1, mu2
                 )
                 weights.add_weight('muID', muID, how='all')
-                weights.add_weight('muIso', muID, how='all')
-                weights.add_weight('muTrig', muID, how='all')
+                weights.add_weight('muIso', muIso, how='all')
+                weights.add_weight('muTrig', muTrig, how='all')
             else:
                 weights.add_weight('muID', how='dummy_all')
                 weights.add_weight('muIso', how='dummy_all')
