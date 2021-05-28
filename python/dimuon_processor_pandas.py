@@ -13,7 +13,6 @@ from coffea.lumi_tools import LumiMask
 from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dimuon, bbangle
 from python.timer import Timer
 from python.weights import Weights
-#from python.corrections import musf_lookup, musf_evaluator, pu_lookup
 from python.corrections import apply_roccor, fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
@@ -62,7 +61,6 @@ class DimuonProcessor(processor.ProcessorABC):
         self.roccor_lookup = rochester_lookup.rochester_lookup(
             rochester_data
         )
-        #self.musf_lookup = musf_lookup(self.parameters)
 
         # Prepare evaluator for corrections that can be loaded together
         zpt_filename = self.parameters['zpt_weights_file']
@@ -502,26 +500,6 @@ class DimuonProcessor(processor.ProcessorABC):
                     'muTrig', muTrig['nom'],
                     muTrig['up'], muTrig['down']
                 )
-                """
-                sf = musf_evaluator(
-                    self.musf_lookup,
-                    self.year,
-                    numevents,
-                    mu1, mu2
-                )
-                weights.add_weight_with_variations(
-                    'muID', sf['muID_nom'],
-                    sf['muID_up'], sf['muID_down']
-                )
-                weights.add_weight_with_variations(
-                    'muIso', sf['muIso_nom'],
-                    sf['muIso_up'], sf['muIso_down']
-                )
-                weights.add_weight_with_variations(
-                    'muTrig', sf['muTrig_nom'],
-                    sf['muTrig_up'], sf['muTrig_down']
-                )
-                """
             else:
                 #print("check 20")
                 weights.add_dummy_weight_with_variations('muID')
