@@ -101,6 +101,7 @@ class DimuonProcessor(processor.ProcessorABC):
             mask = np.ones(numevents, dtype=bool)
             genweight = df.genWeight
             weights.add_weight('genwgt', genweight)
+            weights.add_weight('lumi', self.lumi_weights[dataset])
             if self.do_pu:
                 pu_wgts = pu_evaluator(
                     self.pu_lookups,
@@ -109,21 +110,14 @@ class DimuonProcessor(processor.ProcessorABC):
                     np.array(df.Pileup.nTrueInt),
                     self.auto_pu
                 )
-                weights.add_weight_with_variations(
-                    'pu_wgt', pu_wgts['nom'], pu_wgts['up'], pu_wgts['down']
-                )
-            weights.add_weight('lumi', self.lumi_weights[dataset])
+                weights.add_weight('pu_wgt', pu_wgts, how='all')
             if self.do_l1pw:
                 if self.parameters["do_l1prefiring_wgts"]:
                     if 'L1PreFiringWeight' in df.fields:
                         l1pfw = l1pf_weights(df)
-                        weights.add_weight_with_variations(
-                            'l1prefiring_wgt', l1pfw['nom'], l1pfw['up'], l1pfw['down']
-                        )
+                        weights.add_weight('l1prefiring_wgt', l1pfw, how='all')
                     else:
-                        weights.add_dummy_weight_with_variations(
-                            'l1prefiring_wgt'
-                        )
+                        weights.add_weight('l1prefiring_wgt', how='dummy_vars')
 
         else:
             # For Data: apply Lumi mask
@@ -430,23 +424,13 @@ class DimuonProcessor(processor.ProcessorABC):
                     numevents,
                     mu1, mu2
                 )
-                weights.add_weight_with_variations(
-                    'muID', muID['nom'],
-                    muID['up'], muID['down']
-                )
-                weights.add_weight_with_variations(
-                    'muIso', muIso['nom'],
-                    muIso['up'], muIso['down']
-                )
-                weights.add_weight_with_variations(
-                    'muTrig', muTrig['nom'],
-                    muTrig['up'], muTrig['down']
-                )
+                weights.add_weight('muID', muID, how='all')
+                weights.add_weight('muIso', muID, how='all')
+                weights.add_weight('muTrig', muID, how='all')
             else:
-
-                weights.add_dummy_weight_with_variations('muID')
-                weights.add_dummy_weight_with_variations('muIso')
-                weights.add_dummy_weight_with_variations('muTrig')
+                weights.add_weight('muID', how='dummy_all')
+                weights.add_weight('muIso', how='dummy_all')
+                weights.add_weight('muTrig', how='dummy_all')
 
 
         if self.timer:
