@@ -95,8 +95,7 @@ def saving_func(output, out_dir):
 
 
 def submit_job(arg_set, parameters):
-    out_dir = f"{parameters['out_dir']}/"
-    mkdir(out_dir)
+    mkdir(parameters['out_dir'])
     
     if parameters['channel'] == 'mu':
         from python.dimuon_processor import DimuonProcessor as event_processor
@@ -109,7 +108,7 @@ def submit_job(arg_set, parameters):
         'client': parameters['client'],
         'schema': processor.NanoAODSchema,
         'use_dataframes': True,
-        'apply_to_output': partial(saving_func, out_dir=out_dir)
+        'apply_to_output': partial(saving_func, out_dir=parameters['out_dir']),
         'retries': 0
     }
     processor_args = {
@@ -158,8 +157,8 @@ if __name__ == "__main__":
         'dy':[
             'dy120to200',
             'dy200to400','dy400to800',
-            'dy800to1400','dy1400to2300','dy2300to3500',
-            'dy3500to4500','dy4500to6000','dy6000toInf',
+            #'dy800to1400','dy1400to2300','dy2300to3500',
+            #'dy3500to4500','dy4500to6000','dy6000toInf',
 
         ],
     }

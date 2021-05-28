@@ -1,6 +1,7 @@
 # import time
 import subprocess
 import glob
+import tqdm
 
 import uproot
 
@@ -49,7 +50,7 @@ def load_samples(datasets, parameters):
         samp_info_total.fileset.update(si.fileset)
         samp_info_total.metadata.update(si.metadata)
         samp_info_total.lumi_weights.update(si.lumi_weights)
-        samp_info_total.samples.append(sample)
+        samp_info_total.samples.append(si.sample)
     return samp_info_total
 
 
