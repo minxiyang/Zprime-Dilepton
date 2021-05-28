@@ -6,14 +6,13 @@ import pandas as pd
 
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
-from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
 # from cachetools import LRUCache
 
 from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dielectron, bbangle
 from python.timer import Timer
 from python.weights import Weights
-from python.corrections import apply_roccor, fsr_recovery, apply_geofit
+from python.corrections import fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
 from config.parameters import parameters
@@ -33,7 +32,6 @@ class DielectronProcessor(processor.ProcessorABC):
         self.do_pu = True
         self.auto_pu = True
         self.year = self.samp_info.year
-        self.do_roccor = False
         self.do_fsr = False
         self.do_geofit = False
 
@@ -51,14 +49,6 @@ class DielectronProcessor(processor.ProcessorABC):
 
         #self.vars_to_save = set([v.name for v in variables])
         self.prepare_lookups()
-
-        # Prepare lookups for corrections
-        rochester_data = txt_converters.convert_rochester_file(
-            self.parameters["roccor_file"], loaduncs=True
-        )
-        self.roccor_lookup = rochester_lookup.rochester_lookup(
-            rochester_data
-        )
 
         # Prepare evaluator for corrections that can be loaded together
         zpt_filename = self.parameters['zpt_weights_file']
@@ -182,20 +172,6 @@ class DielectronProcessor(processor.ProcessorABC):
         df['Electron', 'phi_raw'] = df.Electron.phi
         #df['Muon', 'tkRelIso'] = df.Muon.tkRelIso
         #print ('check 5')
-        # Rochester correction
-        if self.do_roccor:
-            apply_roccor(df, self.roccor_lookup, is_mc)
-            df['Muon', 'pt'] = df.Muon.pt_roch
-
-            if self.timer:
-                self.timer.add_checkpoint("Rochester correction")
-
-            # variations will be in branches pt_roch_up and pt_roch_down
-            # muons_pts = {
-            #     'nominal': df.Muon.pt,
-            #     'roch_up':df.Muon.pt_roch_up,
-            #     'roch_down':df.Muon.pt_roch_down
-            # }
 
         # for ...
         if True:  # indent reserved for loop over muon pT variations
@@ -521,16 +497,6 @@ class DielectronProcessor(processor.ProcessorABC):
 
 
     def prepare_lookups(self):
-        """
-        # Rochester correction
-        rochester_data = txt_converters.convert_rochester_file(
-            self.parameters["roccor_file"], loaduncs=True
-        )
-        self.roccor_lookup = rochester_lookup.rochester_lookup(
-            rochester_data
-        )
-        """
-
         # Pile-up reweighting
         self.pu_lookups = pu_lookups(self.parameters)
         

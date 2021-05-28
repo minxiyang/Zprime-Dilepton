@@ -13,11 +13,12 @@ from coffea.lumi_tools import LumiMask
 from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dimuon, bbangle
 from python.timer import Timer
 from python.weights import Weights
-from python.corrections import apply_roccor, fsr_recovery, apply_geofit
+from python.corrections import fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
 from python.corrections_.pu_reweight import pu_lookups, pu_evaluator
 from python.corrections_.lepton_sf import musf_lookup, musf_evaluator
+from python.corrections_.rochester import apply_roccor
 
 from config.parameters import parameters
 #from config.variables import variables
@@ -53,14 +54,6 @@ class DimuonProcessor(processor.ProcessorABC):
 
         #self.vars_to_save = set([v.name for v in variables])
         self.prepare_lookups()
-
-        # Prepare lookups for corrections
-        rochester_data = txt_converters.convert_rochester_file(
-            self.parameters["roccor_file"], loaduncs=True
-        )
-        self.roccor_lookup = rochester_lookup.rochester_lookup(
-            rochester_data
-        )
 
         # Prepare evaluator for corrections that can be loaded together
         zpt_filename = self.parameters['zpt_weights_file']
@@ -550,7 +543,6 @@ class DimuonProcessor(processor.ProcessorABC):
 
 
     def prepare_lookups(self):
-        """
         # Rochester correction
         rochester_data = txt_converters.convert_rochester_file(
             self.parameters["roccor_file"], loaduncs=True
@@ -558,7 +550,6 @@ class DimuonProcessor(processor.ProcessorABC):
         self.roccor_lookup = rochester_lookup.rochester_lookup(
             rochester_data
         )
-        """
 
         # Muon scale factors
         self.musf_lookup = musf_lookup(self.parameters)
