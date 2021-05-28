@@ -1,4 +1,4 @@
-name: CI/CD
+name: test - dielectron
 
 on:
   push:
@@ -9,13 +9,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test_run:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
         python-version: [3.7]
-    name: build - flake8 - python ${{ matrix.python-version }}
+    name: test - python ${{ matrix.python-version }}
 
     steps:
       - uses: actions/checkout@master
@@ -23,10 +23,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: install flake8
-        run: python -m pip install -q flake8
-      - name: flake8 - check ./*py
-        run: flake8 ./*py
-      - name: flake8 - check python/*py
-        run: flake8 python/*py
-
+      - name: install coffea
+        run: python -m pip install coffea
+      - name: install dask
+        run: python -m pip install dask[distributed]
+      - name: test run
+        run: python -W ignore tests/test_dielectron.py
