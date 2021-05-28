@@ -6,7 +6,7 @@ import tqdm
 import datetime
 import coffea.processor as processor
 from coffea.processor import dask_executor, run_uproot_job
-from python.samples_info import load_samples
+from python.preprocessor import load_samples
 from python.utils import mkdir
 
 import dask
