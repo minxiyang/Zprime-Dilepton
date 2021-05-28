@@ -14,7 +14,6 @@ from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dimuon, b
 from python.timer import Timer
 from python.weights import Weights
 from python.corrections import musf_lookup, musf_evaluator, pu_lookup
-#from python.corrections import pu_evaluator
 from python.corrections import apply_roccor, fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
@@ -63,12 +62,6 @@ class DimuonProcessor(processor.ProcessorABC):
             rochester_data
         )
         self.musf_lookup = musf_lookup(self.parameters)
-        
-        """
-        self.pu_lookup = pu_lookup(self.parameters)
-        self.pu_lookup_up = pu_lookup(self.parameters, 'up')
-        self.pu_lookup_down = pu_lookup(self.parameters, 'down')
-        """
 
         # Prepare evaluator for corrections that can be loaded together
         zpt_filename = self.parameters['zpt_weights_file']
@@ -150,30 +143,6 @@ class DimuonProcessor(processor.ProcessorABC):
             genweight = df.genWeight
             weights.add_weight('genwgt', genweight)
             nTrueInt = np.array(nTrueInt)
-            """
-            if self.auto_pu:
-                self.pu_lookup = pu_lookup(
-                    self.parameters, 'nom', auto=nTrueInt
-                )
-                self.pu_lookup_up = pu_lookup(
-                    self.parameters, 'up', auto=nTrueInt
-                )
-                self.pu_lookup_down = pu_lookup(
-                    self.parameters, 'down', auto=nTrueInt
-                )
-                pu_weight = pu_evaluator(
-                    self.pu_lookup, numevents, nTrueInt
-                )
-                pu_weight_up = pu_evaluator(
-                    self.pu_lookup_up, numevents, nTrueInt
-                )
-                pu_weight_down = pu_evaluator(
-                    self.pu_lookup_down, numevents, nTrueInt
-                )
-                weights.add_weight_with_variations(
-                    'pu_wgt', pu_weight, pu_weight_up, pu_weight_down
-                )
-            """
             if self.do_pu:
                 pu_wgts = pu_evaluator(
                     self.pu_lookups,
