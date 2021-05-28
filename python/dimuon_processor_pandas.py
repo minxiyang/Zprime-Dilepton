@@ -14,9 +14,11 @@ from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dimuon, b
 from python.timer import Timer
 from python.weights import Weights
 from python.corrections import musf_lookup, musf_evaluator, pu_lookup
-from python.corrections import pu_evaluator
+#from python.corrections import pu_evaluator
 from python.corrections import apply_roccor, fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
+
+from python.corrections_.pu_reweight import pu_lookups, pu_evaluator
 
 from config.parameters import parameters
 #from config.variables import variables
@@ -31,6 +33,7 @@ class DimuonProcessor(processor.ProcessorABC):
             print("Samples info missing!")
             return
 
+        self.do_pu = False
         self.auto_pu = False
         self.year = self.samp_info.year
         self.do_roccor = False
@@ -50,6 +53,7 @@ class DimuonProcessor(processor.ProcessorABC):
         self.lumi_weights = self.samp_info.lumi_weights
 
         #self.vars_to_save = set([v.name for v in variables])
+        self.prepare_lookups()
 
         # Prepare lookups for corrections
         rochester_data = txt_converters.convert_rochester_file(
@@ -59,10 +63,12 @@ class DimuonProcessor(processor.ProcessorABC):
             rochester_data
         )
         self.musf_lookup = musf_lookup(self.parameters)
+        
+        """
         self.pu_lookup = pu_lookup(self.parameters)
         self.pu_lookup_up = pu_lookup(self.parameters, 'up')
         self.pu_lookup_down = pu_lookup(self.parameters, 'down')
-
+        """
 
         # Prepare evaluator for corrections that can be loaded together
         zpt_filename = self.parameters['zpt_weights_file']
@@ -144,6 +150,7 @@ class DimuonProcessor(processor.ProcessorABC):
             genweight = df.genWeight
             weights.add_weight('genwgt', genweight)
             nTrueInt = np.array(nTrueInt)
+            """
             if self.auto_pu:
                 self.pu_lookup = pu_lookup(
                     self.parameters, 'nom', auto=nTrueInt
@@ -165,6 +172,18 @@ class DimuonProcessor(processor.ProcessorABC):
                 )
                 weights.add_weight_with_variations(
                     'pu_wgt', pu_weight, pu_weight_up, pu_weight_down
+                )
+            """
+            if self.do_pu:
+                pu_wgts = pu_evaluator(
+                    self.pu_lookups,
+                    self.parameters,
+                    numevents,
+                    np.array(df.Pileup.nTrueInt),
+                    self.auto_pu
+                )
+                weights.add_weight_with_variations(
+                    'pu_wgt', pu_wgts['nom'], pu_wgts['up'], pu_wgts['down']
                 )
             weights.add_weight('lumi', self.lumi_weights[dataset])
             #l1pfw = ak.to_pandas(df.L1PreFiringWeight)
@@ -564,6 +583,50 @@ class DimuonProcessor(processor.ProcessorABC):
         return output
 
 
+    def prepare_lookups(self):
+        """
+        # Rochester correction
+        rochester_data = txt_converters.convert_rochester_file(
+            self.parameters["roccor_file"], loaduncs=True
+        )
+        self.roccor_lookup = rochester_lookup.rochester_lookup(
+            rochester_data
+        )
+
+        # Muon scale factors
+        self.musf_lookup = musf_lookup(self.parameters)
+        """
+        # Pile-up reweighting
+        self.pu_lookups = pu_lookups(self.parameters)
+        
+        """
+        # --- Evaluator
+        self.extractor = extractor()
+
+        # Z-pT reweigting (disabled)
+        zpt_filename = self.parameters['zpt_weights_file']
+        self.extractor.add_weight_sets([f"* * {zpt_filename}"])
+        if '2016' in self.year:
+            self.zpt_path = 'zpt_weights/2016_value'
+        else:
+            self.zpt_path = 'zpt_weights/2017_value'
+
+        # Calibration of event-by-event mass resolution
+        for mode in ["Data", "MC"]:
+            label = f"res_calib_{mode}_{self.year}"
+            path = self.parameters['res_calib_path']
+            file_path = f"{path}/{label}.root"
+            self.extractor.add_weight_sets(
+                [f"{label} {label} {file_path}"]
+            )
+
+        self.extractor.finalize()
+        self.evaluator = self.extractor.make_evaluator()
+
+        self.evaluator[self.zpt_path]._axes =\
+            self.evaluator[self.zpt_path]._axes[0]
+        """
+        return
 
 
     def postprocess(self, accumulator):

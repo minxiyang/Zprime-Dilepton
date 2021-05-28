@@ -14,13 +14,14 @@ from python.utils import p4_sum, delta_r, rapidity, cs_variables, find_dielectro
 from python.timer import Timer
 from python.weights import Weights
 from python.corrections import musf_lookup, musf_evaluator, pu_lookup
-from python.corrections import pu_evaluator
+#from python.corrections import pu_evaluator
 from python.corrections import apply_roccor, fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
 from config.parameters import parameters
 #from config.variables import variables
 
+from python.corrections_.pu_reweight import pu_lookups, pu_evaluator
 
 class DielectronProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
@@ -31,6 +32,7 @@ class DielectronProcessor(processor.ProcessorABC):
             print("Samples info missing!")
             return
 
+        self.do_pu = True
         self.auto_pu = True
         self.year = self.samp_info.year
         self.do_roccor = False
@@ -50,6 +52,7 @@ class DielectronProcessor(processor.ProcessorABC):
         self.lumi_weights = self.samp_info.lumi_weights
 
         #self.vars_to_save = set([v.name for v in variables])
+        self.prepare_lookups()
 
         # Prepare lookups for corrections
         rochester_data = txt_converters.convert_rochester_file(
@@ -59,10 +62,12 @@ class DielectronProcessor(processor.ProcessorABC):
             rochester_data
         )
         self.musf_lookup = musf_lookup(self.parameters)
+
+        """
         self.pu_lookup = pu_lookup(self.parameters)
         self.pu_lookup_up = pu_lookup(self.parameters, 'up')
         self.pu_lookup_down = pu_lookup(self.parameters, 'down')
-
+        """
 
         # Prepare evaluator for corrections that can be loaded together
         zpt_filename = self.parameters['zpt_weights_file']
@@ -144,6 +149,7 @@ class DielectronProcessor(processor.ProcessorABC):
             genweight = df.genWeight
             weights.add_weight('genwgt', genweight)
             nTrueInt = np.array(nTrueInt)
+            """
             if self.auto_pu:
                 self.pu_lookup = pu_lookup(
                     self.parameters, 'nom', auto=nTrueInt
@@ -165,6 +171,18 @@ class DielectronProcessor(processor.ProcessorABC):
                 )
                 weights.add_weight_with_variations(
                     'pu_wgt', pu_weight, pu_weight_up, pu_weight_down
+                )
+            """
+            if self.do_pu:
+                pu_wgts = pu_evaluator(
+                    self.pu_lookups,
+                    self.parameters,
+                    numevents,
+                    np.array(df.Pileup.nTrueInt),
+                    self.auto_pu
+                )
+                weights.add_weight_with_variations(
+                    'pu_wgt', pu_wgts['nom'], pu_wgts['up'], pu_wgts['down']
                 )
             weights.add_weight('lumi', self.lumi_weights[dataset])
             #l1pfw = ak.to_pandas(df.L1PreFiringWeight)
@@ -543,7 +561,7 @@ class DielectronProcessor(processor.ProcessorABC):
             if (wgt!='nominal'):
                 continue
             output[f'wgt_{wgt}'] = weights.get_weight(wgt)
-        output['pu_wgt'] = weights.get_weight('pu_wgt_off') 
+
         #NNPDFFac = 0.919027 + (5.98337e-05)*mass + (2.56077e-08)*mass**2 + (-2.82876e-11)*mass**3 + (9.2782e-15)*mass**4 + (-7.77529e-19)*mass**5
         #print(NNPDFFac.head())
         #NNPDFFac_bb = 0.911563 + (0.000113313)*mass + (-2.35833e-08)*mass**2 + (-1.44584e-11)*mass*3 + (8.41748e-15)*mass**4 + (-8.16574e-19)*mass**5
@@ -564,6 +582,50 @@ class DielectronProcessor(processor.ProcessorABC):
         return output
 
 
+    def prepare_lookups(self):
+        """
+        # Rochester correction
+        rochester_data = txt_converters.convert_rochester_file(
+            self.parameters["roccor_file"], loaduncs=True
+        )
+        self.roccor_lookup = rochester_lookup.rochester_lookup(
+            rochester_data
+        )
+
+        # Muon scale factors
+        self.musf_lookup = musf_lookup(self.parameters)
+        """
+        # Pile-up reweighting
+        self.pu_lookups = pu_lookups(self.parameters)
+        
+        """
+        # --- Evaluator
+        self.extractor = extractor()
+
+        # Z-pT reweigting (disabled)
+        zpt_filename = self.parameters['zpt_weights_file']
+        self.extractor.add_weight_sets([f"* * {zpt_filename}"])
+        if '2016' in self.year:
+            self.zpt_path = 'zpt_weights/2016_value'
+        else:
+            self.zpt_path = 'zpt_weights/2017_value'
+
+        # Calibration of event-by-event mass resolution
+        for mode in ["Data", "MC"]:
+            label = f"res_calib_{mode}_{self.year}"
+            path = self.parameters['res_calib_path']
+            file_path = f"{path}/{label}.root"
+            self.extractor.add_weight_sets(
+                [f"{label} {label} {file_path}"]
+            )
+
+        self.extractor.finalize()
+        self.evaluator = self.extractor.make_evaluator()
+
+        self.evaluator[self.zpt_path]._axes =\
+            self.evaluator[self.zpt_path]._axes[0]
+        """
+        return
 
 
     def postprocess(self, accumulator):
