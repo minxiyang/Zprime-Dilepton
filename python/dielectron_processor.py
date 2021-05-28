@@ -8,7 +8,6 @@ import coffea.processor as processor
 from coffea.lookup_tools import extractor
 from coffea.lumi_tools import LumiMask
 
-from python.utils import p4_sum, delta_r, rapidity, cs_variables, bbangle
 from python.timer import Timer
 from python.weights import Weights
 
