@@ -192,7 +192,7 @@ class DimuonProcessor(processor.ProcessorABC):
             mu_branches = ['pt_raw','pt', 'eta', 'eta_raw', 'phi', 'phi_raw','charge','ptErr','highPtId','tkRelIso','mass','dxy']
             muons = ak.to_pandas(df.Muon[mu_branches])
             if self.timer:
-                    self.timer.add_checkpoint("load muon data")
+                self.timer.add_checkpoint("load muon data")
             # --------------------------------------------------------#
             # Select muons that pass pT, eta, isolation cuts,
             # muon ID and quality flags
@@ -262,7 +262,7 @@ class DimuonProcessor(processor.ProcessorABC):
             muons = muons[muons.selection & (nmuons >= 2)&(abs(sum_charge)<nmuons)]
 
             if self.timer:
-                    self.timer.add_checkpoint("muon object selection")
+                self.timer.add_checkpoint("muon object selection")
 
             output['r'] = None
             output['s'] = dataset

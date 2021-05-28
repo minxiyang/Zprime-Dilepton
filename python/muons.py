@@ -84,10 +84,10 @@ def find_dimuon(objs):
         idx2=objs2.pt.idxmax()
     if obj1_selected.pt>obj2_selected.pt:
         #return pd.Series([idx1,idx2,dimuon_mass],index=['idx1','idx2', 'mass'])
-         return [idx1,idx2,dimuon_mass]
+        return [idx1,idx2,dimuon_mass]
     else:
         #return pd.Series([idx2,idx1,dimuon_mass],index=['idx1','idx2', 'mass'])
-         return [idx2,idx1,dimuon_mass] 
+        return [idx2,idx1,dimuon_mass] 
 
 
 def fill_muons(processor, output, mu1, mu2, dimuon_mass, is_mc):

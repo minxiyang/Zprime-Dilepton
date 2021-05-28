@@ -134,7 +134,7 @@ class DielectronProcessor(processor.ProcessorABC):
             el_branches = ['pt_raw','pt', 'eta', 'eta_raw', 'phi', 'phi_raw', 'mass','cutBased_HEEP','charge']
             electrons = ak.to_pandas(df.Electron[el_branches])
             if self.timer:
-                    self.timer.add_checkpoint("load electron data")
+                self.timer.add_checkpoint("load electron data")
 
             # --------------------------------------------------------#
             # Electron selection
@@ -189,7 +189,7 @@ class DielectronProcessor(processor.ProcessorABC):
             electrons = electrons[electrons.selection & (nelectrons >= 2)]
 
             if self.timer:
-                    self.timer.add_checkpoint("electron object selection")
+                self.timer.add_checkpoint("electron object selection")
 
             output['r'] = None
             output['s'] = dataset
@@ -249,7 +249,7 @@ class DielectronProcessor(processor.ProcessorABC):
             fill_electrons(output, e1, e2, dielectron_mass, is_mc)          
         
             if self.timer:
-                    self.timer.add_checkpoint("all electron variables")
+                self.timer.add_checkpoint("all electron variables")
 
 
         # ------------------------------------------------------------#
