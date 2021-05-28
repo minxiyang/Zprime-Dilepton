@@ -19,7 +19,7 @@ from python.corrections import apply_roccor, fsr_recovery, apply_geofit
 from python.mass_resolution import mass_resolution_purdue
 
 from config.parameters import parameters
-from config.variables import variables
+#from config.variables import variables
 
 
 class DimuonProcessor(processor.ProcessorABC):
@@ -42,14 +42,14 @@ class DimuonProcessor(processor.ProcessorABC):
 
         self.timer = Timer('global') if do_timer else None
 
-        self._columns = self.parameters["proc_columns"]
+        #self._columns = self.parameters["proc_columns_mu"]
 
         self.regions = self.samp_info.regions
         self.channels = self.samp_info.channels
 
         self.lumi_weights = self.samp_info.lumi_weights
 
-        self.vars_to_save = set([v.name for v in variables])
+        #self.vars_to_save = set([v.name for v in variables])
 
         # Prepare lookups for corrections
         rochester_data = txt_converters.convert_rochester_file(
@@ -179,8 +179,8 @@ class DimuonProcessor(processor.ProcessorABC):
             mask = lumi_info(df.run, df.luminosityBlock)
         #print('check 3')
         # Apply HLT to both Data and MC
-        hlt = ak.to_pandas(df.HLT[self.parameters["hlt"]])
-        hlt = hlt[self.parameters["hlt"]].sum(axis=1)
+        hlt = ak.to_pandas(df.HLT[self.parameters["mu_hlt"]])
+        hlt = hlt[self.parameters["mu_hlt"]].sum(axis=1)
         #print('check 4 ')
         if self.timer:
             self.timer.add_checkpoint("Applied HLT and lumimask")
@@ -542,6 +542,7 @@ class DimuonProcessor(processor.ProcessorABC):
             if (wgt!='nominal'):
                 continue
             output[f'wgt_{wgt}'] = weights.get_weight(wgt)
+            #output['pu_wgt'] = weights.get_weight('pu_wgt')
         
         NNPDFFac = 0.919027 + (5.98337e-05)*mass + (2.56077e-08)*mass**2 + (-2.82876e-11)*mass**3 + (9.2782e-15)*mass**4 + (-7.77529e-19)*mass**5
         #print(NNPDFFac.head())
