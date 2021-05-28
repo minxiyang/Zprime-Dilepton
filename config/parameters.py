@@ -33,11 +33,6 @@ parameters["roccor_file"] = {
     "2018": "data/roch_corr/RoccoR2018.txt",
 }
 
-parameters["btag_sf_csv"] = {
-    "2016": "data/btag/DeepCSV_2016LegacySF_V1.csv",
-    "2017": "data/btag/DeepCSV_94XSF_V5_B_F.csv",
-    "2018": "data/btag/DeepCSV_102XSF_V1.csv",
-}
 
 parameters["pu_file_data"] = {
     '2016': 'data/pileup/PileupData_GoldenJSON_Full2016.root',
@@ -84,269 +79,8 @@ parameters["muSFFileList"] = {'2016': [
                      'scale' : 50.79/59.74}],
             }
 
-jec_levels_mc = ['L1FastJet', 'L2Relative', 'L3Absolute']
-jec_levels_data = ['L1FastJet', 'L2Relative',
-                   'L3Absolute', 'L2L3Residual']
-
-jec_tag = {
-    '2016': 'Summer16_07Aug2017_V11_MC',
-    '2017': 'Fall17_17Nov2017_V32_MC',
-    '2018': 'Autumn18_V19_MC'
-}
-
-# jec_unc_to_consider = [
-#            'AbsoluteMPFBias', 'AbsoluteScale', 'AbsoluteStat',
-#            'FlavorQCD', 'Fragmentation',
-#            'PileUpDataMC', 'PileUpPtBB',
-#            'PileUpPtEC1', 'PileUpPtEC2', 'PileUpPtHF', 'PileUpPtRef',
-#            'RelativeFSR', 'RelativeJEREC1',
-#            'RelativeJEREC2', 'RelativeJERHF', 'RelativePtBB',
-#            'RelativePtEC1', 'RelativePtEC2',
-#            'RelativePtHF', 'RelativeBal', 'RelativeSample',
-#            'RelativeStatEC', 'RelativeStatFSR',
-#            'RelativeStatHF', 'SinglePionECAL',
-#            'SinglePionHCAL', 'TimePtEta'
-#        ]
-
-# Reduced set
-parameters["jec_unc_to_consider"] = {
-    "2016": ['Absolute', 'Absolute2016', 'BBEC1', 'BBEC12016',
-             'EC2', 'EC22016', 'HF', 'HF2016', 'RelativeBal',
-             'RelativeSample2016', 'FlavorQCD'],
-    "2017": ['Absolute', 'Absolute2017', 'BBEC1', 'BBEC12017',
-             'EC2', 'EC22017', 'HF', 'HF2017', 'RelativeBal',
-             'RelativeSample2017', 'FlavorQCD'],
-    "2018": ['Absolute', 'Absolute2018', 'BBEC1', 'BBEC12018',
-             'EC2', 'EC22018', 'HF', 'HF2018', 'RelativeBal',
-             'RelativeSample2018', 'FlavorQCD']
-}
-
-def jec_variations(year):
-    result = []
-    for v in parameters["jec_unc_to_consider"][year]:
-        result.append(v+"_up")
-        result.append(v+"_down")
-    return result
-
-parameters['jec_variations'] = {
-    year: jec_variations(year) for year in ['2016', '2017', '2018']
-}
-
-parameters['jer_variations'] = for_all_years(
-    [
-        'jer1_up', 'jer1_down',
-        'jer2_up', 'jer2_down',
-        'jer3_up', 'jer3_down',
-        'jer4_up', 'jer4_down',
-        'jer5_up', 'jer5_down',
-        'jer6_up', 'jer6_down',
-    ]
-)
-
-
-parameters['jec_names'] = {
-    y: [f"{jec_tag[y]}_{level}_AK4PFchs"
-        for level in jec_levels_mc]
-    for y in ['2016', '2017', '2018']
-}
-
-parameters['jer_names'] = {
-    '2016': ['Summer16_25nsV1_MC_PtResolution_AK4PFchs'],
-    '2017': ['Fall17_V3_MC_PtResolution_AK4PFchs'],
-    '2018': ['Autumn18_V7_MC_PtResolution_AK4PFchs']
-}
-
-parameters['jersf_names'] = {
-    '2016': ['Summer16_25nsV1_MC_SF_AK4PFchs'],
-    '2017': ['Fall17_V3_MC_SF_AK4PFchs'],
-    '2018': ['Autumn18_V7_MC_SF_AK4PFchs']
-}
-
-parameters['junc_names'] = {
-    y: [f"{jec_tag[y]}_Uncertainty_AK4PFchs"]
-    for y in ['2016', '2017', '2018']}
-
-parameters['jec_unc_sources'] = {
-    y: [f"{jec_tag[y]}_UncertaintySources_AK4PFchs"]
-    for y in ['2016', '2017', '2018']
-}
-
-parameters['jec_weight_sets'] = {}
-for y in ['2016', '2017', '2018']:
-    parameters['jec_weight_sets'][y] = []
-    parameters['jec_weight_sets'][y].extend(
-        [f"* * data/jec/{name}.jec.txt"
-         for name in parameters['jec_names'][y]]
-    )
-    parameters['jec_weight_sets'][y].extend(
-        [f"* * data/jec/{name}.jr.txt"
-         for name in parameters['jer_names'][y]]
-    )
-    parameters['jec_weight_sets'][y].extend(
-        [f"* * data/jec/{name}.jersf.txt"
-         for name in parameters['jersf_names'][y]]
-    )
-    parameters['jec_weight_sets'][y].extend(
-        [f"* * data/jec/{name}.junc.txt"
-         for name in parameters['junc_names'][y]]
-    )
-    parameters['jec_weight_sets'][y].extend(
-        [f"* * data/jec/{name}.junc.txt"
-         for name in parameters['jec_unc_sources'][y]]
-    )
-
-parameters['jec_stack'] = {}
-parameters['jer_stack'] = {}
-parameters['jec_unc_stack'] = {}
-for y in ['2016', '2017', '2018']:
-    parameters['jec_stack'][y] = []
-    parameters['jer_stack'][y] = []
-    parameters['jec_unc_stack'][y] = []
-    parameters['jec_stack'][y].extend(parameters['jec_names'][y])
-    parameters['jer_stack'][y].extend(parameters['jer_names'][y])
-    parameters['jer_stack'][y].extend(parameters['jersf_names'][y])
-    parameters['jec_unc_stack'][y].extend(parameters['junc_names'][y])
-
-parameters['jec_names_data'] = {
-    '2016': {
-        'B': [f"Summer16_07Aug2017BCD_V11_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'C': [f"Summer16_07Aug2017BCD_V11_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'D': [f"Summer16_07Aug2017BCD_V11_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'E': [f"Summer16_07Aug2017EF_V11_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'F': [f"Summer16_07Aug2017EF_V11_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'G': [f"Summer16_07Aug2017GH_V11_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'H': [f"Summer16_07Aug2017GH_V11_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data]},
-    '2017': {
-        'B': [f"Fall17_17Nov2017B_V32_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'C': [f"Fall17_17Nov2017C_V32_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'D': [f"Fall17_17Nov2017DE_V32_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'E': [f"Fall17_17Nov2017DE_V32_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'F': [f"Fall17_17Nov2017F_V32_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data]},
-    '2018': {
-        'A': [f"Autumn18_RunA_V19_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'B': [f"Autumn18_RunB_V19_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'C': [f"Autumn18_RunC_V19_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data],
-        'D': [f"Autumn18_RunD_V19_DATA_{level}_AK4PFchs"
-              for level in jec_levels_data]
-    }
-}
-
-parameters['junc_names_data'] = {
-    '2016': {
-        'B': ["Summer16_07Aug2017BCD_V11_DATA_Uncertainty_AK4PFchs"],
-        'C': ["Summer16_07Aug2017BCD_V11_DATA_Uncertainty_AK4PFchs"],
-        'D': ["Summer16_07Aug2017BCD_V11_DATA_Uncertainty_AK4PFchs"],
-        'E': ["Summer16_07Aug2017EF_V11_DATA_Uncertainty_AK4PFchs"],
-        'F': ["Summer16_07Aug2017EF_V11_DATA_Uncertainty_AK4PFchs"],
-        'G': ["Summer16_07Aug2017GH_V11_DATA_Uncertainty_AK4PFchs"],
-        'H': ["Summer16_07Aug2017GH_V11_DATA_Uncertainty_AK4PFchs"]},
-    '2017': {
-        'B': ["Fall17_17Nov2017B_V32_DATA_Uncertainty_AK4PFchs"],
-        'C': ["Fall17_17Nov2017C_V32_DATA_Uncertainty_AK4PFchs"],
-        'D': ["Fall17_17Nov2017DE_V32_DATA_Uncertainty_AK4PFchs"],
-        'E': ["Fall17_17Nov2017DE_V32_DATA_Uncertainty_AK4PFchs"],
-        'F': ["Fall17_17Nov2017F_V32_DATA_Uncertainty_AK4PFchs"]},
-    '2018': {
-        'A': ["Autumn18_RunA_V19_DATA_Uncertainty_AK4PFchs"],
-        'B': ["Autumn18_RunB_V19_DATA_Uncertainty_AK4PFchs"],
-        'C': ["Autumn18_RunC_V19_DATA_Uncertainty_AK4PFchs"],
-        'D': ["Autumn18_RunD_V19_DATA_Uncertainty_AK4PFchs"]
-    }
-}
-
-parameters['junc_sources_data'] = {
-    '2016': {
-        'B': [
-            "Summer16_07Aug2017BCD_V11_DATA_UncertaintySources_AK4PFchs"],
-        'C': [
-            "Summer16_07Aug2017BCD_V11_DATA_UncertaintySources_AK4PFchs"],
-        'D': [
-            "Summer16_07Aug2017BCD_V11_DATA_UncertaintySources_AK4PFchs"],
-        'E': [
-            "Summer16_07Aug2017EF_V11_DATA_UncertaintySources_AK4PFchs"],
-        'F': [
-            "Summer16_07Aug2017EF_V11_DATA_UncertaintySources_AK4PFchs"],
-        'G': [
-            "Summer16_07Aug2017GH_V11_DATA_UncertaintySources_AK4PFchs"],
-        'H': [
-            "Summer16_07Aug2017GH_V11_DATA_UncertaintySources_AK4PFchs"]
-    },
-    '2017': {
-        'B': ["Fall17_17Nov2017B_V32_DATA_UncertaintySources_AK4PFchs"],
-        'C': ["Fall17_17Nov2017C_V32_DATA_UncertaintySources_AK4PFchs"],
-        'D': ["Fall17_17Nov2017DE_V32_DATA_UncertaintySources_AK4PFchs"],
-        'E': ["Fall17_17Nov2017DE_V32_DATA_UncertaintySources_AK4PFchs"],
-        'F': ["Fall17_17Nov2017F_V32_DATA_UncertaintySources_AK4PFchs"],
-    },
-    '2018': {
-        'A': ["Autumn18_RunA_V19_DATA_UncertaintySources_AK4PFchs"],
-        'B': ["Autumn18_RunB_V19_DATA_UncertaintySources_AK4PFchs"],
-        'C': ["Autumn18_RunC_V19_DATA_UncertaintySources_AK4PFchs"],
-        'D': ["Autumn18_RunD_V19_DATA_UncertaintySources_AK4PFchs"],
-    }
-}
-
-parameters['jec_weight_sets_data'] = {}
-parameters['junc_sources_data_all'] = {}
-for y in ['2016', '2017', '2018']:
-    parameters['jec_weight_sets_data'][y] = []
-    jec_data = []
-    for run, items in parameters['jec_names_data'][y].items():
-        jec_data.extend(items)
-    jec_data = list(set(jec_data))
-    parameters['jec_weight_sets_data'][y].extend(
-        [f"* * data/jec/{name}.jec.txt" for name in jec_data]
-    )
-
-    junc_data = []
-    for run, items in parameters['junc_names_data'][y].items():
-        junc_data.extend(items)
-    junc_data = list(set(junc_data))
-    parameters['jec_weight_sets_data'][y].extend(
-        [f"* * data/jec/{name}.junc.txt" for name in junc_data]
-    )
-
-    junc_src_data = []
-    for run, items in parameters['junc_sources_data'][y].items():
-        junc_src_data.extend(items)
-    junc_src_data = list(set(junc_src_data))
-    parameters['junc_sources_data_all'][y] = junc_src_data
-    parameters['jec_weight_sets'][y].extend(
-        [f"* * data/jec/{name}.junc.txt" for name in junc_src_data]
-    )
-
-parameters['jec_stack_data'] = {}
-for y in ['2016', '2017', '2018']:
-    parameters['jec_stack_data'][y] = []
-    jec_data = []
-    for run, items in parameters['jec_names_data'][y].items():
-        jec_data.extend(items)
-    jec_data = list(set(jec_data))
-    parameters['jec_stack_data'][y].extend(jec_data)
-    junc_data = []
-    for run, items in parameters['junc_names_data'][y].items():
-        junc_data.extend(items)
-    junc_data = list(set(junc_data))
-    parameters['jec_stack_data'][y].extend(junc_data)
-
 parameters['zpt_weights_file'] =\
     for_all_years("data/zpt/zpt_weights.histo.json")
-parameters['puid_sf_file'] = for_all_years("data/puid_sf/PUIDMaps.root")
 parameters['res_calib_path'] = for_all_years("data/res_calib/")
 
 parameters.update({
@@ -377,28 +111,10 @@ parameters.update({
     "electron_eta_cut": for_all_years(2.5),
     "electron_id": for_all_years("cutBased_HEEP"),
 
-    "jet_pt_cut": for_all_years(25.),
-    "jet_eta_cut": for_all_years(4.7),
-    "jet_id": {"2016": "loose", "2017": "tight", "2018": "tight"},
-    "jet_puid": {
-        "2016": "loose", "2017": "2017corrected", "2018": "loose"},
+})
 
-    "min_dr_mu_jet": for_all_years(0.4),
 
-    "btag_loose_wp": {"2016": 0.2217, "2017": 0.1522, "2018": 0.1241},
-    "btag_medium_wp": {"2016": 0.6321, "2017": 0.4941, "2018": 0.4184},
-    "softjet_dr2": for_all_years(0.16)})
-
-parameters["n_pdf_variations"] = {
-    '2016': 100,
-    '2017': 33,
-    '2018': 33}
-
-parameters["dnn_max"] = {
-    '2016': 1.75,
-    '2017': 2.0,
-    '2018': 2.35}
-
+# branches are important only for Spark executor
 event_branches = ['run', 'event', 'luminosityBlock', 'genWeight']
 muon_branches = ['nMuon', 'Muon_pt', 'Muon_ptErr', 'Muon_eta',
                  'Muon_phi', 'Muon_mass', 'Muon_charge',
@@ -436,23 +152,21 @@ event_flags = ['Flag_BadPFMuonFilter',
                'Flag_globalSuperTightHalo2016Filter', 'Flag_goodVertices',
                'Flag_BadChargedCandidateFilter']
 
-#branches_2016 = ['HLT_IsoMu24', 'HLT_IsoTkMu24', 'L1PreFiringWeight_Nom',
-#                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
-#branches_2017 = ['HLT_IsoMu27', 'L1PreFiringWeight_Nom',
-#                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
-#branches_2018 = ['HLT_IsoMu24']
 
-branches_mu_2016 = ['Mu50', 'TkMu50']
-branches_mu_2017 = ['Mu50','TkMu100','OldMu100']
-branches_mu_2018 = ['Mu50','TkMu100','OldMu100']
+branches_2016 = ['Mu50', 'TkMu50', 'L1PreFiringWeight_Nom',
+                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
+branches_2017 = ['Mu50','TkMu100','OldMu100', 'L1PreFiringWeight_Nom',
+                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
+branches_2018 = ['Mu50','TkMu100','OldMu100', 'L1PreFiringWeight_Nom',
+                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
 
 
-proc_columns_mu = event_branches + muon_branches + fsr_branches +\
+proc_columns = event_branches + muon_branches + fsr_branches +\
     jet_branches + genjet_branches + sajet_branches + vtx_branches +\
     genpart_branches + trigobj_branches + ele_branches + other_branches +\
     event_flags
-parameters["proc_columns_mu"] = {
-    "2016": proc_columns_mu + branches_mu_2016,
-    "2017": proc_columns_mu + branches_mu_2017,
-    "2018": proc_columns_mu + branches_mu_2018,
+parameters["proc_columns"] = {
+    "2016": proc_columns + branches_2016,
+    "2017": proc_columns + branches_2017,
+    "2018": proc_columns + branches_2018,
 }

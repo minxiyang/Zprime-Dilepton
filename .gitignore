@@ -1,0 +1,9 @@
+dask_logs/*
+dask-worker-space/*
+*/__pycache__/*
+*pyc
+*/*pyc
+*/*/*pyc
+*~
+*/*~
+*/*/*~
