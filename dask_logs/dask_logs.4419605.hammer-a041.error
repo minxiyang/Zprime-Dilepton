@@ -1,0 +1,14 @@
+distributed.nanny - INFO -         Start Nanny at: 'tcp://128.211.146.51:43203'
+distributed.worker - INFO -       Start worker at: tcp://128.211.146.51:40165
+distributed.worker - INFO -          Listening to: tcp://128.211.146.51:40165
+distributed.worker - INFO -          dashboard at:       128.211.146.51:34780
+distributed.worker - INFO - Waiting to connect to: tcp://128.211.149.135:44932
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -               Threads:                          1
+distributed.worker - INFO -                Memory:                   2.70 GiB
+distributed.worker - INFO -       Local Directory: /depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-sa5ucpen
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -         Registered to: tcp://128.211.149.135:44932
+distributed.worker - INFO - -------------------------------------------------
+distributed.core - INFO - Starting established connection
+slurmstepd: error: *** JOB 4419605 ON hammer-a041 CANCELLED AT 2021-05-21T11:18:23 ***

@@ -1,0 +1,16 @@
+distributed.nanny - INFO -         Start Nanny at: 'tcp://128.211.146.47:34526'
+/apps/cent7/anaconda/5.3.1-py37/lib/python3.7/contextlib.py:119: UserWarning: Creating scratch directories is taking a surprisingly long time. This is often due to running workers on a network file system. Consider specifying a local-directory to point workers to write scratch data to a local disk.
+  next(self.gen)
+distributed.worker - INFO -       Start worker at: tcp://128.211.146.47:43042
+distributed.worker - INFO -          Listening to: tcp://128.211.146.47:43042
+distributed.worker - INFO -          dashboard at:       128.211.146.47:34440
+distributed.worker - INFO - Waiting to connect to: tcp://128.211.149.135:37375
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -               Threads:                          1
+distributed.worker - INFO -                Memory:                   2.70 GiB
+distributed.worker - INFO -       Local Directory: /depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-me0ncx3w
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -         Registered to: tcp://128.211.149.135:37375
+distributed.worker - INFO - -------------------------------------------------
+distributed.core - INFO - Starting established connection
+slurmstepd: error: *** JOB 4419097 ON hammer-a037 CANCELLED AT 2021-05-21T10:57:58 ***

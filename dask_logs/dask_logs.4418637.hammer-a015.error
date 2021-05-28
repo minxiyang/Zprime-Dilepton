@@ -1,0 +1,27 @@
+distributed.nanny - INFO -         Start Nanny at: 'tcp://128.211.146.25:36751'
+distributed.worker - INFO -       Start worker at: tcp://128.211.146.25:40361
+distributed.worker - INFO -          Listening to: tcp://128.211.146.25:40361
+distributed.worker - INFO -          dashboard at:       128.211.146.25:34635
+distributed.worker - INFO - Waiting to connect to: tcp://128.211.149.135:45817
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -               Threads:                          1
+distributed.worker - INFO -                Memory:                   2.70 GiB
+distributed.worker - INFO -       Local Directory: /depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-ffqxffk8
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -         Registered to: tcp://128.211.149.135:45817
+distributed.worker - INFO - -------------------------------------------------
+distributed.core - INFO - Starting established connection
+distributed.worker - INFO - Connection to scheduler broken.  Reconnecting...
+tornado.application - ERROR - Exception in callback <function Worker.__init__.<locals>.<lambda> at 0x2aabc5f56840>
+Traceback (most recent call last):
+  File "/home/yang1452/.local/lib/python3.7/site-packages/tornado/ioloop.py", line 905, in _run
+    return self.callback()
+  File "/home/yang1452/.local/lib/python3.7/site-packages/distributed/worker.py", line 713, in <lambda>
+    lambda: self.batched_stream.send({"op": "keep-alive"}), 60000
+  File "/home/yang1452/.local/lib/python3.7/site-packages/distributed/batched.py", line 136, in send
+    raise CommClosedError()
+distributed.comm.core.CommClosedError
+distributed.worker - INFO - Stopping worker at tcp://128.211.146.25:40361
+distributed.nanny - INFO - Worker closed
+distributed.nanny - INFO - Closing Nanny at 'tcp://128.211.146.25:36751'
+distributed.dask_worker - INFO - End worker

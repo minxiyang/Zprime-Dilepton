@@ -14,11 +14,18 @@ parameters["lumimask"] = {
     "2018": "data/lumimasks/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt"
 }
 
-parameters["hlt"] = {
+parameters["mu_hlt"] = {
     "2016": ['Mu50','TkMu50'],
     "2017": ['Mu50','TkMu100','OldMu100'],
     "2018": ['Mu50','TkMu100','OldMu100']
 }
+
+parameters["el_hlt"] = {
+    "2016": ['Mu50','TkMu50'],
+    "2017": ['Mu50','TkMu100','OldMu100'],
+    "2018": ['DoubleEle25_CaloIdL_MW']
+}
+
 
 parameters["roccor_file"] = {
     "2016": "data/roch_corr/RoccoR2016.txt",
@@ -366,9 +373,9 @@ parameters.update({
     "muon_trigmatch_dr": for_all_years(0.1),
     "muon_trigmatch_id": for_all_years("tightId"),
 
-    "electron_pt_cut": for_all_years(20.),
+    "electron_pt_cut": for_all_years(35.),
     "electron_eta_cut": for_all_years(2.5),
-    "electron_id": for_all_years("mvaFall17V2Iso_WP90"),
+    "electron_id": for_all_years("cutBased_HEEP"),
 
     "jet_pt_cut": for_all_years(25.),
     "jet_eta_cut": for_all_years(4.7),
@@ -435,17 +442,17 @@ event_flags = ['Flag_BadPFMuonFilter',
 #                 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
 #branches_2018 = ['HLT_IsoMu24']
 
-branches_2016 = ['Mu50', 'TkMu50']
-branches_2017 = ['Mu50','TkMu100','OldMu100']
-branches_2018 = ['Mu50','TkMu100','OldMu100']
+branches_mu_2016 = ['Mu50', 'TkMu50']
+branches_mu_2017 = ['Mu50','TkMu100','OldMu100']
+branches_mu_2018 = ['Mu50','TkMu100','OldMu100']
 
 
-proc_columns = event_branches + muon_branches + fsr_branches +\
+proc_columns_mu = event_branches + muon_branches + fsr_branches +\
     jet_branches + genjet_branches + sajet_branches + vtx_branches +\
     genpart_branches + trigobj_branches + ele_branches + other_branches +\
     event_flags
-parameters["proc_columns"] = {
-    "2016": proc_columns + branches_2016,
-    "2017": proc_columns + branches_2017,
-    "2018": proc_columns + branches_2018,
+parameters["proc_columns_mu"] = {
+    "2016": proc_columns_mu + branches_mu_2016,
+    "2017": proc_columns_mu + branches_mu_2017,
+    "2018": proc_columns_mu + branches_mu_2018,
 }

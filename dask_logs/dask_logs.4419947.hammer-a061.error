@@ -1,0 +1,21 @@
+distributed.nanny - INFO -         Start Nanny at: 'tcp://128.211.146.71:38214'
+/home/yang1452/.conda/envs/cent7/5.3.1-py37/hmumu/lib/python3.7/contextlib.py:119: UserWarning: Creating scratch directories is taking a surprisingly long time. This is often due to running workers on a network file system. Consider specifying a local-directory to point workers to write scratch data to a local disk.
+  next(self.gen)
+distributed.worker - INFO -       Start worker at: tcp://128.211.146.71:32791
+distributed.worker - INFO -          Listening to: tcp://128.211.146.71:32791
+distributed.worker - INFO -          dashboard at:       128.211.146.71:37008
+distributed.worker - INFO - Waiting to connect to: tcp://128.211.149.135:36489
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -               Threads:                          1
+distributed.worker - INFO -                Memory:                   2.70 GiB
+distributed.worker - INFO -       Local Directory: /depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-al6_sw2p
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -         Registered to: tcp://128.211.149.135:36489
+distributed.worker - INFO - -------------------------------------------------
+distributed.core - INFO - Starting established connection
+distributed.worker - INFO - Connection to scheduler broken.  Reconnecting...
+distributed.worker - WARNING - Heartbeat to scheduler failed
+distributed.worker - INFO - Stopping worker at tcp://128.211.146.71:32791
+distributed.nanny - INFO - Worker closed
+distributed.nanny - INFO - Closing Nanny at 'tcp://128.211.146.71:38214'
+distributed.dask_worker - INFO - End worker

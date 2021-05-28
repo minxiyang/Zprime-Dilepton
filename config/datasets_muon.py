@@ -40,8 +40,8 @@ datasets={'2018':
 }
 
 lumi_data = {
-    "2016": {'lumi': 36300., 'events': 804026710}, # to be verified
-    "2017": {'lumi': 42135., 'events': 769080716}, # to be verified
+    "2016": {'lumi': 3630., 'events': 804026710}, # to be verified
+    "2017": {'lumi': 4213.5, 'events': 769080716}, # to be verified
     "2018": {'lumi': 6160.8, 'events': 985425574} # to be verified
 }
 

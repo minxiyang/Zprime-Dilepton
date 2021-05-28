@@ -1,0 +1,24 @@
+distributed.nanny - INFO -         Start Nanny at: 'tcp://128.211.146.136:45510'
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-pusrkh1e', purging
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-hc0wsb74', purging
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-d0driown', purging
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-ayqtry_r', purging
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-5slkazqs', purging
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-zhcycs41', purging
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-d1nnkkh3', purging
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-ghnekewq', purging
+distributed.diskutils - INFO - Found stale lock file and directory '/depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-96qq_aun', purging
+distributed.worker - INFO -       Start worker at: tcp://128.211.146.136:36052
+distributed.worker - INFO -          Listening to: tcp://128.211.146.136:36052
+distributed.worker - INFO -          dashboard at:      128.211.146.136:34477
+distributed.worker - INFO - Waiting to connect to: tcp://128.211.149.135:38937
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -               Threads:                          1
+distributed.worker - INFO -                Memory:                   2.70 GiB
+distributed.worker - INFO -       Local Directory: /depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-ximsv111
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO - Waiting to connect to: tcp://128.211.149.135:38937
+distributed.worker - INFO -         Registered to: tcp://128.211.149.135:38937
+distributed.worker - INFO - -------------------------------------------------
+distributed.core - INFO - Starting established connection
+slurmstepd: error: *** JOB 4418646 ON hammer-a126 CANCELLED AT 2021-05-21T10:54:18 ***

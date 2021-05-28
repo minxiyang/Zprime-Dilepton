@@ -1,0 +1,31 @@
+distributed.nanny - INFO -         Start Nanny at: 'tcp://128.211.146.116:42759'
+distributed.worker - INFO -       Start worker at: tcp://128.211.146.116:38221
+distributed.worker - INFO -          Listening to: tcp://128.211.146.116:38221
+distributed.worker - INFO -          dashboard at:      128.211.146.116:38590
+distributed.worker - INFO - Waiting to connect to: tcp://128.211.149.135:36489
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -               Threads:                          1
+distributed.worker - INFO -                Memory:                   2.70 GiB
+distributed.worker - INFO -       Local Directory: /depot-old/cms/private/users/minxi/NanoAOD_study/Zprime-mumu/dask-worker-space/worker-tviqia7_
+distributed.worker - INFO - -------------------------------------------------
+distributed.worker - INFO -         Registered to: tcp://128.211.149.135:36489
+distributed.worker - INFO - -------------------------------------------------
+distributed.core - INFO - Starting established connection
+distributed.worker - WARNING - Compute Failed
+Function:  get_mc
+args:      ('root://cmsxrootd.fnal.gov///store/mc/RunIIAutumn18NanoAODv7/ZToMuMu_NNPDF31_13TeV-powheg_M_120_200/NANOAODSIM/Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/110000/013C0B4D-09B5-9D4A-913A-70069328BB0A.root')
+kwargs:    {}
+Exception: OSError('XRootD error: [ERROR] Operation expired\nin file root://cmsxrootd.fnal.gov///store/mc/RunIIAutumn18NanoAODv7/ZToMuMu_NNPDF31_13TeV-powheg_M_120_200/NANOAODSIM/Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/110000/013C0B4D-09B5-9D4A-913A-70069328BB0A.root')
+
+distributed.worker - WARNING - Compute Failed
+Function:  get_mc
+args:      ('root://cmsxrootd.fnal.gov///store/mc/RunIIAutumn18NanoAODv7/ZToMuMu_NNPDF31_13TeV-powheg_M_120_200/NANOAODSIM/Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/100000/776A49BA-1FBC-BC49-B96F-B1EAA47760B2.root')
+kwargs:    {}
+Exception: OSError('XRootD error: [FATAL] Redirect limit has been reached\nin file root://cmsxrootd.fnal.gov///store/mc/RunIIAutumn18NanoAODv7/ZToMuMu_NNPDF31_13TeV-powheg_M_120_200/NANOAODSIM/Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/100000/776A49BA-1FBC-BC49-B96F-B1EAA47760B2.root')
+
+distributed.worker - INFO - Connection to scheduler broken.  Reconnecting...
+distributed.worker - WARNING - Heartbeat to scheduler failed
+distributed.worker - INFO - Stopping worker at tcp://128.211.146.116:38221
+distributed.nanny - INFO - Worker closed
+distributed.nanny - INFO - Closing Nanny at 'tcp://128.211.146.116:42759'
+distributed.dask_worker - INFO - End worker
