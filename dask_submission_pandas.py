@@ -104,13 +104,12 @@ def submit_job(arg_set, parameters):
     executor_args = {
         'client': parameters['client'],
         'schema': processor.NanoAODSchema,
-        'use_dataframes': True,
-        'apply_to_output': partial(saving_func, out_dir=parameters['out_dir']),
         'retries': 0
     }
     processor_args = {
         'samp_info': parameters['samp_infos'],
         'do_timer': False,
+        'apply_to_output': partial(saving_func, out_dir=parameters['out_dir'])
     }
     try:
         output = run_uproot_job(parameters['samp_infos'].fileset, 'Events',

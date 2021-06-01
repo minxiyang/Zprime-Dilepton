@@ -29,10 +29,13 @@ class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
         self.samp_info = kwargs.pop('samp_info', None)
         do_timer = kwargs.pop('do_timer', True)
+        self.apply_to_output = kwargs.pop('apply_to_output', None)
 
         if self.samp_info is None:
             print("Samples info missing!")
             return
+
+        self._accumulator = processor.defaultdict_accumulator(int)
 
         self.do_pu = False
         self.auto_pu = False
@@ -393,7 +396,11 @@ class DimuonProcessor(processor.ProcessorABC):
             self.timer.add_checkpoint("Filled outputs")
             self.timer.summary()
 
-        return output
+        if self.apply_to_output is None:
+            return output
+        else:
+            self.apply_to_output(output)
+            return self.accumulator.identity()
 
 
     def prepare_lookups(self):
