@@ -201,7 +201,12 @@ class DielectronProcessor(processor.ProcessorABC):
             if electrons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
                 output = output[output.r.isin(self.regions)]
-                return output
+                #return output
+                if self.apply_to_output is None:
+                    return output
+                else:
+                    self.apply_to_output(output)
+                    return self.accumulator.identity()
 
             result = electrons.groupby('entry').apply(find_dielectron)
             dielectron=pd.DataFrame(result.to_list(),columns=['idx1','idx2','mass'])
