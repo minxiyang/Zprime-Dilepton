@@ -135,7 +135,7 @@ class DielectronProcessor(processor.ProcessorABC):
         # Save raw variables before computing any corrections
         
         df['Electron', 'pt_raw'] = df.Electron.pt*(df.Electron.scEtOverPt+1.)
-        df['Electron', 'eta_raw'] = df.Electron.eta + df.Electron.deltaEtaSC)
+        df['Electron', 'eta_raw'] = df.Electron.eta + df.Electron.deltaEtaSC
         df['Electron', 'phi_raw'] = df.Electron.phi
 
 
