@@ -28,24 +28,30 @@ class frame:
                 self.isFill = isFill 
                 self.year = year
 #cfg
-path_read="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/output/result_0514/*/*.parquet"
-path_save="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/plots/"
-variables_plot = ['dimuon_mass', 'dimuon_cos_theta_cs']
+path_read="/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/2018_test_march_2021_9_8_0_28_8/*/*.parquet"
+path_save="/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/plots/"
+#variables_plot = ['dimuon_mass', 'dimuon_cos_theta_cs']
+variables_plot = ['jet1_pt', 'jet1_eta', 'jet1_phi','jet1_btagDeepB','jet2_pt', 'jet2_eta', 'jet2_phi','jet2_btagDeepB']
 frames={}
-bins = [j for j in range(50, 120, 5)] + [j for j in range(120, 150, 5)] + [j for j in range(150, 200, 10)] + [j for j in range(200, 600, 20)] + [j for j in range(600, 900, 30) ] + [j for j in range(900, 1250, 50)] + [j for j in range(1250, 1610, 60) ] + [j for j in range(1610, 1890, 70) ] + [j for j in range(1890, 3970, 80) ] + [j for j in range(3970, 6070, 100) ] + [6070]
-frames['dimuon_mass'] = frame('m($\mu^{+}\mu^{-}$) [GeV]', [120, 4000], 'Events/GeV', [1e-5, 1e7], np.array(bins), "Combine", "skyblue", "2018", True, True, True, True)
-frames['dimuon_cos_theta_cs'] = frame('cos $\\theta$', [-1, 1], 'Events', [0, 50000], np.linspace(-1,1,25), "Combine", "cyan", "2018", False, False, True, True)
+#bins = [j for j in range(50, 120, 5)] + [j for j in range(120, 150, 5)] + [j for j in range(150, 200, 10)] + [j for j in range(200, 600, 20)] + [j for j in range(600, 900, 30) ] + [j for j in range(900, 1250, 50)] + [j for j in range(1250, 1610, 60) ] + [j for j in range(1610, 1890, 70) ] + [j for j in range(1890, 3970, 80) ] + [j for j in range(3970, 6070, 100) ] + [6070]
+#frames['dimuon_mass'] = frame('m($\mu^{+}\mu^{-}$) [GeV]', [120, 4000], 'Events/GeV', [1e-5, 1e7], np.array(bins), "Combine", "skyblue", "2018", True, True, True, True)
+#frames['dimuon_cos_theta_cs'] = frame('cos $\\theta$', [-1, 1], 'Events', [0, 50000], np.linspace(-1,1,25), "Combine", "cyan", "2018", False, False, True, True)
+frames['pt'] = frame('pt', [0, 1000], 'Events', [1e-3, 15000], np.linspace(0,1000,1000), "Combine", "cyan", "2018", False, True, True, True)
+frames['eta'] = frame('eta', [-3, 3], 'Events', [0, 10000], np.linspace(-3,3,100), "Combine", "cyan", "2018", False, False, True, True)
+frames['phi'] = frame('phi', [-3.2, 3.2], 'Events', [0, 6000], np.linspace(-3.2,3.2,100), "Combine", "cyan", "2018", False, False, True, True)
+frames['btagDeepB'] = frame('btagDeepB', [0, 1], 'Events', [1e-3, 50000], np.linspace(0,1,100), "Combine", "cyan", "2018", False, True, True, True)
 lumis={'2016':36.3, '2017':42.1 ,'2018':61.6}
 np.linspace(-1, 1, 25)
 
 
-#hep.set_style(hep.style.CMS)
-#plt.style.use([hep.style.CMS])
+hep.set_style(hep.style.CMS)
+plt.style.use([hep.style.CMS])
 # def function
 
 def plot(data,variable,path_save):
         fig, axs = plt.subplots(2, sharex=True, sharey=False, gridspec_kw={'height_ratios': [5, 1]})
-        frame = frames[variable]
+        var=variable.split('_')[1]
+        frame = frames[var]
         axs[1].set_xlabel(frame.xtitle)
         axs[0].set_ylabel(frame.ytitle)
         #axs[0].yaxis.grid(True, which='minor')
@@ -62,7 +68,9 @@ def plot(data,variable,path_save):
         df=data[variable].compute()
         entries = df.values
         weight=(data['wgt_nominal'].compute()).values
+        print(weight)
         yvals, bins  = np.histogram(entries, bins=frame.bins, weights=weight)
+        print(yvals)
         if variable == "dimuon_mass":
                 binSize = np.diff(bins)
                 yvals = yvals/binSize
@@ -103,12 +111,14 @@ def plot(data,variable,path_save):
 
 #load data 
 file_paths = glob.glob(path_read)
-with ProcessPoolExecutor(max_workers=48) as executor:
-        dfs = list(executor.map(dd.read_parquet, file_paths))
+#print(file_paths)
+#dd.read_parquet(file_paths[0],header=None,index_col=[0,1],columns=['jet1_pt', 'jet1_eta', 'jet1_phi','jet1_btagDeepB','jet2_pt', 'jet2_eta', 'jet2_phi','jet2_btagDeepB'])
+executor =  ProcessPoolExecutor(max_workers=12) 
+dfs = list(executor.map(dd.read_parquet, file_paths))
 data=dd.concat(dfs)
 #print(data.head())
 #plot
-with ProcessPoolExecutor(max_workers=48) as executor:
+with ProcessPoolExecutor(max_workers=12) as executor:
 	executor.map(plot, itertools.repeat(data), variables_plot, itertools.repeat(path_save))
 
 

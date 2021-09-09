@@ -38,10 +38,10 @@ class frame:
                 self.isFill = isFill 
                 self.year = year
 #cfg
-path_DY="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/output/DY_ee/*/*.parquet"
-other_path="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/output/other/*/*.parquet"
-path_data="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/output/data/*/*.parquet"
-path_save="/depot/cms/users/minxi/NanoAOD_study/Zprime-mumu/plots/"
+path_DY="/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/DY_ee/*/*.parquet"
+other_path="/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/other/*/*.parquet"
+path_data="/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/data/*/*.parquet"
+path_save="/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/plots/"
 path_signal="/depot/cms/users/minxi/NanoAOD_study/dileptonmassplots/inputs/paperPlotInputs_DimuonMass_Run2.root"
 variables_plot = 'dielectron_mass'
 frames={}
@@ -113,6 +113,7 @@ def plot(DY, Zprime, G_RS, variable, path_save):
         #other_tree = other_mass.values
         #data_tree = data_mass.values
         DY_weight=(DY['pu_wgt'].compute()).values
+        print(DY_weight)
         DY_weight[DY_weight<0]=0
         DY_vals, bins  = np.histogram(DY_tree, bins=frame.bins, weights=DY_weight)
         #DY_vals2, bins  = np.histogram(DY_tree, bins=frame.bins, weights=DY_weight**2)

@@ -158,7 +158,7 @@ trigobj_branches = ['nTrigObj', 'TrigObj_pt', 'TrigObj_l1pt',
                     'TrigObj_phi', 'TrigObj_id', 'TrigObj_l1iso',
                     'TrigObj_l1charge', 'TrigObj_filterBits']
 ele_branches = ['nElectron', 'Electron_pt', 'Electron_eta',
-                'Electron_mvaFall17V2Iso_WP90']
+                'Electron_mvaFall17V2Iso_WP90', 'Electron_scEtOverPt', 'Electron_deltaEtaSC', 'Electron_cutBased_HEEP']
 other_branches = ['MET_pt', 'HTXS_stage1_1_fine_cat_pTjet30GeV',
                   'fixedGridRhoFastjetAll', 'nLHEScaleWeight',
                   'nLHEPdfWeight', 'LHEPdfWeight']
