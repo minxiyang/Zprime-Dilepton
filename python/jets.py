@@ -46,8 +46,8 @@ def fill_jets(output, variables, jets, flavor="mu"):
         variables[f'jet2_{v}'] = jet2[v]
     #print(variables.head())
     variables.jet1_rap = rapidity(jet1)
-    if njet>1: variables.jet2_rap = rapidity(jet2)
-    if njet>1:
+    if njet>1: 
+        variables.jet2_rap = rapidity(jet2)
     # Fill dijet variables
         jj = p4_sum(jet1, jet2)
         for v in ['pt', 'eta', 'phi', 'mass']:
@@ -85,21 +85,19 @@ def fill_jets(output, variables, jets, flavor="mu"):
         mmjj = p4_sum(dileptons, dijets)
         for v in ['pt', 'eta', 'phi', 'mass']:
             variables[f'mmjj_{v}'] = mmjj[v]
-        if flavor == "mu": dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = [output.dimuon_pt, output.dimuon_eta, output.dimuon_phi, output.dimuon_rap]
-        else: dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = [output.dielectron_pt, output.dielectron_eta, output.dielectron_phi, output.dielectron_rap] 
+        if flavor == "mu": 
+            dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = output.dimuon_pt, output.dimuon_eta, output.dimuon_phi, output.dimuon_rap
+        else: 
+            dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = output.dielectron_pt, output.dielectron_eta, output.dielectron_phi, output.dielectron_rap 
 
         variables.zeppenfeld = (
             dilepton_eta - 0.5 * (
-            variables.jet1_eta +
-            variables.jet2_eta
-        )
+                variables.jet1_eta +
+                variables.jet2_eta
+            )
         )
 
-        variables.rpt = variables.mmjj_pt / (
-            dilepton_pt +
-            variables.jet1_pt +
-            variables.jet2_pt
-        )
+        variables.rpt = variables.mmjj_pt(dilepton_pt + variables.jet1_pt + variables.jet2_pt)
 
         ll_ystar = (
             dilepton_rap -
@@ -124,26 +122,25 @@ def fill_jets(output, variables, jets, flavor="mu"):
             )
 
         variables.mmj2_dEta,\
-        variables.mmj2_dPhi,\
-        variables.mmj2_dR = delta_r(
-            dilepton_eta,
-            variables.jet2_eta,
-            dilepton_phi,
-            variables.jet2_phi
-        )
+            variables.mmj2_dPhi,\
+                variables.mmj2_dR = delta_r(
+                    dilepton_eta,
+                    variables.jet2_eta,
+                    dilepton_phi,
+                    variables.jet2_phi
+                )
 
         variables.mmj_min_dEta = np.where(
-        variables.mmj1_dEta,
-        variables.mmj2_dEta,
-        (variables.mmj1_dEta < variables.mmj2_dEta)
+            variables.mmj1_dEta,
+            variables.mmj2_dEta,
+            (variables.mmj1_dEta < variables.mmj2_dEta)
         )
 
         variables.mmj_min_dPhi = np.where(
-        variables.mmj1_dPhi,
-        variables.mmj2_dPhi,
-        (variables.mmj1_dPhi < variables.mmj2_dPhi)
+            variables.mmj1_dPhi,
+            variables.mmj2_dPhi,
+            (variables.mmj1_dPhi < variables.mmj2_dPhi)
         )
-        #print(variables.head())
 
 
 def jet_id(jets, parameters, year):

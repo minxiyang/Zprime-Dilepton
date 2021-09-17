@@ -20,8 +20,8 @@ from python.corrections.jec import jec_factories, apply_jec
 from python.corrections.geofit import apply_geofit
 from python.corrections.l1prefiring_weights import l1pf_weights
 from python.corrections.kFac import kFac
-from python.jets import prepare_jets, fill_jets, fill_softjets
-from python.jets import jet_id, jet_puid, gen_jet_pair_mass
+from python.jets import prepare_jets, fill_jets
+#from python.jets import jet_id, jet_puid, gen_jet_pair_mass
 from python.muons import find_dimuon, fill_muons
 from python.utils import bbangle
 
@@ -263,7 +263,6 @@ class DimuonProcessor(processor.ProcessorABC):
                 (abs(sum_charge)<nmuons) &
                 good_pv
             )
-            print('flag')
             if self.timer:
                 self.timer.add_checkpoint("Selected events and muons")
 
@@ -463,7 +462,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 jet_columns += ['pt_jec', 'mass_jec']
             if is_mc and self.do_jerunc:
                 jet_columns += ['pt_orig', 'mass_orig']
-
+        '''
         # Find jets that have selected muons within dR<0.4 from them
         #matched_mu_pt = jets.matched_muons.pt_fsr
         #matched_mu_iso = jets.matched_muons.pfRelIso04_all
@@ -491,6 +490,7 @@ class DimuonProcessor(processor.ProcessorABC):
         #        return
         ##    jets = jets[unc_name]['down'][jet_columns]
         #else:
+        '''
         jets = jets[jet_columns]
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
@@ -580,7 +580,7 @@ class DimuonProcessor(processor.ProcessorABC):
         fill_jets(output, variables, Jets)
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
-
+        '''
         # ------------------------------------------------------------#
         # Fill soft activity jet variables
         # ------------------------------------------------------------#
@@ -685,7 +685,7 @@ class DimuonProcessor(processor.ProcessorABC):
         #         variables.selection &
         #         (variables.njets >= 2) &
         #         vbf_cut & two_jets_matched] = 'vbf_2j'
-
+        '''
         # --------------------------------------------------------------#
         # Fill outputs
         # --------------------------------------------------------------#
@@ -709,8 +709,7 @@ class DimuonProcessor(processor.ProcessorABC):
         self.roccor_lookup = rochester_lookup.rochester_lookup(
             rochester_data
         )
-        self.jec_factories,\
-        self.jec_factories_data = jec_factories(self.year)
+        self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors
         self.musf_lookup = musf_lookup(self.parameters)
         # Pile-up reweighting

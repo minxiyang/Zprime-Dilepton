@@ -12,9 +12,9 @@ from config.parameters import parameters
 from python.corrections.pu_reweight import pu_lookups, pu_evaluator
 from python.corrections.l1prefiring_weights import l1pf_weights
 from python.electrons import find_dielectron, fill_electrons
-from python.jets import prepare_jets, fill_jets, fill_softjets
-from python.jets import jet_id, jet_puid, gen_jet_pair_mass
-from python.corrections.kFac import kFac
+from python.jets import prepare_jets, fill_jets
+#from python.jets import jet_id, jet_puid, gen_jet_pair_mass
+#from python.corrections.kFac import kFac
 from python.corrections.jec import jec_factories, apply_jec
 
 class DielectronProcessor(processor.ProcessorABC):
@@ -306,7 +306,7 @@ class DielectronProcessor(processor.ProcessorABC):
         for wgt in weights.df.columns:
             
             if (wgt=='pu_wgt_off'):
-                output[f'pu_wgt'] = weights.get_weight(wgt)
+                output['pu_wgt'] = weights.get_weight(wgt)
             if (wgt!='nominal'):
                 output[f'wgt_{wgt}'] = weights.get_weight(wgt)
   
@@ -345,7 +345,7 @@ class DielectronProcessor(processor.ProcessorABC):
                 jet_columns += ['pt_jec', 'mass_jec']
             if is_mc and self.do_jerunc:
                 jet_columns += ['pt_orig', 'mass_orig']
-
+        '''
         # Find jets that have selected muons within dR<0.4 from them
         #matched_mu_pt = jets.matched_muons.pt_fsr
         #matched_mu_iso = jets.matched_muons.pfRelIso04_all
@@ -373,6 +373,7 @@ class DielectronProcessor(processor.ProcessorABC):
         #        return
         ##    jets = jets[unc_name]['down'][jet_columns]
         #else:
+        '''
         jets = jets[jet_columns]
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
@@ -393,7 +394,7 @@ class DielectronProcessor(processor.ProcessorABC):
             if is_mc and self.do_jerunc and not self.do_jec:
                 jets['pt'] = jets['pt_orig']
                 jets['mass'] = jets['mass_orig']
-
+        '''
         # ------------------------------------------------------------#
         # Apply jetID and PUID
         # ------------------------------------------------------------#
@@ -424,7 +425,7 @@ class DielectronProcessor(processor.ProcessorABC):
 
         # if self.timer:
         #     self.timer.add_checkpoint("Selected jets")
-
+        '''
         # ------------------------------------------------------------#
         # Fill jet-related variables
         # ------------------------------------------------------------#
@@ -480,8 +481,7 @@ class DielectronProcessor(processor.ProcessorABC):
     def prepare_lookups(self):
         # Pile-up reweighting
         self.pu_lookups = pu_lookups(self.parameters)
-        self.jec_factories,\
-        self.jec_factories_data = jec_factories(self.year)
+        self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # --- Evaluator
         self.extractor = extractor()
 
