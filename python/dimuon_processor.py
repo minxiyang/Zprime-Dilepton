@@ -204,7 +204,7 @@ class DimuonProcessor(processor.ProcessorABC):
                     self.timer.add_checkpoint("GeoFit correction")
 
             # --- conversion from awkward to pandas --- #
-            mu_branches = ['pt_raw','pt', 'eta', 'eta_raw', 'phi', 'phi_raw','charge','ptErr','highPtId','tkRelIso','mass','dxy']
+            mu_branches = ['pt_raw','pt', 'eta', 'eta_raw', 'phi', 'phi_raw','charge','ptErr','highPtId','tkRelIso','mass','dxy', 'dz', 'genPartFlav', 'ip3d', 'sip3d']
             muons = ak.to_pandas(df.Muon[mu_branches])
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
@@ -263,7 +263,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 (abs(sum_charge)<nmuons) &
                 good_pv
             )
-
+            print('flag')
             if self.timer:
                 self.timer.add_checkpoint("Selected events and muons")
 
