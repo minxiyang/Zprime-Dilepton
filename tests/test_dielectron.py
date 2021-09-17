@@ -29,7 +29,7 @@ if __name__ == "__main__":
     )
     print('Client created')
 
-    file_name = "ztoee_file_NanoAODv6.root"
+    file_name = "ztoee_file_NanoAODv7.root"
     file_path = f"{os.getcwd()}/tests/samples/{file_name}"
     dataset = {'test': file_path}
 
@@ -59,9 +59,9 @@ if __name__ == "__main__":
 
     elapsed = round(time.time() - tick, 3)
     print(f'Finished everything in {elapsed} s.')
-
-    diele_mass = df.loc[df.event == 8001, 'dielectron_mass'].values[0]
-    wgt = df.loc[df.event == 8001, 'wgt_nominal'].values[0]
-    assert(df.shape[0] == 5035)
-    assert(almost_equal(diele_mass, 2473.15505815))
-    assert(almost_equal(wgt, 0.000108786717997054))
+    print(df.event)
+    diele_mass = df.loc[df.event == 47984, 'dielectron_mass'].values[0]
+    wgt = df.loc[df.event == 47984, 'pu_wgt'].values[0]
+    assert(df.shape[0] == 9601)
+    assert(almost_equal(diele_mass, 457.09391916649224))
+    assert(almost_equal(wgt, 0.25154298543930054))

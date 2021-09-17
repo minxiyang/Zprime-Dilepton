@@ -64,4 +64,4 @@ if __name__ == "__main__":
     wgt = df.loc[df.event == 6006, 'wgt_nominal'].values[0]
     assert(df.shape[0] == 5156)
     assert(almost_equal(dimuon_mass, 2272.14609463627))
-    assert(almost_equal(wgt, 9.897695655219338e-05))
+    assert(almost_equal(wgt, 8.52419168691765e-05))
