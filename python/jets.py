@@ -44,7 +44,6 @@ def fill_jets(output, variables, jets, flavor="mu"):
     for v in ['pt', 'eta', 'phi', 'qgl', 'btagDeepB']:
         variables[f'jet1_{v}'] = jet1[v]
         variables[f'jet2_{v}'] = jet2[v]
-    #print(variables.head())
     variables.jet1_rap = rapidity(jet1)
     if njet>1: 
         variables.jet2_rap = rapidity(jet2)
@@ -97,7 +96,7 @@ def fill_jets(output, variables, jets, flavor="mu"):
             )
         )
 
-        variables.rpt = variables.mmjj_pt(dilepton_pt + variables.jet1_pt + variables.jet2_pt)
+        variables.rpt = variables.mmjj_pt / (dilepton_pt + variables.jet1_pt + variables.jet2_pt)
 
         ll_ystar = (
             dilepton_rap -
