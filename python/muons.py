@@ -42,6 +42,7 @@ def find_dimuon(objs):
     '''
 
     dmass=20.
+    
     for i in range(objs1.shape[0]):
         for j in range(objs2.shape[0]):
             #print(objs1.iloc[i].pt)
@@ -64,6 +65,17 @@ def find_dimuon(objs):
                 #print("        idx1=",idx1)
                 idx2=objs2.iloc[j].mu_idx
                 dimuon_mass=mass
+                gpx1_ = objs1.iloc[i].pt_gen * np.cos(objs1.iloc[i].phi_gen)
+                gpy1_ = objs1.iloc[i].pt_gen * np.sin(objs1.iloc[i].phi_gen)
+                gpz1_ = objs1.iloc[i].pt_gen * np.sinh(objs1.iloc[i].eta_gen)
+                ge1_ = np.sqrt(gpx1_**2 + gpy1_**2 + gpz1_**2 + objs1.iloc[i].mass**2)
+                gpx2_ = objs2.iloc[j].pt_gen * np.cos(objs2.iloc[j].phi_gen)
+                gpy2_ = objs2.iloc[j].pt_gen * np.sin(objs2.iloc[j].phi_gen)
+                gpz2_ = objs2.iloc[j].pt_gen * np.sinh(objs2.iloc[j].eta_gen)
+                ge2_ = np.sqrt(gpx2_**2 + gpy2_**2 + gpz2_**2 + objs2.iloc[j].mass**2)
+                gm2 = (ge1_+ge2_)**2-(gpx1_+gpx2_)**2-(gpy1_+gpy2_)**2-(gpz1_+gpz2_)**2
+                dimuon_mass_gen=math.sqrt(max(0,gm2))
+
     if dmass==20:
         obj1 = objs1.loc[objs1.pt.idxmax()]         
         obj2 = objs2.loc[objs2.pt.idxmax()]
@@ -78,29 +90,43 @@ def find_dimuon(objs):
         m2 = (e1_+e2_)**2-(px1_+px2_)**2-(py1_+py2_)**2-(pz1_+pz2_)**2
         mass=math.sqrt(max(0,m2))
         dimuon_mass=mass
+        gpx1_ = obj1.pt_gen * np.cos(obj1.phi_gen)
+        gpy1_ = obj1.pt_gen * np.sin(obj1.phi_gen)
+        gpz1_ = obj1.pt_gen * np.sinh(obj1.eta_gen)
+        ge1_ = np.sqrt(gpx1_**2 + gpy1_**2 + gpz1_**2 + obj1.mass**2)
+        gpx2_ = obj2.pt_gen * np.cos(obj2.phi_gen)
+        gpy2_ = obj2.pt_gen * np.sin(obj2.phi_gen)
+        gpz2_ = obj2.pt_gen * np.sinh(obj2.eta_gen)
+        ge2_ = np.sqrt(gpx2_**2 + gpy2_**2 + gpz2_**2 + obj2.mass**2)
+        gm2 = (ge1_+ge2_)**2-(gpx1_+gpx2_)**2-(gpy1_+gpy2_)**2-(gpz1_+gpz2_)**2
+        dimuon_mass_gen=math.sqrt(max(0,gm2))
         obj1_selected = obj1
         obj2_selected = obj2
         idx1=objs1.pt.idxmax()
         idx2=objs2.pt.idxmax()
+
+   
+
+    
     if obj1_selected.pt>obj2_selected.pt:
         #return pd.Series([idx1,idx2,dimuon_mass],index=['idx1','idx2', 'mass'])
-        return [idx1,idx2,dimuon_mass]
+        return [idx1,idx2,dimuon_mass, dimuon_mass_gen]
     else:
         #return pd.Series([idx2,idx1,dimuon_mass],index=['idx1','idx2', 'mass'])
-        return [idx2,idx1,dimuon_mass] 
+        return [idx2,idx1,dimuon_mass, dimuon_mass_gen] 
 
 
-def fill_muons(processor, output, mu1, mu2, dimuon_mass, is_mc):
+def fill_muons(processor, output, mu1, mu2, dimuon_mass , dimuon_mass_gen, is_mc):
     mu1_variable_names = [
-        'mu1_pt', 'mu1_pt_over_mass', 'mu1_ptErr',
-        'mu1_eta', 'mu1_phi', 'mu1_iso'
+        'mu1_pt', 'mu1_pt_gen', 'mu1_pt_over_mass', 'mu1_ptErr',
+        'mu1_eta', 'mu1_eta_gen', 'mu1_phi', 'mu1_phi_gen', 'mu1_iso','mu1_dxy', 'mu1_dz', 'mu1_genPartFlav', 'mu1_ip3d', 'mu1_sip3d'
     ]
     mu2_variable_names = [
-        'mu2_pt', 'mu2_pt_over_mass', 'mu2_ptErr',
-        'mu2_eta', 'mu2_phi', 'mu2_iso'
+        'mu2_pt', 'mu2_pt_gen', 'mu2_pt_over_mass', 'mu2_ptErr',
+        'mu2_eta', 'mu2_eta_gen', 'mu2_phi', 'mu2_phi_gen', 'mu2_iso', 'mu2_dxy', 'mu2_dz', 'mu2_genPartFlav', 'mu2_ip3d', 'mu2_sip3d'
     ]
     dimuon_variable_names = [
-        'dimuon_mass',
+        'dimuon_mass', 'dimuon_mass_gen',
         'dimuon_mass_res', 'dimuon_mass_res_rel',
         'dimuon_ebe_mass_res', 'dimuon_ebe_mass_res_rel',
         'dimuon_pt', 'dimuon_pt_log',
@@ -122,12 +148,13 @@ def fill_muons(processor, output, mu1, mu2, dimuon_mass, is_mc):
 
     # Fill single muon variables
 
-    for v in ['pt', 'ptErr', 'eta', 'phi']:
+    for v in ['pt', 'pt_gen', 'ptErr', 'eta', 'eta_gen', 'phi', 'phi_gen', 'dxy', 'dz', 'genPartFlav', 'ip3d', 'sip3d']:
         output[f'mu1_{v}'] = mu1[v]
         output[f'mu2_{v}'] = mu2[v]
     output['mu1_iso'] = mu1.tkRelIso
     output['mu2_iso'] = mu2.tkRelIso
     output.dimuon_mass=dimuon_mass
+    output.dimuon_mass_gen=dimuon_mass_gen
     output['mu1_pt_over_mass'] = output.mu1_pt.values / output.dimuon_mass.values
     output['mu2_pt_over_mass'] = output.mu2_pt.values / output.dimuon_mass.values
 

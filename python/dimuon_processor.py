@@ -154,11 +154,15 @@ class DimuonProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
 
         # Save raw variables before computing any corrections
+        
         df['Muon', 'pt_raw'] = df.Muon.pt
         df['Muon', 'eta_raw'] = df.Muon.eta
         df['Muon', 'phi_raw'] = df.Muon.phi
-        df['Muon', 'tkRelIso'] = df.Muon.tkRelIso
-
+        #df['Muon', 'tkRelIso'] = df.Muon.tkRelIso
+        #df['Muon', 'genPartIdx'] = df.Muon.genPartIdx
+        df['Muon', 'pt_gen'] = df.GenPart[df.Muon.genPartIdx].pt
+        df['Muon', 'eta_gen'] = df.GenPart[df.Muon.genPartIdx].eta
+        df['Muon', 'phi_gen'] = df.GenPart[df.Muon.genPartIdx].phi
         # Rochester correction
         if self.do_roccor:
             apply_roccor(df, self.roccor_lookup, is_mc)
@@ -204,7 +208,7 @@ class DimuonProcessor(processor.ProcessorABC):
                     self.timer.add_checkpoint("GeoFit correction")
 
             # --- conversion from awkward to pandas --- #
-            mu_branches = ['pt_raw','pt', 'eta', 'eta_raw', 'phi', 'phi_raw','charge','ptErr','highPtId','tkRelIso','mass','dxy', 'dz', 'genPartFlav', 'ip3d', 'sip3d']
+            mu_branches = ['pt_raw','pt', 'pt_gen', 'eta', 'eta_raw', 'eta_gen', 'phi', 'phi_raw' ,'phi_gen', 'charge','ptErr','highPtId','tkRelIso','mass','dxy', 'dz', 'genPartFlav', 'ip3d', 'sip3d']
             muons = ak.to_pandas(df.Muon[mu_branches])
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
@@ -292,7 +296,7 @@ class DimuonProcessor(processor.ProcessorABC):
                     return self.accumulator.identity()
 
             result = muons.groupby('entry').apply(find_dimuon)
-            dimuon=pd.DataFrame(result.to_list(),columns=['idx1','idx2','mass'])
+            dimuon=pd.DataFrame(result.to_list(),columns=['idx1','idx2','mass', 'mass_gen'])
             mu1=muons.loc[dimuon.idx1.values,:]
             mu2=muons.loc[dimuon.idx2.values,:]
             mu1.index = mu1.index.droplevel('subentry')
@@ -310,7 +314,8 @@ class DimuonProcessor(processor.ProcessorABC):
                 self.timer.add_checkpoint("back back angle calculation")
 
             dimuon_mass=dimuon.mass
-
+            dimuon_mass_gen=dimuon.mass_gen
+            
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
             # and trigger matching
@@ -327,7 +332,7 @@ class DimuonProcessor(processor.ProcessorABC):
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
             
-            fill_muons(self, output, mu1, mu2, dimuon_mass, is_mc)
+            fill_muons(self, output, mu1, mu2, dimuon_mass, dimuon_mass_gen ,is_mc)
 
         # ------------------------------------------------------------#
         # Prepare jets
