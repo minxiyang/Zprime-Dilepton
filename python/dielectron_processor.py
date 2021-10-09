@@ -1,6 +1,7 @@
 import awkward
 import awkward as ak
 import numpy as np
+
 # np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
 import coffea.processor as processor
@@ -13,17 +14,19 @@ from python.corrections.pu_reweight import pu_lookups, pu_evaluator
 from python.corrections.l1prefiring_weights import l1pf_weights
 from python.electrons import find_dielectron, fill_electrons
 from python.jets import prepare_jets, fill_jets
-#from python.jets import jet_id, jet_puid, gen_jet_pair_mass
-#from python.corrections.kFac import kFac
+
+# from python.jets import jet_id, jet_puid, gen_jet_pair_mass
+# from python.corrections.kFac import kFac
 from python.corrections.jec import jec_factories, apply_jec
+
 
 class DielectronProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
-        self.samp_info = kwargs.pop('samp_info', None)
-        do_timer = kwargs.pop('do_timer', True)
-        self.apply_to_output = kwargs.pop('apply_to_output', None) 
-        self.do_btag_syst = kwargs.pop('do_btag_syst', None)
-        self.pt_variations = kwargs.pop('pt_variations', ['nominal'])
+        self.samp_info = kwargs.pop("samp_info", None)
+        do_timer = kwargs.pop("do_timer", True)
+        self.apply_to_output = kwargs.pop("apply_to_output", None)
+        self.do_btag_syst = kwargs.pop("do_btag_syst", None)
+        self.pt_variations = kwargs.pop("pt_variations", ["nominal"])
         if self.samp_info is None:
             print("Samples info missing!")
             return
@@ -38,26 +41,32 @@ class DielectronProcessor(processor.ProcessorABC):
 
         self.year = self.samp_info.year
 
-        self.parameters = {
-            k: v[self.year] for k, v in parameters.items()}
+        self.parameters = {k: v[self.year] for k, v in parameters.items()}
 
-        self.timer = Timer('global') if do_timer else None
+        self.timer = Timer("global") if do_timer else None
 
         self._columns = self.parameters["proc_columns"]
 
-        self.regions = ['bb', 'be', 'ee']
-        self.channels = ['ee']
+        self.regions = ["bb", "be", "ee"]
+        self.channels = ["ee"]
 
         self.lumi_weights = self.samp_info.lumi_weights
         if self.do_btag_syst:
-            self.btag_systs = ["jes", "lf", "hfstats1", "hfstats2",
-                               "cferr1", "cferr2", "hf", "lfstats1",
-                               "lfstats2"]
+            self.btag_systs = [
+                "jes",
+                "lf",
+                "hfstats1",
+                "hfstats2",
+                "cferr1",
+                "cferr2",
+                "hf",
+                "lfstats1",
+                "lfstats2",
+            ]
         else:
             self.btag_systs = []
 
         self.prepare_lookups()
-
 
     @property
     def accumulator(self):
@@ -74,9 +83,9 @@ class DielectronProcessor(processor.ProcessorABC):
             self.timer.update()
 
         # Dataset name (see definitions in config/datasets.py)
-        dataset = df.metadata['dataset']
-        
-        is_mc = 'data' not in dataset
+        dataset = df.metadata["dataset"]
+
+        is_mc = "data" not in dataset
 
         # ------------------------------------------------------------#
         # Apply HLT, lumimask, genweights, PU weights
@@ -87,10 +96,10 @@ class DielectronProcessor(processor.ProcessorABC):
 
         # All variables that we want to save
         # will be collected into the 'output' dataframe
-        output = pd.DataFrame({'run': df.run, 'event': df.event})
-        output.index.name = 'entry'
-        output['npv'] = df.PV.npvs
-        output['met'] = df.MET.pt
+        output = pd.DataFrame({"run": df.run, "event": df.event})
+        output.index.name = "entry"
+        output["npv"] = df.PV.npvs
+        output["met"] = df.MET.pt
 
         # Separate dataframe to keep track on weights
         # and their systematic variations
@@ -101,28 +110,28 @@ class DielectronProcessor(processor.ProcessorABC):
             # L1 prefiring weights
             mask = np.ones(numevents, dtype=bool)
             genweight = df.genWeight
-            weights.add_weight('genwgt', genweight)
-            weights.add_weight('lumi', self.lumi_weights[dataset])
+            weights.add_weight("genwgt", genweight)
+            weights.add_weight("lumi", self.lumi_weights[dataset])
             if self.do_pu:
                 pu_wgts = pu_evaluator(
                     self.pu_lookups,
                     self.parameters,
                     numevents,
                     np.array(df.Pileup.nTrueInt),
-                    self.auto_pu
+                    self.auto_pu,
                 )
-                weights.add_weight('pu_wgt', pu_wgts, how='all')
+                weights.add_weight("pu_wgt", pu_wgts, how="all")
             if self.do_l1pw:
                 if self.parameters["do_l1prefiring_wgts"]:
-                    if 'L1PreFiringWeight' in df.fields:
+                    if "L1PreFiringWeight" in df.fields:
                         l1pfw = l1pf_weights(df)
-                        weights.add_weight('l1prefiring_wgt', l1pfw, how='all')
+                        weights.add_weight("l1prefiring_wgt", l1pfw, how="all")
                     else:
-                        weights.add_weight('l1prefiring_wgt', how='dummy_vars')
+                        weights.add_weight("l1prefiring_wgt", how="dummy_vars")
 
         else:
             # For Data: apply Lumi mask
-            lumi_info = LumiMask(self.parameters['lumimask'])
+            lumi_info = LumiMask(self.parameters["lumimask"])
             mask = lumi_info(df.run, df.luminosityBlock)
 
         # Apply HLT to both Data and MC
@@ -133,17 +142,28 @@ class DielectronProcessor(processor.ProcessorABC):
             self.timer.add_checkpoint("Applied HLT and lumimask")
 
         # Save raw variables before computing any corrections
-        
-        df['Electron', 'pt_raw'] = df.Electron.pt*(df.Electron.scEtOverPt+1.)
-        df['Electron', 'eta_raw'] = df.Electron.eta + df.Electron.deltaEtaSC
-        df['Electron', 'phi_raw'] = df.Electron.phi
 
+        df["Electron", "pt_raw"] = df.Electron.pt * (df.Electron.scEtOverPt + 1.0)
+        df["Electron", "eta_raw"] = df.Electron.eta + df.Electron.deltaEtaSC
+        df["Electron", "phi_raw"] = df.Electron.phi
 
         # for ...
         if True:  # indent reserved for loop over pT variations
 
             # --- conversion from awkward to pandas --- #
-            el_branches = ['pt_raw', 'pt', 'scEtOverPt', 'eta', 'deltaEtaSC', 'eta_raw', 'phi', 'phi_raw', 'mass','cutBased_HEEP','charge']
+            el_branches = [
+                "pt_raw",
+                "pt",
+                "scEtOverPt",
+                "eta",
+                "deltaEtaSC",
+                "eta_raw",
+                "phi",
+                "phi_raw",
+                "mass",
+                "cutBased_HEEP",
+                "charge",
+            ]
             electrons = ak.to_pandas(df.Electron[el_branches])
             if self.timer:
                 self.timer.add_checkpoint("load electron data")
@@ -157,19 +177,20 @@ class DielectronProcessor(processor.ProcessorABC):
             flags = flags[self.parameters["event_flags"]].product(axis=1)
 
             # Define baseline muon selection (applied to pandas DF!)
-            electrons['selection'] =  (
-                (electrons.pt_raw > self.parameters["electron_pt_cut"]) &
-                (abs(electrons.eta_raw) < self.parameters["electron_eta_cut"]) &
-                (electrons[self.parameters["electron_id"]]>0) 
+            electrons["selection"] = (
+                (electrons.pt_raw > self.parameters["electron_pt_cut"])
+                & (abs(electrons.eta_raw) < self.parameters["electron_eta_cut"])
+                & (electrons[self.parameters["electron_id"]] > 0)
             )
 
             # Count electrons
-            nelectrons = electrons[electrons.selection].reset_index()\
-                .groupby('entry')['subentry'].nunique()
-            output['event_selection'] = (mask &
-                (hlt > 0) &
-                (nelectrons >= 2) 
+            nelectrons = (
+                electrons[electrons.selection]
+                .reset_index()
+                .groupby("entry")["subentry"]
+                .nunique()
             )
+            output["event_selection"] = mask & (hlt > 0) & (nelectrons >= 2)
 
             if self.timer:
                 self.timer.add_checkpoint("Selected events and electrons")
@@ -183,34 +204,35 @@ class DielectronProcessor(processor.ProcessorABC):
             if self.timer:
                 self.timer.add_checkpoint("electron object selection")
 
-            output['r'] = None
-            output['s'] = dataset
-            output['year'] = int(self.year)
-            #print(output.shape[1])
+            output["r"] = None
+            output["s"] = dataset
+            output["year"] = int(self.year)
+            # print(output.shape[1])
 
             if electrons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
                 output = output[output.r.isin(self.regions)]
-                #return output
+                # return output
                 if self.apply_to_output is None:
                     return output
                 else:
                     self.apply_to_output(output)
                     return self.accumulator.identity()
 
-            result = electrons.groupby('entry').apply(find_dielectron)
-            dielectron=pd.DataFrame(result.to_list(),columns=['idx1','idx2','mass'])
-            e1=electrons.loc[dielectron.idx1.values,:]
-            e2=electrons.loc[dielectron.idx2.values,:]
-            e1.index = e1.index.droplevel('subentry')
-            e2.index = e2.index.droplevel('subentry')
+            result = electrons.groupby("entry").apply(find_dielectron)
+            dielectron = pd.DataFrame(
+                result.to_list(), columns=["idx1", "idx2", "mass"]
+            )
+            e1 = electrons.loc[dielectron.idx1.values, :]
+            e2 = electrons.loc[dielectron.idx2.values, :]
+            e1.index = e1.index.droplevel("subentry")
+            e2.index = e2.index.droplevel("subentry")
             if self.timer:
                 self.timer.add_checkpoint("dielectron pair selection")
 
-  
             if self.timer:
                 self.timer.add_checkpoint("back back angle calculation")
-            dielectron_mass=dielectron.mass
+            dielectron_mass = dielectron.mass
 
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
@@ -219,15 +241,15 @@ class DielectronProcessor(processor.ProcessorABC):
 
             # Events where there is at least one muon passing
             # leading muon pT cut
-            #if self.timer:
+            # if self.timer:
             #    self.timer.add_checkpoint("Applied trigger matching")
 
             # --------------------------------------------------------#
             # Fill dielectron and electron variables
             # --------------------------------------------------------#
-            
-            fill_electrons(output, e1, e2, dielectron_mass, is_mc)          
-        
+
+            fill_electrons(output, e1, e2, dielectron_mass, is_mc)
+
             if self.timer:
                 self.timer.add_checkpoint("all electron variables")
 
@@ -247,25 +269,42 @@ class DielectronProcessor(processor.ProcessorABC):
 
         # We only need to reapply JEC for 2018 data
         # (unless new versions of JEC are released)
-        if ('data' in dataset) and ('2018' in self.year):
+        if ("data" in dataset) and ("2018" in self.year):
             self.do_jec = True
 
         apply_jec(
-            df, jets, dataset, is_mc, self.year,
-            self.do_jec, self.do_jecunc, self.do_jerunc,
-            self.jec_factories, self.jec_factories_data
+            df,
+            jets,
+            dataset,
+            is_mc,
+            self.year,
+            self.do_jec,
+            self.do_jecunc,
+            self.do_jerunc,
+            self.jec_factories,
+            self.jec_factories_data,
         )
         output.columns = pd.MultiIndex.from_product(
-            [output.columns, ['']], names=['Variable', 'Variation']
+            [output.columns, [""]], names=["Variable", "Variation"]
         )
 
         if self.timer:
             self.timer.add_checkpoint("Jet preparation & event weights")
-        
+
         for v_name in self.pt_variations:
             output_updated = self.jet_loop(
-                v_name, is_mc, df, dataset, mask, electrons,
-                e1, e2, jets, weights, numevents, output
+                v_name,
+                is_mc,
+                df,
+                dataset,
+                mask,
+                electrons,
+                e1,
+                e2,
+                jets,
+                weights,
+                numevents,
+                output,
             )
             if output_updated is not None:
                 output = output_updated
@@ -295,26 +334,25 @@ class DielectronProcessor(processor.ProcessorABC):
         # Fill outputs
         # ------------------------------------------------------------#
 
-        mass = output.dielectron_mass
-        output['r'] = None
-        output.loc[((output.e1_eta < 1.442) & (output.e2_eta < 1.442)), 'r'] = "bb"
-        output.loc[((output.e1_eta > 1.566) ^ (output.e2_eta > 1.566)), 'r'] = "be"
-        output.loc[((output.e1_eta > 1.566) & (output.e2_eta > 1.566)), 'r'] = "ee"
-        #output['s'] = dataset
-        #output['year'] = int(self.year)
+        # mass = output.dielectron_mass
+        output["r"] = None
+        output.loc[((output.e1_eta < 1.442) & (output.e2_eta < 1.442)), "r"] = "bb"
+        output.loc[((output.e1_eta > 1.566) ^ (output.e2_eta > 1.566)), "r"] = "be"
+        output.loc[((output.e1_eta > 1.566) & (output.e2_eta > 1.566)), "r"] = "ee"
+        # output['s'] = dataset
+        # output['year'] = int(self.year)
 
         for wgt in weights.df.columns:
-            
-            if (wgt=='pu_wgt_off'):
-                output['pu_wgt'] = weights.get_weight(wgt)
-            if (wgt!='nominal'):
-                output[f'wgt_{wgt}'] = weights.get_weight(wgt)
-  
-                
+
+            if wgt == "pu_wgt_off":
+                output["pu_wgt"] = weights.get_weight(wgt)
+            if wgt != "nominal":
+                output[f"wgt_{wgt}"] = weights.get_weight(wgt)
+
         output = output.loc[output.event_selection, :]
         output = output.reindex(sorted(output.columns), axis=1)
         output = output[output.r.isin(self.regions)]
-        output.columns=output.columns.droplevel('Variation')
+        output.columns = output.columns.droplevel("Variation")
         if self.timer:
             self.timer.add_checkpoint("Filled outputs")
             self.timer.summary()
@@ -325,27 +363,46 @@ class DielectronProcessor(processor.ProcessorABC):
             self.apply_to_output(output)
             return self.accumulator.identity()
 
-
-    def jet_loop(self, variation, is_mc, df, dataset, mask, muons,
-                 mu1, mu2, jets, weights, numevents, output):
+    def jet_loop(
+        self,
+        variation,
+        is_mc,
+        df,
+        dataset,
+        mask,
+        muons,
+        mu1,
+        mu2,
+        jets,
+        weights,
+        numevents,
+        output,
+    ):
         # weights = copy.deepcopy(weights)
 
-        if not is_mc and variation != 'nominal':
+        if not is_mc and variation != "nominal":
             return
 
         variables = pd.DataFrame(index=output.index)
 
         jet_columns = [
-            'pt', 'eta', 'phi', 'jetId', 'qgl', 'puId', 'mass', 'btagDeepB',
+            "pt",
+            "eta",
+            "phi",
+            "jetId",
+            "qgl",
+            "puId",
+            "mass",
+            "btagDeepB",
         ]
         if is_mc:
-            jet_columns += ['partonFlavour', 'hadronFlavour']
-        if variation == 'nominal':
+            jet_columns += ["partonFlavour", "hadronFlavour"]
+        if variation == "nominal":
             if self.do_jec:
-                jet_columns += ['pt_jec', 'mass_jec']
+                jet_columns += ["pt_jec", "mass_jec"]
             if is_mc and self.do_jerunc:
-                jet_columns += ['pt_orig', 'mass_orig']
-        '''
+                jet_columns += ["pt_orig", "mass_orig"]
+        """
         # Find jets that have selected muons within dR<0.4 from them
         #matched_mu_pt = jets.matched_muons.pt_fsr
         #matched_mu_iso = jets.matched_muons.pfRelIso04_all
@@ -373,28 +430,28 @@ class DielectronProcessor(processor.ProcessorABC):
         #        return
         ##    jets = jets[unc_name]['down'][jet_columns]
         #else:
-        '''
+        """
         jets = jets[jet_columns]
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
         if jets.index.nlevels == 3:
             # sometimes there are duplicates?
             jets = jets.loc[pd.IndexSlice[:, :, 0], :]
-            jets.index = jets.index.droplevel('subsubentry')
+            jets.index = jets.index.droplevel("subsubentry")
 
-        if variation == 'nominal':
+        if variation == "nominal":
             # Update pt and mass if JEC was applied
             if self.do_jec:
-                jets['pt'] = jets['pt_jec']
-                jets['mass'] = jets['mass_jec']
+                jets["pt"] = jets["pt_jec"]
+                jets["mass"] = jets["mass_jec"]
 
             # We use JER corrections only for systematics, so we shouldn't
             # update the kinematics. Use original values,
             # unless JEC were applied.
             if is_mc and self.do_jerunc and not self.do_jec:
-                jets['pt'] = jets['pt_orig']
-                jets['mass'] = jets['mass_orig']
-        '''
+                jets["pt"] = jets["pt_orig"]
+                jets["mass"] = jets["mass_orig"]
+        """
         # ------------------------------------------------------------#
         # Apply jetID and PUID
         # ------------------------------------------------------------#
@@ -425,42 +482,37 @@ class DielectronProcessor(processor.ProcessorABC):
 
         # if self.timer:
         #     self.timer.add_checkpoint("Selected jets")
-        '''
+        """
         # ------------------------------------------------------------#
         # Fill jet-related variables
         # ------------------------------------------------------------#
 
-        njets = jets.reset_index().groupby('entry')['subentry'].nunique()
-        variables['njets'] = njets
+        njets = jets.reset_index().groupby("entry")["subentry"].nunique()
+        variables["njets"] = njets
 
-        #one_jet = (njets > 0)
-        #two_jets = (njets > 1)
-        
+        # one_jet = (njets > 0)
+        # two_jets = (njets > 1)
+
         # Sort jets by pT and reset their numbering in an event
-        jets = jets.sort_values(
-            ['entry', 'pt'], ascending=[True, False]
-        )
+        jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
         jets.index = pd.MultiIndex.from_arrays(
-            [
-                jets.index.get_level_values(0),
-                jets.groupby(level=0).cumcount()
-            ],
-            names=['entry', 'subentry']
+            [jets.index.get_level_values(0), jets.groupby(level=0).cumcount()],
+            names=["entry", "subentry"],
         )
         # Select two jets with highest pT
-        #try:
+        # try:
 
         jet1 = jets.loc[pd.IndexSlice[:, 0], :]
         jet2 = jets.loc[pd.IndexSlice[:, 1], :]
-        jet1.index = jet1.index.droplevel('subentry')
-        jet2.index = jet2.index.droplevel('subentry')
+        jet1.index = jet1.index.droplevel("subentry")
+        jet2.index = jet2.index.droplevel("subentry")
         Jets = [jet1, jet2]
-        #else:
+        # else:
         #    jet1.index = jet1.index.droplevel('subentry')
         #    Jets = [jet1]
-        #except Exception:
+        # except Exception:
         #    return
-        fill_jets(output, variables, Jets, 'el')
+        fill_jets(output, variables, Jets, "el")
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
 
@@ -468,13 +520,13 @@ class DielectronProcessor(processor.ProcessorABC):
         # Fill outputs
         # --------------------------------------------------------------#
 
-        variables.update({'wgt_nominal': weights.get_weight('nominal')})
+        variables.update({"wgt_nominal": weights.get_weight("nominal")})
 
         # All variables are affected by jet pT because of jet selections:
         # a jet may or may not be selected depending on pT variation.
 
         for key, val in variables.items():
-            #output.loc[:, pd.IndexSlice[key, variation]] = val
+            # output.loc[:, pd.IndexSlice[key, variation]] = val
             output.loc[:, key] = val
         return output
 
@@ -486,29 +538,25 @@ class DielectronProcessor(processor.ProcessorABC):
         self.extractor = extractor()
 
         # Z-pT reweigting (disabled)
-        zpt_filename = self.parameters['zpt_weights_file']
+        zpt_filename = self.parameters["zpt_weights_file"]
         self.extractor.add_weight_sets([f"* * {zpt_filename}"])
-        if '2016' in self.year:
-            self.zpt_path = 'zpt_weights/2016_value'
+        if "2016" in self.year:
+            self.zpt_path = "zpt_weights/2016_value"
         else:
-            self.zpt_path = 'zpt_weights/2017_value'
+            self.zpt_path = "zpt_weights/2017_value"
 
         # Calibration of event-by-event mass resolution
         for mode in ["Data", "MC"]:
             label = f"res_calib_{mode}_{self.year}"
-            path = self.parameters['res_calib_path']
+            path = self.parameters["res_calib_path"]
             file_path = f"{path}/{label}.root"
-            self.extractor.add_weight_sets(
-                [f"{label} {label} {file_path}"]
-            )
+            self.extractor.add_weight_sets([f"{label} {label} {file_path}"])
 
         self.extractor.finalize()
         self.evaluator = self.extractor.make_evaluator()
 
-        self.evaluator[self.zpt_path]._axes =\
-            self.evaluator[self.zpt_path]._axes[0]
+        self.evaluator[self.zpt_path]._axes = self.evaluator[self.zpt_path]._axes[0]
         return
-
 
     def postprocess(self, accumulator):
         return accumulator
