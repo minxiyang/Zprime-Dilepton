@@ -55,11 +55,9 @@ if __name__ == "__main__":
                             executor, executor_args=executor_args,
                             chunksize=10000)
     df = output.compute()
-    print(df)
 
     elapsed = round(time.time() - tick, 3)
     print(f'Finished everything in {elapsed} s.')
-    print(df.event)
     diele_mass = df.loc[df.event == 47984, 'dielectron_mass'].values[0]
     wgt = df.loc[df.event == 47984, 'pu_wgt'].values[0]
     assert(df.shape[0] == 9601)

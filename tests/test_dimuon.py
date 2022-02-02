@@ -56,12 +56,11 @@ if __name__ == "__main__":
                             chunksize=10000)
     df = output.compute()
     print(df)
-
     elapsed = round(time.time() - tick, 3)
     print(f'Finished everything in {elapsed} s.')
 
     dimuon_mass = df.loc[df.event == 6006, 'dimuon_mass'].values[0]
     wgt = df.loc[df.event == 6006, 'wgt_nominal'].values[0]
-    assert(df.shape[0] == 5156)
+    assert(df.shape[0] == 4543)
     assert(almost_equal(dimuon_mass, 2272.14609463627))
-    assert(almost_equal(wgt, 8.52419168691765e-05))
+    assert(almost_equal(wgt, 8.098436450586813e-05))

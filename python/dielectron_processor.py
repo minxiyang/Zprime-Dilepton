@@ -9,14 +9,14 @@ from coffea.lookup_tools import extractor
 from coffea.lumi_tools import LumiMask
 from python.timer import Timer
 from python.weights import Weights
-from config.parameters import parameters
+from config.parameters import parameters, ele_branches, jet_branches
 from python.corrections.pu_reweight import pu_lookups, pu_evaluator
 from python.corrections.l1prefiring_weights import l1pf_weights
 from python.electrons import find_dielectron, fill_electrons
 from python.jets import prepare_jets, fill_jets
 
 # from python.jets import jet_id, jet_puid, gen_jet_pair_mass
-# from python.corrections.kFac import kFac
+from python.corrections.kFac import kFac
 from python.corrections.jec import jec_factories, apply_jec
 
 
@@ -129,6 +129,12 @@ class DielectronProcessor(processor.ProcessorABC):
                     else:
                         weights.add_weight("l1prefiring_wgt", how="dummy_vars")
 
+            df["Electron", "pt_gen"] = df.GenPart[df.Electron.genPartIdx].pt
+            df["Electron", "eta_gen"] = df.GenPart[df.Electron.genPartIdx].eta
+            df["Electron", "phi_gen"] = df.GenPart[df.Electron.genPartIdx].phi
+            global ele_branches
+            ele_branches += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen"]
+
         else:
             # For Data: apply Lumi mask
             lumi_info = LumiMask(self.parameters["lumimask"])
@@ -151,20 +157,9 @@ class DielectronProcessor(processor.ProcessorABC):
         if True:  # indent reserved for loop over pT variations
 
             # --- conversion from awkward to pandas --- #
-            el_branches = [
-                "pt_raw",
-                "pt",
-                "scEtOverPt",
-                "eta",
-                "deltaEtaSC",
-                "eta_raw",
-                "phi",
-                "phi_raw",
-                "mass",
-                "cutBased_HEEP",
-                "charge",
-            ]
-            electrons = ak.to_pandas(df.Electron[el_branches])
+            electrons = ak.to_pandas(df.Electron[ele_branches])
+            electrons = electrons.dropna()
+            electrons = electrons.loc[:, ~electrons.columns.duplicated()]
             if self.timer:
                 self.timer.add_checkpoint("load electron data")
 
@@ -183,6 +178,8 @@ class DielectronProcessor(processor.ProcessorABC):
                 & (electrons[self.parameters["electron_id"]] > 0)
             )
 
+            if dataset == "dyInclusive50":
+                electrons = electrons[electrons.genPartFlav == 15]
             # Count electrons
             nelectrons = (
                 electrons[electrons.selection]
@@ -207,22 +204,25 @@ class DielectronProcessor(processor.ProcessorABC):
             output["r"] = None
             output["s"] = dataset
             output["year"] = int(self.year)
-            # print(output.shape[1])
 
             if electrons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
                 output = output[output.r.isin(self.regions)]
-                # return output
                 if self.apply_to_output is None:
                     return output
                 else:
                     self.apply_to_output(output)
                     return self.accumulator.identity()
 
-            result = electrons.groupby("entry").apply(find_dielectron)
-            dielectron = pd.DataFrame(
-                result.to_list(), columns=["idx1", "idx2", "mass"]
-            )
+            result = electrons.groupby("entry").apply(find_dielectron, is_mc=is_mc)
+            if is_mc:
+                dielectron = pd.DataFrame(
+                    result.to_list(), columns=["idx1", "idx2", "mass", "mass_gen"]
+                )
+            else:
+                dielectron = pd.DataFrame(
+                    result.to_list(), columns=["idx1", "idx2", "mass"]
+                )
             e1 = electrons.loc[dielectron.idx1.values, :]
             e2 = electrons.loc[dielectron.idx2.values, :]
             e1.index = e1.index.droplevel("subentry")
@@ -233,6 +233,18 @@ class DielectronProcessor(processor.ProcessorABC):
             if self.timer:
                 self.timer.add_checkpoint("back back angle calculation")
             dielectron_mass = dielectron.mass
+            if is_mc:
+                dielectron_mass_gen = dielectron.mass_gen
+            else:
+                dielectron_mass_gen = -999.0
+                e1["pt_gen"] = -999.0
+                e1["eta_gen"] = -999.0
+                e1["phi_gen"] = -999.0
+                e1["genPartFlav"] = -999.0
+                e2["pt_gen"] = -999.0
+                e2["eta_gen"] = -999.0
+                e2["phi_gen"] = -999.0
+                e2["genPartFlav"] = -999.0
 
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
@@ -248,7 +260,7 @@ class DielectronProcessor(processor.ProcessorABC):
             # Fill dielectron and electron variables
             # --------------------------------------------------------#
 
-            fill_electrons(output, e1, e2, dielectron_mass, is_mc)
+            fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc)
 
             if self.timer:
                 self.timer.add_checkpoint("all electron variables")
@@ -270,7 +282,7 @@ class DielectronProcessor(processor.ProcessorABC):
         # We only need to reapply JEC for 2018 data
         # (unless new versions of JEC are released)
         if ("data" in dataset) and ("2018" in self.year):
-            self.do_jec = True
+            self.do_jec = False
 
         apply_jec(
             df,
@@ -302,6 +314,7 @@ class DielectronProcessor(processor.ProcessorABC):
                 e1,
                 e2,
                 jets,
+                jet_branches,
                 weights,
                 numevents,
                 output,
@@ -363,6 +376,26 @@ class DielectronProcessor(processor.ProcessorABC):
             self.apply_to_output(output)
             return self.accumulator.identity()
 
+        if is_mc and "dy" in output.s:
+            mass_bb = output[output["r"] == "bb"].dielectron_mass_gen.to_numpy()
+            mass_be = output[output["r"] == "be"].dielectron_mass_gen.to_numpy()
+            output.loc[
+                ((output.e1_eta < 1.2) & (output.e2_eta < 1.2)), "wgt_nominal"
+            ] = (
+                output.loc[
+                    ((output.e1_eta < 1.2) & (output.e2_eta < 1.2)), "wgt_nominal"
+                ]
+                * kFac(mass_bb, "bb", "mu")
+            ).values
+            output.loc[
+                ((output.e1_eta > 1.2) | (output.e2_eta > 1.2)), "wgt_nominal"
+            ] = (
+                output.loc[
+                    ((output.e1_eta > 1.2) | (output.e2_eta > 1.2)), "wgt_nominal"
+                ]
+                * kFac(mass_be, "be", "mu")
+            ).values
+
     def jet_loop(
         self,
         variation,
@@ -370,10 +403,11 @@ class DielectronProcessor(processor.ProcessorABC):
         df,
         dataset,
         mask,
-        muons,
-        mu1,
-        mu2,
+        electrons,
+        e1,
+        e2,
         jets,
+        jet_branches,
         weights,
         numevents,
         output,
@@ -385,7 +419,7 @@ class DielectronProcessor(processor.ProcessorABC):
 
         variables = pd.DataFrame(index=output.index)
 
-        jet_columns = [
+        jet_branches = [
             "pt",
             "eta",
             "phi",
@@ -396,12 +430,12 @@ class DielectronProcessor(processor.ProcessorABC):
             "btagDeepB",
         ]
         if is_mc:
-            jet_columns += ["partonFlavour", "hadronFlavour"]
+            jet_branches += ["partonFlavour", "hadronFlavour"]
         if variation == "nominal":
             if self.do_jec:
-                jet_columns += ["pt_jec", "mass_jec"]
+                jet_branches += ["pt_jec", "mass_jec"]
             if is_mc and self.do_jerunc:
-                jet_columns += ["pt_orig", "mass_orig"]
+                jet_branches += ["pt_orig", "mass_orig"]
         """
         # Find jets that have selected muons within dR<0.4 from them
         #matched_mu_pt = jets.matched_muons.pt_fsr
@@ -431,14 +465,15 @@ class DielectronProcessor(processor.ProcessorABC):
         ##    jets = jets[unc_name]['down'][jet_columns]
         #else:
         """
-        jets = jets[jet_columns]
+        jets = jets[jet_branches]
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
         if jets.index.nlevels == 3:
             # sometimes there are duplicates?
             jets = jets.loc[pd.IndexSlice[:, :, 0], :]
             jets.index = jets.index.droplevel("subsubentry")
-
+        jets = jets.dropna()
+        jets = jets.loc[:, ~jets.columns.duplicated()]
         if variation == "nominal":
             # Update pt and mass if JEC was applied
             if self.do_jec:
@@ -487,31 +522,35 @@ class DielectronProcessor(processor.ProcessorABC):
         # Fill jet-related variables
         # ------------------------------------------------------------#
 
-        njets = jets.reset_index().groupby("entry")["subentry"].nunique()
-        variables["njets"] = njets
-
-        # one_jet = (njets > 0)
-        # two_jets = (njets > 1)
-
         # Sort jets by pT and reset their numbering in an event
-        jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
         jets.index = pd.MultiIndex.from_arrays(
             [jets.index.get_level_values(0), jets.groupby(level=0).cumcount()],
             names=["entry", "subentry"],
         )
-        # Select two jets with highest pT
-        # try:
 
-        jet1 = jets.loc[pd.IndexSlice[:, 0], :]
-        jet2 = jets.loc[pd.IndexSlice[:, 1], :]
-        jet1.index = jet1.index.droplevel("subentry")
-        jet2.index = jet2.index.droplevel("subentry")
+        jets.loc[
+            (
+                (jets.pt < 30.0)
+                | (abs(jets.eta) > 2.4)
+                | (jets.btagDeepB < parameters["UL_btag_medium"][self.year])
+            ),
+            :,
+        ] = -999.0
+        jets["selection"] = 0
+        jets.loc[
+            (
+                (jets.pt > 30.0)
+                & (abs(jets.eta) < 2.4)
+                & (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
+            ),
+            "selection",
+        ] = 1
+        nBjets = jets.loc[:, "selection"].groupby("entry").sum()
+        variables["njets"] = nBjets
+        jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
+        jet1 = jets.groupby("entry").nth(0)
+        jet2 = jets.groupby("entry").nth(1)
         Jets = [jet1, jet2]
-        # else:
-        #    jet1.index = jet1.index.droplevel('subentry')
-        #    Jets = [jet1]
-        # except Exception:
-        #    return
         fill_jets(output, variables, Jets, "el")
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")

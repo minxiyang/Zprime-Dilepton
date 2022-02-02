@@ -7,9 +7,10 @@ import coffea.processor as processor
 from coffea.processor import dask_executor, run_uproot_job
 from python.preprocessor import load_samples
 from python.utils import mkdir
-
+#import time
 import dask
 from dask.distributed import Client
+import copy
 
 dask.config.set({"temporary-directory": "/depot/cms/users/minxi/dask-temp/"})
 
@@ -67,7 +68,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.149.135"
+#node_ip = "128.211.149.135"
+node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
 
 
@@ -98,8 +100,9 @@ parameters = {
     "label": args.label,
     "global_out_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
     "out_path": f"{args.year}_{args.label}_{local_time}",
-    # 'server': 'root://xrootd.rcac.purdue.edu/',
-    "server": "root://cmsxrootd.fnal.gov//",
+    #"server": "root://xrootd.rcac.purdue.edu/",
+    #"server": "root://cmsxrootd.fnal.gov//",
+    "server": "/mnt/hadoop/",
     "datasets_from": "Zprime",
     "from_das": True,
     "chunksize": int(args.chunksize),
@@ -109,6 +112,7 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "client": None,
     "channel": args.channel,
+    "n_workers":40,
 }
 
 parameters["out_dir"] = f"{parameters['global_out_path']}/" f"{parameters['out_path']}"
@@ -126,11 +130,12 @@ def saving_func(output, out_dir):
     for ds in output.s.unique():
         df = output[output.s == ds]
         if df.shape[0] == 0:
-            return
+            continue
         mkdir(f"{out_dir}/{ds}")
         df.to_parquet(
             path=f"{out_dir}/{ds}/{name}.parquet",
         )
+    del output   
 
 
 def submit_job(arg_set, parameters):
@@ -152,23 +157,25 @@ def submit_job(arg_set, parameters):
         "samp_info": parameters["samp_infos"],
         "do_timer": False,
         "apply_to_output": partial(saving_func, out_dir=parameters["out_dir"])
-        # 'apply_to_output':None
     }
+   
     try:
+         
         output = run_uproot_job(
-            parameters["samp_infos"].fileset,
-            "Events",
-            event_processor(**processor_args),
-            executor,
-            executor_args=executor_args,
-            chunksize=parameters["chunksize"],
-            maxchunks=parameters["maxchunks"],
-        )
-
+                parameters["samp_infos"].fileset,
+                "Events",
+                event_processor(**processor_args),
+                executor,
+                executor_args=executor_args,
+                chunksize=parameters["chunksize"],
+                maxchunks=parameters["maxchunks"],
+                )
+           
+           
     except Exception as e:
         tb = traceback.format_exc()
         return "Failed: " + str(e) + " " + tb
-
+           
     return "Success!"
 
 
@@ -183,10 +190,6 @@ if __name__ == "__main__":
             "data_B",
             "data_C",
             "data_D",
-            # 'data_E',
-            # 'data_F',
-            # 'data_G',
-            # 'data_H',
         ],
         "other_mc": [
             "WZ",
@@ -221,6 +224,7 @@ if __name__ == "__main__":
             "dy800to1400",
             "dy1400to2300",
             "dy2300to3500",
+
             "dy3500to4500",
             "dy4500to6000",
             "dy6000toInf",
@@ -230,10 +234,10 @@ if __name__ == "__main__":
     if parameters["local_cluster"]:
         parameters["client"] = dask.distributed.Client(
             processes=True,
-            n_workers=48,
+            n_workers=parameters["n_workers"],
             # dashboard_address=dash_local,
             threads_per_worker=1,
-            memory_limit="2.9GB",
+            memory_limit="3.6GB",
         )
     else:
         parameters["client"] = Client(
@@ -243,13 +247,17 @@ if __name__ == "__main__":
 
     datasets_mc = []
     datasets_data = []
+    blackList=["Wantitop", "tW"]
     for group, samples in smp.items():
         for sample in samples:
-            if sample in ["WZ", "tW", "WZ2L2Q", "Wantitop"]:
+            if sample in blackList: #["WZ", "tW", "WZ2L2Q", "Wantitop"]:
                 continue
-            if group != "dy":
+            #if  "ttbar" in sample:
+            #if group != "data":
+            #    continue
+            if sample not in ["data_D"]:
                 continue
-            # if 'dy400to800' not in sample:
+            #if group !=  "other_mc":
             #    continue
             if group == "data":
                 datasets_data.append(sample)
@@ -265,8 +273,7 @@ if __name__ == "__main__":
         print(f"Processing {lbl}")
         arg_sets = []
         for d in datasets:
-            arg_sets.append({"dataset": d})
-
+            arg_sets.append({"dataset":d})
         tick1 = time.time()
         parameters["samp_infos"] = load_samples(datasets, parameters)
         timings[f"load {lbl}"] = time.time() - tick1

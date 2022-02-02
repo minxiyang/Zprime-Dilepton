@@ -1,52 +1,20 @@
 import numpy as np
 import math
-
+import pandas as pd
 from python.utils import p4_sum, delta_r, cs_variables
 
 
-def find_dimuon(objs):
+def find_dimuon(objs, dataset, is_mc=False):
+
     objs1 = objs[objs.charge > 0]
     objs2 = objs[objs.charge < 0]
     objs1["mu_idx"] = objs1.index
     objs2["mu_idx"] = objs2.index
-    """
-    px1 = objs1.pt * np.cos(objs1.phi)
-    py1 = objs1.pt * np.sin(objs1.phi)
-    pz1 = objs1.pt * np.sinh(objs1.eta)
-    e1 = np.sqrt(px1**2 + py1**2 + pz1**2 + objs1.mass**2)
-    px2 = objs2.pt * np.cos(objs2.phi)
-    py2 = objs2.pt * np.sin(objs2.phi)
-    pz2 = objs2.pt * np.sinh(objs2.eta)
-    e2 = np.sqrt(px2**2 + py2**2 + pz2**2 + objs2.mass**2)
-
-    pairs_m = 2*(0.511**2 + (np.array([e1]).T).dot([e2]) - (np.array([px1]).T).dot([px2]) - (np.array([py1]).T).dot([py2]) - (np.array([pz1]).T).dot([pz2]))
-    pairs_m = np.sqrt(pairs_m)
-    n = len(e1)+len(e2)
-    if n == 2:
-        return [objs1.iloc[0].mu_idx, objs2.iloc[0].mu_idx, pairs_m]
-
-    ind = np.argmin(np.abs(pairs_m - 91.1876))
-    ind = np.unravel_index(ind, pairs_m.shape)
-    mass = pairs_m[ind]
-    if abs(mass-91.1876) < 20:
-        return [objs1.iloc[ind[0]].mu_idx, objs2.iloc[ind[1]].mu_idx, mass]
-    else:
-        idx1=objs1.pt.idxmax()
-        idx2=objs2.pt.idxmax()
-        #mass = pairs_m[(idx1[1],idx)]
-        return [idx1, idx2, mass]
-    #if objs1.shape[0]==0:
-    #    print("obj1 empty")
-    #if objs2.shape[0]==0:
-    #    print("obj2 empty")
-    """
 
     dmass = 20.0
 
     for i in range(objs1.shape[0]):
         for j in range(objs2.shape[0]):
-            # print(objs1.iloc[i].pt)
-            # print(objs2.iloc[j].pt)
             px1_ = objs1.iloc[i].pt * np.cos(objs1.iloc[i].phi)
             py1_ = objs1.iloc[i].pt * np.sin(objs1.iloc[i].phi)
             pz1_ = objs1.iloc[i].pt * np.sinh(objs1.iloc[i].eta)
@@ -62,33 +30,35 @@ def find_dimuon(objs):
                 - (pz1_ + pz2_) ** 2
             )
             mass = math.sqrt(max(0, m2))
+
             if abs(mass - 91.1876) < dmass:
                 dmass = abs(mass - 91.1876)
                 obj1_selected = objs1.iloc[i]
                 obj2_selected = objs2.iloc[j]
                 idx1 = objs1.iloc[i].mu_idx
-                # print("        idx1=",idx1)
                 idx2 = objs2.iloc[j].mu_idx
+
                 dimuon_mass = mass
-                gpx1_ = objs1.iloc[i].pt_gen * np.cos(objs1.iloc[i].phi_gen)
-                gpy1_ = objs1.iloc[i].pt_gen * np.sin(objs1.iloc[i].phi_gen)
-                gpz1_ = objs1.iloc[i].pt_gen * np.sinh(objs1.iloc[i].eta_gen)
-                ge1_ = np.sqrt(
-                    gpx1_ ** 2 + gpy1_ ** 2 + gpz1_ ** 2 + objs1.iloc[i].mass ** 2
-                )
-                gpx2_ = objs2.iloc[j].pt_gen * np.cos(objs2.iloc[j].phi_gen)
-                gpy2_ = objs2.iloc[j].pt_gen * np.sin(objs2.iloc[j].phi_gen)
-                gpz2_ = objs2.iloc[j].pt_gen * np.sinh(objs2.iloc[j].eta_gen)
-                ge2_ = np.sqrt(
-                    gpx2_ ** 2 + gpy2_ ** 2 + gpz2_ ** 2 + objs2.iloc[j].mass ** 2
-                )
-                gm2 = (
-                    (ge1_ + ge2_) ** 2
-                    - (gpx1_ + gpx2_) ** 2
-                    - (gpy1_ + gpy2_) ** 2
-                    - (gpz1_ + gpz2_) ** 2
-                )
-                dimuon_mass_gen = math.sqrt(max(0, gm2))
+                if is_mc:
+                    gpx1_ = objs1.iloc[i].pt_gen * np.cos(objs1.iloc[i].phi_gen)
+                    gpy1_ = objs1.iloc[i].pt_gen * np.sin(objs1.iloc[i].phi_gen)
+                    gpz1_ = objs1.iloc[i].pt_gen * np.sinh(objs1.iloc[i].eta_gen)
+                    ge1_ = np.sqrt(
+                        gpx1_ ** 2 + gpy1_ ** 2 + gpz1_ ** 2 + objs1.iloc[i].mass ** 2
+                    )
+                    gpx2_ = objs2.iloc[j].pt_gen * np.cos(objs2.iloc[j].phi_gen)
+                    gpy2_ = objs2.iloc[j].pt_gen * np.sin(objs2.iloc[j].phi_gen)
+                    gpz2_ = objs2.iloc[j].pt_gen * np.sinh(objs2.iloc[j].eta_gen)
+                    ge2_ = np.sqrt(
+                        gpx2_ ** 2 + gpy2_ ** 2 + gpz2_ ** 2 + objs2.iloc[j].mass ** 2
+                    )
+                    gm2 = (
+                        (ge1_ + ge2_) ** 2
+                        - (gpx1_ + gpx2_) ** 2
+                        - (gpy1_ + gpy2_) ** 2
+                        - (gpz1_ + gpz2_) ** 2
+                    )
+                    dimuon_mass_gen = math.sqrt(max(0, gm2))
 
     if dmass == 20:
         obj1 = objs1.loc[objs1.pt.idxmax()]
@@ -109,32 +79,38 @@ def find_dimuon(objs):
         )
         mass = math.sqrt(max(0, m2))
         dimuon_mass = mass
-        gpx1_ = obj1.pt_gen * np.cos(obj1.phi_gen)
-        gpy1_ = obj1.pt_gen * np.sin(obj1.phi_gen)
-        gpz1_ = obj1.pt_gen * np.sinh(obj1.eta_gen)
-        ge1_ = np.sqrt(gpx1_ ** 2 + gpy1_ ** 2 + gpz1_ ** 2 + obj1.mass ** 2)
-        gpx2_ = obj2.pt_gen * np.cos(obj2.phi_gen)
-        gpy2_ = obj2.pt_gen * np.sin(obj2.phi_gen)
-        gpz2_ = obj2.pt_gen * np.sinh(obj2.eta_gen)
-        ge2_ = np.sqrt(gpx2_ ** 2 + gpy2_ ** 2 + gpz2_ ** 2 + obj2.mass ** 2)
-        gm2 = (
-            (ge1_ + ge2_) ** 2
-            - (gpx1_ + gpx2_) ** 2
-            - (gpy1_ + gpy2_) ** 2
-            - (gpz1_ + gpz2_) ** 2
-        )
-        dimuon_mass_gen = math.sqrt(max(0, gm2))
+
+        if is_mc:
+            gpx1_ = obj1.pt_gen * np.cos(obj1.phi_gen)
+            gpy1_ = obj1.pt_gen * np.sin(obj1.phi_gen)
+            gpz1_ = obj1.pt_gen * np.sinh(obj1.eta_gen)
+            ge1_ = np.sqrt(gpx1_ ** 2 + gpy1_ ** 2 + gpz1_ ** 2 + obj1.mass ** 2)
+            gpx2_ = obj2.pt_gen * np.cos(obj2.phi_gen)
+            gpy2_ = obj2.pt_gen * np.sin(obj2.phi_gen)
+            gpz2_ = obj2.pt_gen * np.sinh(obj2.eta_gen)
+            ge2_ = np.sqrt(gpx2_ ** 2 + gpy2_ ** 2 + gpz2_ ** 2 + obj2.mass ** 2)
+            gm2 = (
+                (ge1_ + ge2_) ** 2
+                - (gpx1_ + gpx2_) ** 2
+                - (gpy1_ + gpy2_) ** 2
+                - (gpz1_ + gpz2_) ** 2
+            )
+            dimuon_mass_gen = math.sqrt(max(0, gm2))
+
         obj1_selected = obj1
         obj2_selected = obj2
         idx1 = objs1.pt.idxmax()
         idx2 = objs2.pt.idxmax()
-
     if obj1_selected.pt > obj2_selected.pt:
-        # return pd.Series([idx1,idx2,dimuon_mass],index=['idx1','idx2', 'mass'])
-        return [idx1, idx2, dimuon_mass, dimuon_mass_gen]
+        if is_mc:
+            return [idx1, idx2, dimuon_mass, dimuon_mass_gen]
+        else:
+            return [idx1, idx2, dimuon_mass]
     else:
-        # return pd.Series([idx2,idx1,dimuon_mass],index=['idx1','idx2', 'mass'])
-        return [idx2, idx1, dimuon_mass, dimuon_mass_gen]
+        if is_mc:
+            return [idx2, idx1, dimuon_mass, dimuon_mass_gen]
+        else:
+            return [idx2, idx1, dimuon_mass]
 
 
 def fill_muons(processor, output, mu1, mu2, dimuon_mass, dimuon_mass_gen, is_mc):
@@ -218,7 +194,10 @@ def fill_muons(processor, output, mu1, mu2, dimuon_mass, dimuon_mass_gen, is_mc)
     output["mu1_iso"] = mu1.tkRelIso
     output["mu2_iso"] = mu2.tkRelIso
     output.dimuon_mass = dimuon_mass
-    output.dimuon_mass_gen = dimuon_mass_gen
+    if is_mc:
+        output.dimuon_mass_gen = dimuon_mass_gen
+    else:
+        output.dimuon_mass_gen = -999.0
     output["mu1_pt_over_mass"] = output.mu1_pt.values / output.dimuon_mass.values
     output["mu2_pt_over_mass"] = output.mu2_pt.values / output.dimuon_mass.values
 
