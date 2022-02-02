@@ -4,7 +4,7 @@ import pandas as pd
 from python.utils import p4_sum, delta_r, cs_variables
 
 
-def find_dimuon(objs, dataset, is_mc=False):
+def find_dimuon(objs, is_mc=False):
 
     objs1 = objs[objs.charge > 0]
     objs2 = objs[objs.charge < 0]

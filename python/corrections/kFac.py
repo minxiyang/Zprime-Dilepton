@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def kFac(mass, region, flavor):
 
     if flavor == "mu":
@@ -28,6 +31,7 @@ def kFac(mass, region, flavor):
                 5.58804e-15,
                 -3.92687e-19,
             ]
+        # else:
 
     correction = pars[0]
     for i in range(1, 6):

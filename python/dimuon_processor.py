@@ -315,9 +315,7 @@ class DimuonProcessor(processor.ProcessorABC):
                     self.apply_to_output(output)
                     return self.accumulator.identity()
 
-            result = muons.groupby("entry").apply(
-                find_dimuon, is_mc=is_mc, dataset=dataset
-            )
+            result = muons.groupby("entry").apply(find_dimuon, is_mc=is_mc)
             if is_mc:
                 dimuon = pd.DataFrame(
                     result.to_list(), columns=["idx1", "idx2", "mass", "mass_gen"]
