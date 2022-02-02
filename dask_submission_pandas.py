@@ -7,11 +7,8 @@ import coffea.processor as processor
 from coffea.processor import dask_executor, run_uproot_job
 from python.preprocessor import load_samples
 from python.utils import mkdir
-
-# import time
 import dask
 from dask.distributed import Client
-import copy
 
 dask.config.set({"temporary-directory": "/depot/cms/users/minxi/dask-temp/"})
 
