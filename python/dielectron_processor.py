@@ -104,7 +104,7 @@ class DielectronProcessor(processor.ProcessorABC):
         # Separate dataframe to keep track on weights
         # and their systematic variations
         weights = Weights(output)
-
+        ele_branches_local = ele_branches
         if is_mc:
             # For MC: Apply gen.weights, pileup weights, lumi weights,
             # L1 prefiring weights
@@ -132,8 +132,7 @@ class DielectronProcessor(processor.ProcessorABC):
             df["Electron", "pt_gen"] = df.GenPart[df.Electron.genPartIdx].pt
             df["Electron", "eta_gen"] = df.GenPart[df.Electron.genPartIdx].eta
             df["Electron", "phi_gen"] = df.GenPart[df.Electron.genPartIdx].phi
-            global ele_branches
-            ele_branches += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen"]
+            ele_branches_local += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen"]
 
         else:
             # For Data: apply Lumi mask
@@ -157,7 +156,7 @@ class DielectronProcessor(processor.ProcessorABC):
         if True:  # indent reserved for loop over pT variations
 
             # --- conversion from awkward to pandas --- #
-            electrons = ak.to_pandas(df.Electron[ele_branches])
+            electrons = ak.to_pandas(df.Electron[ele_branches_local])
             electrons = electrons.dropna()
             electrons = electrons.loc[:, ~electrons.columns.duplicated()]
             if self.timer:
@@ -565,8 +564,13 @@ class DielectronProcessor(processor.ProcessorABC):
         # a jet may or may not be selected depending on pT variation.
 
         for key, val in variables.items():
-            # output.loc[:, pd.IndexSlice[key, variation]] = val
             output.loc[:, key] = val
+
+        del df
+        del electrons
+        del jets
+        del e1
+        del e2
         return output
 
     def prepare_lookups(self):

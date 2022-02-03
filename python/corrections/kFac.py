@@ -1,6 +1,3 @@
-import numpy as np
-
-
 def kFac(mass, region, flavor):
 
     if flavor == "mu":

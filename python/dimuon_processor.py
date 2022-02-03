@@ -4,7 +4,6 @@ import numpy as np
 
 # np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
-import dask
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
 from coffea.lookup_tools import txt_converters, rochester_lookup
@@ -168,7 +167,7 @@ class DimuonProcessor(processor.ProcessorABC):
         # df['Muon', 'tkRelIso'] = df.Muon.tkRelIso
         # df['Muon', 'genPartIdx'] = df.Muon.genPartIdx
         if is_mc:
-
+            df["Muon", "event"] = df.event
             df["Muon", "pt_gen"] = df.GenPart[df.Muon.genPartIdx].pt
             df["Muon", "eta_gen"] = df.GenPart[df.Muon.genPartIdx].eta
             df["Muon", "phi_gen"] = df.GenPart[df.Muon.genPartIdx].phi
@@ -217,10 +216,11 @@ class DimuonProcessor(processor.ProcessorABC):
                     self.timer.add_checkpoint("GeoFit correction")
 
             # --- conversion from awkward to pandas --- #
-            global muon_branches
+            # global muon_branches
+            muon_branches_local = muon_branches
             if is_mc:
-                muon_branches += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen"]
-            muons = ak.to_pandas(df.Muon[muon_branches])
+                muon_branches_local += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen"]
+            muons = ak.to_pandas(df.Muon[muon_branches_local])
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
             muons = muons.dropna()
@@ -790,6 +790,12 @@ class DimuonProcessor(processor.ProcessorABC):
 
         for key, val in variables.items():
             output.loc[:, key] = val
+
+        del df
+        del muons
+        del jets
+        del mu1
+        del mu2
         return output
 
     def prepare_lookups(self):

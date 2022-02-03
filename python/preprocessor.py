@@ -149,11 +149,6 @@ class SamplesInfo(object):
         if self.debug:
             all_files = [all_files[0]]
 
-        # black_list=['root://cmsxrootd.fnal.gov///store/mc/RunIIAutumn18NanoAODv7/WZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8/NANOAODSIM/Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/100000/38C89C20-4BA4-E84C-A857-667A74B74D6F.root','root://cmsxrootd.fnal.gov///store/mc/RunIIAutumn18NanoAODv7/WZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8/NANOAODSIM/Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/70000/9E4D10AB-4D87-7149-9FF8-C05DC9B438F0.root','root://cmsxrootd.fnal.gov///store/mc/RunIIAutumn18NanoAODv7/WZ_TuneCP5_13TeV-pythia8/NANOAODSIM/Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/70000/99CE6A6B-C286-724F-9C99-702C1052FF77.root','root://cmsxrootd.fnal.gov///store/data/Run2018D/SingleMuon/NANOAOD/02Apr2020-v1/240000/22094471-2B01-C045-B0EB-DEF5C26B68FC.root','root://cmsxrootd.fnal.gov///store/data/Run2018D/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/130000/195BC720-372C-6943-849A-A6D5A2CE81A8.root','root://cmsxrootd.fnal.gov///store/data/Run2018D/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/280000/707A40FB-CECA-4840-860C-ABE15D2F21F5.root','root://cmsxrootd.fnal.gov///store/data/Run2018D/SingleMuon/NANOAOD/02Apr2020-v1/40000/BA52ADD7-9A8F-AA43-8901-32167BD2215A.root','root://cmsxrootd.fnal.gov///store/mc/RunIIAutumn18NanoAODv7/WZTo3LNu_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/Nano02Apr2020_102X_upgrade2018_realistic_v21_ext1-v1/60000/BA21AD3C-CC5B-EB40-ACF8-A12922BAC5FA.root']
-        # for bfile in black_list:
-        #    if bfile in all_files: all_files.remove(bfile)
-        # print(f"Loading {sample}: {len(all_files)} files")
-
         sumGenWgts = 0
         nGenEvts = 0
         if use_dask:

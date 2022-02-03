@@ -233,7 +233,7 @@ if __name__ == "__main__":
             n_workers=parameters["n_workers"],
             # dashboard_address=dash_local,
             threads_per_worker=1,
-            memory_limit="3.6GB",
+            memory_limit="4.0GB",
         )
     else:
         parameters["client"] = Client(
@@ -246,15 +246,15 @@ if __name__ == "__main__":
     blackList = ["Wantitop", "tW"]
     for group, samples in smp.items():
         for sample in samples:
-            if sample in blackList:  # ["WZ", "tW", "WZ2L2Q", "Wantitop"]:
+            if sample in blackList:
                 continue
             # if  "ttbar" in sample:
             # if group != "data":
             #    continue
-            if sample not in ["data_D"]:
-                continue
-            # if group !=  "other_mc":
+            # if sample not in ["tW"]:
             #    continue
+            if group != "other_mc":
+                continue
             if group == "data":
                 datasets_data.append(sample)
             else:

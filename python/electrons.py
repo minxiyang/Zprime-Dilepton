@@ -144,7 +144,7 @@ def fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc):
         "dielectron_dPhi",
         "dielectron_dR",
         "dielectron_rap",
-        "dielecron_cos_theta_cs",
+        "dielectron_cos_theta_cs",
         "dielectron_phi_cs",
         "wgt_nominal",
         "pu_wgt",
