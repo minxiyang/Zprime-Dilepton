@@ -246,12 +246,12 @@ if __name__ == "__main__":
     blackList = ["Wantitop", "tW"]
     for group, samples in smp.items():
         for sample in samples:
-            if sample in blackList:
-                continue
+            # if sample not in blackList:
+            #    continue
             # if  "ttbar" in sample:
             # if group != "data":
             #    continue
-            # if sample not in ["tW"]:
+            # if sample not in ["ttbar_lep", "WWinclusive"]:
             #    continue
             if group != "other_mc":
                 continue

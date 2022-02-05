@@ -44,8 +44,9 @@ def setFrame(xtitle, ytitle, logx, logy, xRange, yRange, flavor, year):
     if logx:
         axs[1].set_xticks([200, 300, 1000, 2000])
     axs[1].get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    locmaj = LogLocator(base=10.0, subs=(1.0,), numticks=100)
-    locmin = LogLocator(base=10.0, subs=np.arange(2, 10) * 0.1, numticks=100)
+    if logy:
+        locmaj = LogLocator(base=10.0, subs=(1.0,), numticks=100)
+        locmin = LogLocator(base=10.0, subs=np.arange(2, 10) * 0.1, numticks=100)
     axs[1].hlines(
         (-0.5, 0, 0.5), xRange[0], xRange[1], color="black", linestyles="dotted"
     )
@@ -61,17 +62,18 @@ def setFrame(xtitle, ytitle, logx, logy, xRange, yRange, flavor, year):
             [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
         )
     ax_signal.set_xticks([])
-    locmaj = LogLocator(base=10.0, subs=(1.0,), numticks=100)
-    ax_signal.get_yaxis().set_major_locator(locmaj)
-    ax_signal.yaxis.set_minor_locator(locmin)
-    ax_signal.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+    if logy:
+        locmaj = LogLocator(base=10.0, subs=(1.0,), numticks=100)
+        ax_signal.get_yaxis().set_major_locator(locmaj)
+        ax_signal.yaxis.set_minor_locator(locmin)
+        ax_signal.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     if logy:
         axs[0].set_yticks(
             [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
         )
-    axs[0].get_yaxis().set_major_locator(locmaj)
-    axs[0].yaxis.set_minor_locator(locmin)
-    axs[0].yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        axs[0].get_yaxis().set_major_locator(locmaj)
+        axs[0].yaxis.set_minor_locator(locmin)
+        axs[0].yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     if flavor == "el":
         lumi = lumi_el[year]
     else:
@@ -87,8 +89,8 @@ def setFrame(xtitle, ytitle, logx, logy, xRange, yRange, flavor, year):
         fontsize=28,
     )
     axs[0].text(
-        0.88,
-        0.95,
+        0.84,
+        0.97,
         "CMS",
         verticalalignment="top",
         horizontalalignment="right",
@@ -97,8 +99,8 @@ def setFrame(xtitle, ytitle, logx, logy, xRange, yRange, flavor, year):
         weight="bold",
     )
     axs[0].text(
-        0.88,
-        0.85,
+        0.9,
+        0.9,
         "Preliminary",
         verticalalignment="top",
         horizontalalignment="right",

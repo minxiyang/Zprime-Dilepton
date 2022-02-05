@@ -223,7 +223,7 @@ class DimuonProcessor(processor.ProcessorABC):
             muons = ak.to_pandas(df.Muon[muon_branches_local])
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
-            muons = muons.dropna()
+            # muons = muons.dropna()
             muons = muons.loc[:, ~muons.columns.duplicated()]
             # --------------------------------------------------------#
             # Select muons that pass pT, eta, isolation cuts,
@@ -480,12 +480,12 @@ class DimuonProcessor(processor.ProcessorABC):
                 continue
             output[f"wgt_{wgt}"] = weights.get_weight(wgt)
 
-        if is_mc:
-            output = output[output.dimuon_mass_gen > 0]
+        # if is_mc:
+        #    output = output[output.dimuon_mass_gen > 0]
 
         if is_mc and "dy" in output.s:
-            mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
-            mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
+            mass_bb = output[output["r"] == "bb"].dimuon_mass.to_numpy()
+            mass_be = output[output["r"] == "be"].dimuon_mass.to_numpy()
             output.loc[
                 ((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)), "wgt_nominal"
             ] = (

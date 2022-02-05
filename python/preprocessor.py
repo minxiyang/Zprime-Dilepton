@@ -195,10 +195,8 @@ class SamplesInfo(object):
         }
 
     def get_data(self, f):
-        # print(f)
         ret = {}
         tree = uproot.open(f, timeout=self.timeout)["Events"]
-        # tree = file["Events"]
         ret["data_entries"] = tree.num_entries
         return ret
 

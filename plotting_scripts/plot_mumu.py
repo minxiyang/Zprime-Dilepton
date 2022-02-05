@@ -13,11 +13,11 @@ def load2df(files):
 
     df = dd.read_parquet(files)
     field = [
-        "dielectron_mass",
-        "dielectron_cos_theta_cs",
+        "dimuon_mass",
+        "dimuon_cos_theta_cs",
         "njets",
-        "dielectron_mass_gen",
-        "pu_wgt",
+        "dimuon_mass_gen",
+        "wgt_nominal",
     ]
     out = df[field]
     out.compute()
@@ -37,17 +37,15 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
 
     if njets == -1:
 
-        var_array = df.loc[df["dielectron_mass"] > 120, var].compute()
-
+        var_array = df.loc[df["dimuon_mass"] > 120, var].compute()
+        print(var_array)
         if iswgt:
 
-            wgt = df.loc[(df["dielectron_mass"] > 120), "pu_wgt"].compute()
+            wgt = df.loc[(df["dimuon_mass"] > 120), "wgt_nominal"].compute()
             wgt[wgt < 0] = 0
             if iscut:
                 # print(wgt[genmass > masscut])
-                genmass = df.loc[
-                    (df["dielectron_mass"] > 120), "dielectron_mass"
-                ].compute()
+                genmass = df.loc[(df["dimuon_mass"] > 120), "dimuon_mass"].compute()
                 wgt[genmass > masscut] = 0
             vals, bins = np.histogram(var_array, bins=bins, weights=wgt)
             vals2, bins = np.histogram(var_array, bins=bins, weights=wgt ** 2)
@@ -59,18 +57,17 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
     else:
 
         var_array = df.loc[
-            (df["njets"] == njets) & (df["dielectron_mass"] > 120), var
+            (df["njets"] == njets) & (df["dimuon_mass"] > 120), var
         ].compute()
 
         if iswgt:
             wgt = df.loc[
-                (df["njets"] == njets) & (df["dielectron_mass"] > 120), "pu_wgt"
+                (df["njets"] == njets) & (df["dimuon_mass"] > 120), "wgt_nominal"
             ].compute()
             wgt[wgt < 0] = 0
             if iscut:
                 genmass = df.loc[
-                    (df["dielectron_mass"] > 120) & (df["njets"] == njets),
-                    "dielectron_mass",
+                    (df["dimuon_mass"] > 120) & (df["njets"] == njets), "dimuon_mass"
                 ].compute()
                 wgt[genmass > masscut] = 0
             vals, bins = np.histogram(var_array, bins=bins, weights=wgt)
@@ -170,28 +167,28 @@ if __name__ == "__main__":
     bins_cs = np.linspace(-1.0, 1.0, 26)
     bins_jets = np.linspace(0, 7, 8)
     path = "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/"
-    path_dy = path + "dy_ee/*/*.parquet"
+    path_dy = path + "dy_mumu/*/*.parquet"
     dy_files = glob.glob(path_dy)
-    path_data = path + "UL_ee/*/*.parquet"
+    path_data = path + "pre_UL_mumu/*/*.parquet"
     data_files = glob.glob(path_data)
-    path_tt_inclusive = path + "other_mc_ee/ttbar_lep/*.parquet"
+    path_tt_inclusive = path + "other_mc_mumuv2/ttbar_lep/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
-    path_tt = path + "other_mc_ee/ttbar_lep_*/*.parquet"
+    path_tt = path + "other_mc_mumuv2/ttbar_lep_*/*.parquet"
     tt_files = glob.glob(path_tt)
     tt_files = [file_ for file_ in tt_files if "ext" not in file_]
-    path_wz = path + "other_mc_ee/WZ*/*.parquet"
+    path_wz = path + "other_mc_mumuv2/WZ*/*.parquet"
     wz_files = glob.glob(path_wz)
-    path_tw1 = path + "other_mc_ee/tW/*.parquet"
-    path_tw2 = path + "other_mc_ee/Wantitop/*.parquet"
+    path_tw1 = path + "other_mc_mumuv2/tW/*.parquet"
+    path_tw2 = path + "other_mc_mumuv2/Wantitop/*.parquet"
     tw_files = glob.glob(path_tw1) + glob.glob(path_tw2)
-    path_zz = path + "other_mc_ee/ZZ*/*.parquet"
+    path_zz = path + "other_mc_mumuv2/ZZ*/*.parquet"
     zz_files = glob.glob(path_zz)
     zz_files = [file_ for file_ in zz_files if "ext" not in file_]
-    path_tau = path + "other_mc_ee/dyInclusive50/*.parquet"
+    path_tau = path + "other_mc_mumuv2/dyInclusive50/*.parquet"
     tau_files = glob.glob(path_tau)
-    path_ww = path + "other_mc_ee/WW*0/*.parquet"
+    path_ww = path + "other_mc_mumuv2/WW*0/*.parquet"
     ww_files = glob.glob(path_ww)
-    path_ww_inclusive = path + "other_mc_ee/WWinclusive/*.parquet"
+    path_ww_inclusive = path + "other_mc_mumuv2/WWinclusive/*.parquet"
     ww_inclusive_files = glob.glob(path_ww_inclusive)
 
     file_dict = {
@@ -243,7 +240,7 @@ if __name__ == "__main__":
             iswgt = True
 
         mass_inclu[key] = df2hist(
-            "dielectron_mass",
+            "dimuon_mass",
             df,
             bins_mass,
             masscut=masscut,
@@ -252,7 +249,7 @@ if __name__ == "__main__":
             iswgt=iswgt,
         )
         mass_0j[key] = df2hist(
-            "dielectron_mass",
+            "dimuon_mass",
             df,
             bins_mass,
             masscut=masscut,
@@ -261,7 +258,7 @@ if __name__ == "__main__":
             iswgt=iswgt,
         )
         mass_1j[key] = df2hist(
-            "dielectron_mass",
+            "dimuon_mass",
             df,
             bins_mass,
             masscut=masscut,
@@ -270,7 +267,7 @@ if __name__ == "__main__":
             iswgt=iswgt,
         )
         mass_2j[key] = df2hist(
-            "dielectron_mass",
+            "dimuon_mass",
             df,
             bins_mass,
             masscut=masscut,
@@ -280,7 +277,7 @@ if __name__ == "__main__":
         )
 
         cs_inclu[key] = df2hist(
-            "dielectron_cos_theta_cs",
+            "dimuon_cos_theta_cs",
             df,
             bins_cs,
             masscut=masscut,
@@ -290,7 +287,7 @@ if __name__ == "__main__":
             scale=False,
         )
         cs_0j[key] = df2hist(
-            "dielectron_cos_theta_cs",
+            "dimuon_cos_theta_cs",
             df,
             bins_cs,
             masscut=masscut,
@@ -300,7 +297,7 @@ if __name__ == "__main__":
             scale=False,
         )
         cs_1j[key] = df2hist(
-            "dielectron_cos_theta_cs",
+            "dimuon_cos_theta_cs",
             df,
             bins_cs,
             masscut=masscut,
@@ -310,7 +307,7 @@ if __name__ == "__main__":
             scale=False,
         )
         cs_2j[key] = df2hist(
-            "dielectron_cos_theta_cs",
+            "dimuon_cos_theta_cs",
             df,
             bins_cs,
             masscut=masscut,
@@ -339,7 +336,7 @@ if __name__ == "__main__":
         "$WW$",
         "$tW$",
         "$t\\bar{t}$",
-        "$\gamma/\mathrm{Z}\\rightarrow e^{+}e^{-}$",
+        "$\gamma/\mathrm{Z}\\rightarrow \mu^{+}\mu^{-}$",
     ]
     colors = ["yellow", "red", "darkred", "brown", "blue", "skyblue", "darkgreen"]
 
@@ -379,15 +376,15 @@ if __name__ == "__main__":
         mass_2j["tt"],
         mass_2j["dy"],
     ]
-    name = "dielectron_mass_2nbjets"
+    name = "dimuon_mass_2nbjets"
     axes_mass2j = setFrame(
-        "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
+        "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         True,
         True,
         [120, 6000],
         [1e-7, 1e5],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes_mass2j, data_2j, MCs, labels, colors, name)
@@ -401,15 +398,15 @@ if __name__ == "__main__":
         mass_1j["tt"],
         mass_1j["dy"],
     ]
-    name = "dielectron_mass_1nbjets"
+    name = "dimuon_mass_1nbjets"
     axes_mass1j = setFrame(
-        "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
+        "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         True,
         True,
         [120, 6000],
         [1e-6, 1e6],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes_mass1j, data_1j, MCs, labels, colors, name)
@@ -423,15 +420,15 @@ if __name__ == "__main__":
         mass_0j["tt"],
         mass_0j["dy"],
     ]
-    name = "dielectron_mass_0nbjets"
+    name = "dimuon_mass_0nbjets"
     axes_mass0j = setFrame(
-        "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
+        "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         True,
         True,
         [120, 6000],
         [1e-5, 1e7],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes_mass0j, data_0j, MCs, labels, colors, name)
@@ -445,15 +442,15 @@ if __name__ == "__main__":
         mass_inclu["tt"],
         mass_inclu["dy"],
     ]
-    name = "dielectron_mass_inclu"
+    name = "dimuon_mass_inclu"
     axes_mass = setFrame(
-        "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
+        "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         True,
         True,
         [120, 6000],
         [1e-5, 1e7],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes_mass, data_inclu, MCs, labels, colors, name)
@@ -490,7 +487,7 @@ if __name__ == "__main__":
         cs_2j["tt"],
         cs_2j["dy"],
     ]
-    name = "dielectron_cs_2nbjets"
+    name = "dimuon_cs_2nbjets"
     axes_cs2j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
@@ -498,7 +495,7 @@ if __name__ == "__main__":
         False,
         [-1.0, 1.0],
         [0, 3000],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes_cs2j, data_2j, MCs, labels, colors, name)
@@ -512,7 +509,7 @@ if __name__ == "__main__":
         cs_1j["tt"],
         cs_1j["dy"],
     ]
-    name = "dielectron_cs_1nbjets"
+    name = "dimuon_cs_1nbjets"
     axes_cs1j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
@@ -520,7 +517,7 @@ if __name__ == "__main__":
         False,
         [-1.0, 1.0],
         [0, 15000],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes_cs1j, data_1j, MCs, labels, colors, name)
@@ -534,7 +531,7 @@ if __name__ == "__main__":
         cs_0j["tt"],
         cs_0j["dy"],
     ]
-    name = "dielectron_cs_0nbjets"
+    name = "dimuon_cs_0nbjets"
     axes_cs0j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
@@ -542,7 +539,7 @@ if __name__ == "__main__":
         False,
         [-1.0, 1.0],
         [0, 75000],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes_cs0j, data_0j, MCs, labels, colors, name)
@@ -556,7 +553,7 @@ if __name__ == "__main__":
         cs_inclu["tt"],
         cs_inclu["dy"],
     ]
-    name = "dielectron_cs_inclusive"
+    name = "dimuon_cs_inclusive"
     axes_cs = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
@@ -564,7 +561,7 @@ if __name__ == "__main__":
         False,
         [-1.0, 1.0],
         [0, 75000],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes_cs, data_inclu, MCs, labels, colors, name)
@@ -586,7 +583,7 @@ if __name__ == "__main__":
         nbjets["tt"],
         nbjets["dy"],
     ]
-    name = "dielectron_nbjets"
+    name = "dimuon_nbjets"
     axes = setFrame(
         "Number of B-jets",
         "Events",
@@ -594,7 +591,7 @@ if __name__ == "__main__":
         True,
         [0, 7.0],
         [1e-5, 1e11],
-        "el",
+        "mu",
         "2018",
     )
     plots(axes, data, MCs, labels, colors, name)

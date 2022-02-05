@@ -162,6 +162,11 @@ def fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc):
 
     # Fill dielectron variables
     output.dielectron_mass = dielectron_mass
+    if is_mc:
+        output.dielectron_mass_gen = dielectron_mass_gen
+    else:
+        output.dielectron_mass_gen = -999.0
+
     ee = p4_sum(e1, e2)
     for v in ["pt", "eta", "phi", "mass", "rap"]:
         name = f"dielectron_{v}"
