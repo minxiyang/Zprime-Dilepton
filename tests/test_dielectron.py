@@ -66,7 +66,7 @@ if __name__ == "__main__":
     print(f"Finished everything in {elapsed} s.")
     diele_mass = df.loc[df.event == 47984, "dielectron_mass"].values[0]
     wgt = df.loc[df.event == 47984, "pu_wgt"].values[0]
-
+    print([diele_mass, wgt]) 
     assert df.shape[0] == 9620
     assert almost_equal(diele_mass, 478.945869112157)
     assert almost_equal(wgt, 0.25154298543930054)
