@@ -52,7 +52,7 @@ def find_dielectron(objs, is_mc=False):
                     dielectron_mass_gen = math.sqrt(max(0, gm2))
 
     if dmass == 20:
-        objs = objs.sort_values(by="pt_raw")
+        objs = objs.sort_values(by="pt")
         obj1 = objs.iloc[-1]
         obj2 = objs.iloc[-2]
         px1_ = obj1.pt * np.cos(obj1.phi)
@@ -90,6 +90,10 @@ def find_dielectron(objs, is_mc=False):
             )
             dielectron_mass_gen = math.sqrt(max(0, gm2))
     if is_mc:
+        log1 = objs.loc[objs.el_idx == idx1, "idx"].to_numpy()
+        log2 = objs.loc[objs.el_idx == idx2, "idx"].to_numpy()
+        if log1[0] == -1 or log2[0] == -1:
+            dielectron_mass_gen = -999.0
         return [idx1, idx2, dielectron_mass, dielectron_mass_gen]
     else:
         return [idx1, idx2, dielectron_mass]
@@ -156,7 +160,7 @@ def fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc):
         output[n] = 0.0
 
     # Fill single electron variables
-    for v in ["pt", "eta", "phi"]:
+    for v in ["pt", "eta", "phi", "pt_raw", "eta_raw", "phi_raw"]:
         output[f"e1_{v}"] = e1[v]
         output[f"e2_{v}"] = e2[v]
 

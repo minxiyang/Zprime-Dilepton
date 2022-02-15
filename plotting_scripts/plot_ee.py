@@ -18,6 +18,10 @@ def load2df(files):
         "njets",
         "dielectron_mass_gen",
         "pu_wgt",
+        "r",
+        "event",
+        "run",
+        "luminosityBlock",
     ]
     out = df[field]
     out.compute()
@@ -34,19 +38,24 @@ def chunk(files, size):
 
 
 def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=True):
-
+    # if not iswgt:
+    #    df = df.drop_duplicates(subset=["dielectron_mass"])
+    # df["dielectron_mass"].compute()
     if njets == -1:
 
-        var_array = df.loc[df["dielectron_mass"] > 120, var].compute()
-
+        var_array = df.loc[
+            (df["dielectron_mass"] > 120) & (df["r"] != "ee"), var
+        ].compute()
         if iswgt:
 
-            wgt = df.loc[(df["dielectron_mass"] > 120), "pu_wgt"].compute()
+            wgt = df.loc[
+                (df["dielectron_mass"] > 120) & (df["r"] != "ee"), "pu_wgt"
+            ].compute()
             wgt[wgt < 0] = 0
             if iscut:
                 # print(wgt[genmass > masscut])
                 genmass = df.loc[
-                    (df["dielectron_mass"] > 120), "dielectron_mass"
+                    (df["dielectron_mass"] > 120) & (df["r"] != "ee"), "dielectron_mass"
                 ].compute()
                 wgt[genmass > masscut] = 0
             vals, bins = np.histogram(var_array, bins=bins, weights=wgt)
@@ -59,17 +68,23 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
     else:
 
         var_array = df.loc[
-            (df["njets"] == njets) & (df["dielectron_mass"] > 120), var
+            (df["njets"] == njets) & (df["dielectron_mass"] > 120) & (df["r"] != "ee"),
+            var,
         ].compute()
 
         if iswgt:
             wgt = df.loc[
-                (df["njets"] == njets) & (df["dielectron_mass"] > 120), "pu_wgt"
+                (df["njets"] == njets)
+                & (df["dielectron_mass"] > 120)
+                & (df["r"] != "ee"),
+                "pu_wgt",
             ].compute()
             wgt[wgt < 0] = 0
             if iscut:
                 genmass = df.loc[
-                    (df["dielectron_mass"] > 120) & (df["njets"] == njets),
+                    (df["dielectron_mass"] > 120)
+                    & (df["njets"] == njets)
+                    & (df["r"] != "ee"),
                     "dielectron_mass",
                 ].compute()
                 wgt[genmass > masscut] = 0
@@ -149,8 +164,8 @@ def plots(axes, data, MCs, labels, colors, name):
 if __name__ == "__main__":
 
     client_args = {
-        "n_workers": 48,
-        "memory_limit": "3.0GB",
+        "n_workers": 40,
+        "memory_limit": "4.0GB",
         "timeout": 120,
     }
 
@@ -170,28 +185,28 @@ if __name__ == "__main__":
     bins_cs = np.linspace(-1.0, 1.0, 26)
     bins_jets = np.linspace(0, 7, 8)
     path = "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/"
-    path_dy = path + "dy_ee/*/*.parquet"
+    path_dy = path + "dy_eev2/*/*.parquet"
     dy_files = glob.glob(path_dy)
-    path_data = path + "UL_ee/*/*.parquet"
+    path_data = path + "UL_eev2/*/*.parquet"
     data_files = glob.glob(path_data)
-    path_tt_inclusive = path + "other_mc_ee/ttbar_lep/*.parquet"
+    path_tt_inclusive = path + "other_mc_eev2/ttbar_lep/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
-    path_tt = path + "other_mc_ee/ttbar_lep_*/*.parquet"
+    path_tt = path + "other_mc_eev2/ttbar_lep_*/*.parquet"
     tt_files = glob.glob(path_tt)
     tt_files = [file_ for file_ in tt_files if "ext" not in file_]
-    path_wz = path + "other_mc_ee/WZ*/*.parquet"
+    path_wz = path + "other_mc_eev2/WZ*/*.parquet"
     wz_files = glob.glob(path_wz)
-    path_tw1 = path + "other_mc_ee/tW/*.parquet"
-    path_tw2 = path + "other_mc_ee/Wantitop/*.parquet"
+    path_tw1 = path + "other_mc_eev2/tW/*.parquet"
+    path_tw2 = path + "other_mc_eev2/Wantitop/*.parquet"
     tw_files = glob.glob(path_tw1) + glob.glob(path_tw2)
-    path_zz = path + "other_mc_ee/ZZ*/*.parquet"
+    path_zz = path + "other_mc_eev2/ZZ*/*.parquet"
     zz_files = glob.glob(path_zz)
     zz_files = [file_ for file_ in zz_files if "ext" not in file_]
-    path_tau = path + "other_mc_ee/dyInclusive50/*.parquet"
+    path_tau = path + "other_mc_eev2/dyInclusive50/*.parquet"
     tau_files = glob.glob(path_tau)
-    path_ww = path + "other_mc_ee/WW*0/*.parquet"
+    path_ww = path + "other_mc_eev2/WW*0/*.parquet"
     ww_files = glob.glob(path_ww)
-    path_ww_inclusive = path + "other_mc_ee/WWinclusive/*.parquet"
+    path_ww_inclusive = path + "other_mc_eev2/WWinclusive/*.parquet"
     ww_inclusive_files = glob.glob(path_ww_inclusive)
 
     file_dict = {
@@ -217,7 +232,18 @@ if __name__ == "__main__":
     cs_1j = {}
     cs_2j = {}
     nbjets = {}
-    for key in file_dict.keys():
+    for key in [
+        "dy",
+        "tt",
+        "tt_inclu",
+        "wz",
+        "tw",
+        "zz",
+        "tau",
+        "ww",
+        "ww_inclu",
+        "data",
+    ]:
         print(key)
         file_bag = chunk(file_dict[key], client_args["n_workers"])
         if len(file_bag) == 1:
@@ -238,7 +264,9 @@ if __name__ == "__main__":
             iscut = False
 
         if key == "data":
+            df = df.drop_duplicates(subset=["dielectron_mass"])
             iswgt = False
+            client.close()
         else:
             iswgt = True
 
@@ -331,7 +359,7 @@ if __name__ == "__main__":
             scale=False,
         )
 
-    client.close()
+    # client.close()
     labels = [
         "$\\tau\\tau$",
         "$ZZ$",

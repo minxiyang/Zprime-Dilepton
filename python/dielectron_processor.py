@@ -14,6 +14,7 @@ from python.corrections.pu_reweight import pu_lookups, pu_evaluator
 from python.corrections.l1prefiring_weights import l1pf_weights
 from python.electrons import find_dielectron, fill_electrons
 from python.jets import prepare_jets, fill_jets
+import copy
 
 # from python.jets import jet_id, jet_puid, gen_jet_pair_mass
 from python.corrections.kFac import kFac
@@ -96,7 +97,9 @@ class DielectronProcessor(processor.ProcessorABC):
 
         # All variables that we want to save
         # will be collected into the 'output' dataframe
-        output = pd.DataFrame({"run": df.run, "event": df.event})
+        output = pd.DataFrame(
+            {"run": df.run, "event": df.event, "luminosityBlock": df.luminosityBlock}
+        )
         output.index.name = "entry"
         output["npv"] = df.PV.npvs
         output["met"] = df.MET.pt
@@ -104,7 +107,7 @@ class DielectronProcessor(processor.ProcessorABC):
         # Separate dataframe to keep track on weights
         # and their systematic variations
         weights = Weights(output)
-        ele_branches_local = ele_branches
+        ele_branches_local = copy.copy(ele_branches)
         if is_mc:
             # For MC: Apply gen.weights, pileup weights, lumi weights,
             # L1 prefiring weights
@@ -132,7 +135,8 @@ class DielectronProcessor(processor.ProcessorABC):
             df["Electron", "pt_gen"] = df.GenPart[df.Electron.genPartIdx].pt
             df["Electron", "eta_gen"] = df.GenPart[df.Electron.genPartIdx].eta
             df["Electron", "phi_gen"] = df.GenPart[df.Electron.genPartIdx].phi
-            ele_branches_local += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen"]
+            df["Electron", "idx"] = df.Electron.genPartIdx
+            ele_branches_local += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen", "idx"]
 
         else:
             # For Data: apply Lumi mask
@@ -148,8 +152,8 @@ class DielectronProcessor(processor.ProcessorABC):
 
         # Save raw variables before computing any corrections
 
-        df["Electron", "pt_raw"] = df.Electron.pt * (df.Electron.scEtOverPt + 1.0)
-        df["Electron", "eta_raw"] = df.Electron.eta + df.Electron.deltaEtaSC
+        df["Electron", "pt_raw"] = df.Electron.pt
+        df["Electron", "eta_raw"] = df.Electron.eta
         df["Electron", "phi_raw"] = df.Electron.phi
 
         # for ...
@@ -157,8 +161,15 @@ class DielectronProcessor(processor.ProcessorABC):
 
             # --- conversion from awkward to pandas --- #
             electrons = ak.to_pandas(df.Electron[ele_branches_local])
+            electrons.pt = electrons.pt_raw * (electrons.scEtOverPt + 1.0)
+            electrons.eta = electrons.eta_raw + electrons.deltaEtaSC
             electrons = electrons.dropna()
             electrons = electrons.loc[:, ~electrons.columns.duplicated()]
+            if is_mc:
+                electrons.loc[electrons.idx == -1, "pt_gen"] = -999.0
+                electrons.loc[electrons.idx == -1, "eta_gen"] = -999.0
+                electrons.loc[electrons.idx == -1, "phi_gen"] = -999.0
+
             if self.timer:
                 self.timer.add_checkpoint("load electron data")
 
@@ -172,8 +183,8 @@ class DielectronProcessor(processor.ProcessorABC):
 
             # Define baseline muon selection (applied to pandas DF!)
             electrons["selection"] = (
-                (electrons.pt_raw > self.parameters["electron_pt_cut"])
-                & (abs(electrons.eta_raw) < self.parameters["electron_eta_cut"])
+                (electrons.pt > self.parameters["electron_pt_cut"])
+                & (abs(electrons.eta) < self.parameters["electron_eta_cut"])
                 & (electrons[self.parameters["electron_id"]] > 0)
             )
 
@@ -526,21 +537,13 @@ class DielectronProcessor(processor.ProcessorABC):
             [jets.index.get_level_values(0), jets.groupby(level=0).cumcount()],
             names=["entry", "subentry"],
         )
-
-        jets.loc[
-            (
-                (jets.pt < 30.0)
-                | (abs(jets.eta) > 2.4)
-                | (jets.btagDeepB < parameters["UL_btag_medium"][self.year])
-            ),
-            :,
-        ] = -999.0
         jets["selection"] = 0
         jets.loc[
             (
                 (jets.pt > 30.0)
                 & (abs(jets.eta) < 2.4)
                 & (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
+                & (jets.jetId >= 2)
             ),
             "selection",
         ] = 1
@@ -565,7 +568,10 @@ class DielectronProcessor(processor.ProcessorABC):
 
         for key, val in variables.items():
             output.loc[:, key] = val
-
+        #        if is_mc:
+        #            output = output.drop_duplicates(subset=['event'])
+        #        else:
+        #            output = output.drop_duplicates(subset=['run'])
         del df
         del electrons
         del jets

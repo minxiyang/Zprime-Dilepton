@@ -183,7 +183,18 @@ def invert(rot):
 
 # https://github.com/arizzi/PisaHmm/blob/master/boost_to_CS.h
 def cs_variables(mu1, mu2):
-    multiplier = mu2.charge
+
+    charge2 = mu2.charge.to_numpy()
+    charge1 = mu1.charge.to_numpy()
+    eta2 = mu2.eta.to_numpy()
+    eta1 = mu1.eta.to_numpy()
+    multiplier = charge2
+    multiplier[(charge1 != charge2) & (eta1 < eta2)] = -charge1[
+        (charge1 != charge2) & (eta1 < eta2)
+    ]
+    multiplier[(charge1 != charge2) & (eta1 >= eta2)] = charge2[
+        (charge1 != charge2) & (eta1 >= eta2)
+    ]
     mu1_px = mu1.pt * np.cos(mu1.phi)
     mu1_py = mu1.pt * np.sin(mu1.phi)
     mu1_pz = mu1.pt * np.sinh(mu1.eta)

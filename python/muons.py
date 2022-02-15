@@ -100,6 +100,12 @@ def find_dimuon(objs, is_mc=False):
         obj2_selected = obj2
         idx1 = objs1.pt.idxmax()
         idx2 = objs2.pt.idxmax()
+
+        log1 = obj1_selected.to_numpy()
+        log2 = obj2_selected.to_numpy()
+        if log1[0] == -1 or log2[0] == -1:
+            dimuon_mass_gen = -999.0
+
     if obj1_selected.pt > obj2_selected.pt:
         if is_mc:
             return [idx1, idx2, dimuon_mass, dimuon_mass_gen]

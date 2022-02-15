@@ -99,8 +99,8 @@ parameters = {
     "global_out_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
     "out_path": f"{args.year}_{args.label}_{local_time}",
     # "server": "root://xrootd.rcac.purdue.edu/",
-    # "server": "root://cmsxrootd.fnal.gov//",
-    "server": "/mnt/hadoop/",
+    "server": "root://cmsxrootd.fnal.gov//",
+    # "server": "/mnt/hadoop/",
     "datasets_from": "Zprime",
     "from_das": True,
     "chunksize": int(args.chunksize),
@@ -127,6 +127,7 @@ def saving_func(output, out_dir):
         return
     for ds in output.s.unique():
         df = output[output.s == ds]
+        df = df.drop_duplicates(subset=["run", "event", "luminosityBlock"])
         if df.shape[0] == 0:
             continue
         mkdir(f"{out_dir}/{ds}")
@@ -251,9 +252,9 @@ if __name__ == "__main__":
             # if  "ttbar" in sample:
             # if group != "data":
             #    continue
-            # if sample not in ["ttbar_lep", "WWinclusive"]:
+            # if sample not in ["data_A"]:
             #    continue
-            if group != "other_mc":
+            if group != "data":
                 continue
             if group == "data":
                 datasets_data.append(sample)

@@ -1,6 +1,7 @@
 import os
 import sys
-[sys.path.append(i) for i in ['.', '..']]
+
+[sys.path.append(i) for i in [".", ".."]]
 import time
 
 import coffea.processor as processor
@@ -11,11 +12,11 @@ from python.preprocessor import SamplesInfo
 import dask
 from dask.distributed import Client
 
-__all__ = ['Client']
+__all__ = ["Client"]
 
 
 def almost_equal(a, b):
-    return (abs(a - b) < 10e-8)
+    return abs(a - b) < 10e-8
 
 
 if __name__ == "__main__":
@@ -25,41 +26,47 @@ if __name__ == "__main__":
         processes=True,
         n_workers=1,
         threads_per_worker=1,
-        memory_limit='2.9GB',
+        memory_limit="2.9GB",
     )
-    print('Client created')
+    print("Client created")
 
     file_name = "ztoee_file_NanoAODv7.root"
     file_path = f"{os.getcwd()}/tests/samples/{file_name}"
-    dataset = {'test': file_path}
+    dataset = {"test": file_path}
 
-    samp_info = SamplesInfo(xrootd=False, datasets_from='el', year='2018')
+    samp_info = SamplesInfo(xrootd=False, datasets_from="el", year="2018")
     samp_info.paths = dataset
-    samp_info.load('test', use_dask=False)
-    samp_info.lumi_weights['test'] = 1.
+    samp_info.load("test", use_dask=False)
+    samp_info.lumi_weights["test"] = 1.0
     executor = dask_executor
     executor_args = {
-        'client': client,
-        'schema': processor.NanoAODSchema,
-        'use_dataframes': True,
-        'retries': 0
+        "client": client,
+        "schema": processor.NanoAODSchema,
+        "use_dataframes": True,
+        "retries": 0,
     }
     processor_args = {
-        'samp_info': samp_info,
-        'do_timer': False,
-        'do_btag_syst': False,
+        "samp_info": samp_info,
+        "do_timer": False,
+        "do_btag_syst": False,
     }
     print(samp_info.fileset)
-    output = run_uproot_job(samp_info.fileset, 'Events',
-                            DielectronProcessor(**processor_args),
-                            executor, executor_args=executor_args,
-                            chunksize=10000)
+    output = run_uproot_job(
+        samp_info.fileset,
+        "Events",
+        DielectronProcessor(**processor_args),
+        executor,
+        executor_args=executor_args,
+        chunksize=10000,
+    )
     df = output.compute()
+    print(df)
 
     elapsed = round(time.time() - tick, 3)
-    print(f'Finished everything in {elapsed} s.')
-    diele_mass = df.loc[df.event == 47984, 'dielectron_mass'].values[0]
-    wgt = df.loc[df.event == 47984, 'pu_wgt'].values[0]
-    assert(df.shape[0] == 9601)
-    assert(almost_equal(diele_mass, 457.09391916649224))
-    assert(almost_equal(wgt, 0.25154298543930054))
+    print(f"Finished everything in {elapsed} s.")
+    diele_mass = df.loc[df.event == 47984, "dielectron_mass"].values[0]
+    wgt = df.loc[df.event == 47984, "pu_wgt"].values[0]
+
+    assert df.shape[0] == 9620
+    assert almost_equal(diele_mass, 478.945869112157)
+    assert almost_equal(wgt, 0.25154298543930054)

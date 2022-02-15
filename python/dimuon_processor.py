@@ -21,6 +21,7 @@ from python.corrections.geofit import apply_geofit
 from python.corrections.l1prefiring_weights import l1pf_weights
 from python.corrections.kFac import kFac
 from python.jets import prepare_jets, fill_jets
+import copy
 
 # from python.jets import jet_id, jet_puid, gen_jet_pair_mass
 from python.muons import find_dimuon, fill_muons
@@ -108,7 +109,9 @@ class DimuonProcessor(processor.ProcessorABC):
 
         # All variables that we want to save
         # will be collected into the 'output' dataframe
-        output = pd.DataFrame({"run": df.run, "event": df.event})
+        output = pd.DataFrame(
+            {"run": df.run, "event": df.event, "luminosityBlock": df.luminosityBlock}
+        )
         output.index.name = "entry"
         output["npv"] = df.PV.npvs
         output["met"] = df.MET.pt
@@ -160,17 +163,16 @@ class DimuonProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
 
         # Save raw variables before computing any corrections
-
         df["Muon", "pt_raw"] = df.Muon.pt
         df["Muon", "eta_raw"] = df.Muon.eta
         df["Muon", "phi_raw"] = df.Muon.phi
         # df['Muon', 'tkRelIso'] = df.Muon.tkRelIso
         # df['Muon', 'genPartIdx'] = df.Muon.genPartIdx
         if is_mc:
-            df["Muon", "event"] = df.event
             df["Muon", "pt_gen"] = df.GenPart[df.Muon.genPartIdx].pt
             df["Muon", "eta_gen"] = df.GenPart[df.Muon.genPartIdx].eta
             df["Muon", "phi_gen"] = df.GenPart[df.Muon.genPartIdx].phi
+            df["Muon", "idx"] = df.Muon.genPartIdx
         # Rochester correction
         if self.do_roccor:
             apply_roccor(df, self.roccor_lookup, is_mc)
@@ -216,14 +218,23 @@ class DimuonProcessor(processor.ProcessorABC):
                     self.timer.add_checkpoint("GeoFit correction")
 
             # --- conversion from awkward to pandas --- #
-            # global muon_branches
-            muon_branches_local = muon_branches
+            muon_branches_local = copy.copy(muon_branches)
             if is_mc:
-                muon_branches_local += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen"]
+                muon_branches_local += [
+                    "genPartFlav",
+                    "pt_gen",
+                    "eta_gen",
+                    "phi_gen",
+                    "idx",
+                ]
             muons = ak.to_pandas(df.Muon[muon_branches_local])
+            if is_mc:
+                muons.loc[muons.idx == -1, "pt_gen"] = -999.0
+                muons.loc[muons.idx == -1, "eta_gen"] = -999.0
+                muons.loc[muons.idx == -1, "phi_gen"] = -999.0
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
-            # muons = muons.dropna()
+            muons = muons.dropna()
             muons = muons.loc[:, ~muons.columns.duplicated()]
             # --------------------------------------------------------#
             # Select muons that pass pT, eta, isolation cuts,
@@ -645,22 +656,14 @@ class DimuonProcessor(processor.ProcessorABC):
             names=["entry", "subentry"],
         )
         # Select two jets with highest pT
-        # try:
 
-        jets.loc[
-            (
-                (jets.pt < 30.0)
-                | (abs(jets.eta) > 2.4)
-                | (jets.btagDeepB < parameters["UL_btag_medium"][self.year])
-            ),
-            :,
-        ] = -999.0
         jets["selection"] = 0
         jets.loc[
             (
                 (jets.pt > 30.0)
                 & (abs(jets.eta) < 2.4)
                 & (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
+                & (jets.jetId >= 2)
             ),
             "selection",
         ] = 1
