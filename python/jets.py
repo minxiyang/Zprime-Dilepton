@@ -74,7 +74,7 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
         try:
             variables[f"jet1_{v}"] = jet1[v]
             variables[f"jet2_{v}"] = jet2[v]
-        except:
+        except Exception:
             variables[f"jet1_{v}"] = -999.0
             variables[f"jet2_{v}"] = -999.0
     variables.jet1_rap = rapidity(jet1)
@@ -94,7 +94,7 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
         ]:
             try:
                 variables[f"jj_{v}"] = jj[v]
-            except:
+            except Exception:
                 variables[f"jj_{v}"] = -999.0
 
         variables.jj_mass_log = np.log(variables.jj_mass)
@@ -178,7 +178,7 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
         ]:
             try:
                 variables[f"mmjj_{v}"] = mmjj[v]
-            except:
+            except Exception:
                 variables[f"mmjj_{v}"] = -999.0
         if flavor == "mu":
             dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = (

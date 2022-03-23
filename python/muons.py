@@ -202,7 +202,7 @@ def fill_muons(processor, output, mu1, mu2, is_mc):
         try:
             output[f"mu1_{v}"] = mu1[v]
             output[f"mu2_{v}"] = mu2[v]
-        except:
+        except Exception:
             output[f"mu1_{v}"] = -999.0
             output[f"mu2_{v}"] = -999.0
 
@@ -221,7 +221,7 @@ def fill_muons(processor, output, mu1, mu2, is_mc):
         try:
             output[name] = mm[v]
             output[name] = output[name].fillna(-999.0)
-        except:
+        except Exception:
             output[name] = -999.0
     output["mu1_pt_over_mass"] = output.mu1_pt.values / output.dimuon_mass.values
     output["mu2_pt_over_mass"] = output.mu2_pt.values / output.dimuon_mass.values

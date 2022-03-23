@@ -177,7 +177,7 @@ def fill_electrons(output, e1, e2, is_mc=True):
         try:
             output[f"e1_{v}"] = e1[v]
             output[f"e2_{v}"] = e2[v]
-        except:
+        except Exception:
             output[f"e1_{v}"] = -999.0
             output[f"e2_{v}"] = -999.0
 
@@ -199,7 +199,7 @@ def fill_electrons(output, e1, e2, is_mc=True):
         try:
             output[name] = ee[v]
             output[name] = output[name].fillna(-999.0)
-        except:
+        except Exception:
             output[name] = -999.0
 
     output["dielectron_pt_log"] = np.log(output.dielectron_pt[output.dielectron_pt > 0])

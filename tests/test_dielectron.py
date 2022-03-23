@@ -16,7 +16,7 @@ __all__ = ["Client"]
 
 
 def almost_equal(a, b):
-    return abs(a - b) < 10e-8
+    return abs(a - b) < 10e-5
 
 
 if __name__ == "__main__":

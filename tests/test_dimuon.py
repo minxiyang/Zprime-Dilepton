@@ -16,7 +16,7 @@ __all__ = ["Client"]
 
 
 def almost_equal(a, b):
-    return abs(a - b) < 10e-8
+    return abs(a - b) < 10e-5
 
 
 if __name__ == "__main__":
@@ -60,7 +60,8 @@ if __name__ == "__main__":
     )
     elapsed = round(time.time() - tick, 3)
     print(f"Finished everything in {elapsed} s.")
-
+    df = output.compute()
+    print(df)
     dimuon_mass = df.loc[df.event == 6006, "dimuon_mass"].values[0]
     wgt = df.loc[df.event == 6006, "wgt_nominal"].values[0]
     assert df.shape[0] == 5148
