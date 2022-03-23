@@ -16,7 +16,7 @@ def prepare_jets(df, is_mc):
         )
 
 
-def fill_jets(output, variables, jets, flavor="mu"):
+def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
     variable_names = [
         "jet1_pt",
         "jet1_eta",
@@ -70,16 +70,32 @@ def fill_jets(output, variables, jets, flavor="mu"):
     jet1 = jets[0]
     jet2 = jets[1]
     # Fill single jet variables
-    for v in ["pt", "eta", "phi", "qgl", "btagDeepB"]:
-        variables[f"jet1_{v}"] = jet1[v]
-        variables[f"jet2_{v}"] = jet2[v]
+    for v in ["pt", "eta", "phi", "pt_gen", "eta_gen", "phi_gen", "qgl", "btagDeepB"]:
+        try:
+            variables[f"jet1_{v}"] = jet1[v]
+            variables[f"jet2_{v}"] = jet2[v]
+        except:
+            variables[f"jet1_{v}"] = -999.0
+            variables[f"jet2_{v}"] = -999.0
     variables.jet1_rap = rapidity(jet1)
     if njet > 1:
         variables.jet2_rap = rapidity(jet2)
         # Fill dijet variables
-        jj = p4_sum(jet1, jet2)
-        for v in ["pt", "eta", "phi", "mass"]:
-            variables[f"jj_{v}"] = jj[v]
+        jj = p4_sum(jet1, jet2, is_mc=is_mc)
+        for v in [
+            "pt",
+            "eta",
+            "phi",
+            "mass",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+            "mass_gen",
+        ]:
+            try:
+                variables[f"jj_{v}"] = jj[v]
+            except:
+                variables[f"jj_{v}"] = -999.0
 
         variables.jj_mass_log = np.log(variables.jj_mass)
 
@@ -92,26 +108,78 @@ def fill_jets(output, variables, jets, flavor="mu"):
 
         # Fill dimuon-dijet system variables
         if flavor == "mu":
-            mm_columns = ["dimuon_pt", "dimuon_eta", "dimuon_phi", "dimuon_mass"]
+            mm_columns = [
+                "dimuon_pt",
+                "dimuon_eta",
+                "dimuon_phi",
+                "dimuon_mass",
+                "dimuon_pt_gen",
+                "dimuon_eta_gen",
+                "dimuon_phi_gen",
+                "dimuon_mass_gen",
+            ]
         else:
             mm_columns = [
                 "dielectron_pt",
                 "dielectron_eta",
                 "dielectron_phi",
                 "dielectron_mass",
+                "dielectron_pt_gen",
+                "dielectron_eta_gen",
+                "dielectron_phi_gen",
+                "dielectron_mass_gen",
             ]
-        jj_columns = ["jj_pt", "jj_eta", "jj_phi", "jj_mass"]
+        jj_columns = [
+            "jj_pt",
+            "jj_eta",
+            "jj_phi",
+            "jj_mass",
+            "jj_pt_gen",
+            "jj_eta_gen",
+            "jj_phi_gen",
+            "jj_mass_gen",
+        ]
 
         dileptons = output.loc[:, mm_columns]
         dijets = variables.loc[:, jj_columns]
 
         # careful with renaming
-        dileptons.columns = ["mass", "pt", "eta", "phi"]
-        dijets.columns = ["pt", "eta", "phi", "mass"]
+        dileptons.columns = [
+            "mass",
+            "pt",
+            "eta",
+            "phi",
+            "mass_gen",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+        ]
+        dijets.columns = [
+            "pt",
+            "eta",
+            "phi",
+            "mass",
+            "mass_gen",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+        ]
 
-        mmjj = p4_sum(dileptons, dijets)
-        for v in ["pt", "eta", "phi", "mass"]:
-            variables[f"mmjj_{v}"] = mmjj[v]
+        mmjj = p4_sum(dileptons, dijets, is_mc=is_mc)
+        for v in [
+            "pt",
+            "eta",
+            "phi",
+            "mass",
+            "mass_gen",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+        ]:
+            try:
+                variables[f"mmjj_{v}"] = mmjj[v]
+            except:
+                variables[f"mmjj_{v}"] = -999.0
         if flavor == "mu":
             dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = (
                 output.dimuon_pt,

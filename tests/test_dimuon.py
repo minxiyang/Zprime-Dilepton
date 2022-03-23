@@ -50,7 +50,6 @@ if __name__ == "__main__":
         "do_timer": False,
         "do_btag_syst": False,
     }
-    print(samp_info.fileset)
     output = run_uproot_job(
         samp_info.fileset,
         "Events",
@@ -59,13 +58,11 @@ if __name__ == "__main__":
         executor_args=executor_args,
         chunksize=10000,
     )
-    df = output.compute()
-    print(df)
     elapsed = round(time.time() - tick, 3)
     print(f"Finished everything in {elapsed} s.")
 
     dimuon_mass = df.loc[df.event == 6006, "dimuon_mass"].values[0]
     wgt = df.loc[df.event == 6006, "wgt_nominal"].values[0]
-    assert df.shape[0] == 5156
+    assert df.shape[0] == 5148
     assert almost_equal(dimuon_mass, 2272.14609463627)
     assert almost_equal(wgt, 8.098436450586813e-05)

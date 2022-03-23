@@ -118,7 +118,7 @@ def find_dimuon(objs, is_mc=False):
             return [idx2, idx1, dimuon_mass]
 
 
-def fill_muons(processor, output, mu1, mu2, dimuon_mass, dimuon_mass_gen, is_mc):
+def fill_muons(processor, output, mu1, mu2, is_mc):
     mu1_variable_names = [
         "mu1_pt",
         "mu1_pt_gen",
@@ -162,6 +162,9 @@ def fill_muons(processor, output, mu1, mu2, dimuon_mass, dimuon_mass_gen, is_mc)
         "dimuon_pt_log",
         "dimuon_eta",
         "dimuon_phi",
+        "dimuon_pt_gen",
+        "dimuon_eta_gen",
+        "dimuon_phi_gen",
         "dimuon_dEta",
         "dimuon_dPhi",
         "dimuon_dR",
@@ -179,7 +182,7 @@ def fill_muons(processor, output, mu1, mu2, dimuon_mass, dimuon_mass_gen, is_mc)
         output[n] = 0.0
 
     # Fill single muon variables
-
+    mm = p4_sum(mu1, mu2, is_mc)
     for v in [
         "pt",
         "pt_gen",
@@ -193,27 +196,35 @@ def fill_muons(processor, output, mu1, mu2, dimuon_mass, dimuon_mass_gen, is_mc)
         "genPartFlav",
         "ip3d",
         "sip3d",
+        "tkRelIso",
     ]:
-        output[f"mu1_{v}"] = mu1[v]
-        output[f"mu2_{v}"] = mu2[v]
-    output["mu1_iso"] = mu1.tkRelIso
-    output["mu2_iso"] = mu2.tkRelIso
-    output.dimuon_mass = dimuon_mass
-    if is_mc:
-        output.dimuon_mass_gen = dimuon_mass_gen
-    else:
-        output.dimuon_mass_gen = -999.0
+
+        try:
+            output[f"mu1_{v}"] = mu1[v]
+            output[f"mu2_{v}"] = mu2[v]
+        except:
+            output[f"mu1_{v}"] = -999.0
+            output[f"mu2_{v}"] = -999.0
+
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "mass",
+        "pt_gen",
+        "eta_gen",
+        "phi_gen",
+        "mass_gen",
+        "rap",
+    ]:
+        name = f"dimuon_{v}"
+        try:
+            output[name] = mm[v]
+            output[name] = output[name].fillna(-999.0)
+        except:
+            output[name] = -999.0
     output["mu1_pt_over_mass"] = output.mu1_pt.values / output.dimuon_mass.values
     output["mu2_pt_over_mass"] = output.mu2_pt.values / output.dimuon_mass.values
-
-    # Fill dimuon variables
-
-    mm = p4_sum(mu1, mu2)
-    for v in ["pt", "eta", "phi", "mass", "rap"]:
-        name = f"dimuon_{v}"
-        output[name] = mm[v]
-        output[name] = output[name].fillna(-999.0)
-
     output["dimuon_pt_log"] = np.log(output.dimuon_pt[output.dimuon_pt > 0])
     output.loc[output.dimuon_pt < 0, "dimuon_pt_log"] = -999.0
 

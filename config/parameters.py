@@ -5,7 +5,7 @@ def for_all_years(value):
 
 parameters = {}
 lumis = {"2016": 36.3, "2017": 42.1, "2018": 61.6}
-parameters["lumimask"] = {
+parameters["lumimask_Pre-UL_mu"] = {
     # "2016": "data/lumimasks/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt",
     # "2017": "data/lumimasks/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_v1.txt",
     # "2018": "data/lumimasks/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt",
@@ -13,6 +13,15 @@ parameters["lumimask"] = {
     "2017": "data/lumimasks/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_MuonPhys.txt",
     "2018": "data/lumimasks/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt",
 }
+
+parameters["lumimask_Pre-UL_el"] = {
+    "2018": "data/lumimasks/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt",
+}
+
+parameters["lumimask_UL_el"] = {
+    "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt",
+}
+
 
 parameters["mu_hlt"] = {
     "2016": ["Mu50", "TkMu50"],

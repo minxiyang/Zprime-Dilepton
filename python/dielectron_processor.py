@@ -132,15 +132,15 @@ class DielectronProcessor(processor.ProcessorABC):
                     else:
                         weights.add_weight("l1prefiring_wgt", how="dummy_vars")
 
-            df["Electron", "pt_gen"] = df.GenPart[df.Electron.genPartIdx].pt
-            df["Electron", "eta_gen"] = df.GenPart[df.Electron.genPartIdx].eta
-            df["Electron", "phi_gen"] = df.GenPart[df.Electron.genPartIdx].phi
+            df["Electron", "pt_gen"] = df.Electron.matched_gen.pt
+            df["Electron", "eta_gen"] = df.Electron.matched_gen.eta
+            df["Electron", "phi_gen"] = df.Electron.matched_gen.phi
             df["Electron", "idx"] = df.Electron.genPartIdx
             ele_branches_local += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen", "idx"]
 
         else:
             # For Data: apply Lumi mask
-            lumi_info = LumiMask(self.parameters["lumimask"])
+            lumi_info = LumiMask(self.parameters["lumimask_Pre-UL_el"])
             mask = lumi_info(df.run, df.luminosityBlock)
 
         # Apply HLT to both Data and MC
@@ -156,7 +156,6 @@ class DielectronProcessor(processor.ProcessorABC):
         df["Electron", "eta_raw"] = df.Electron.eta
         df["Electron", "phi_raw"] = df.Electron.phi
 
-        # for ...
         if True:  # indent reserved for loop over pT variations
 
             # --- conversion from awkward to pandas --- #
@@ -243,18 +242,6 @@ class DielectronProcessor(processor.ProcessorABC):
             if self.timer:
                 self.timer.add_checkpoint("back back angle calculation")
             dielectron_mass = dielectron.mass
-            if is_mc:
-                dielectron_mass_gen = dielectron.mass_gen
-            else:
-                dielectron_mass_gen = -999.0
-                e1["pt_gen"] = -999.0
-                e1["eta_gen"] = -999.0
-                e1["phi_gen"] = -999.0
-                e1["genPartFlav"] = -999.0
-                e2["pt_gen"] = -999.0
-                e2["eta_gen"] = -999.0
-                e2["phi_gen"] = -999.0
-                e2["genPartFlav"] = -999.0
 
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
@@ -270,7 +257,7 @@ class DielectronProcessor(processor.ProcessorABC):
             # Fill dielectron and electron variables
             # --------------------------------------------------------#
 
-            fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc)
+            fill_electrons(output, e1, e2, is_mc)
 
             if self.timer:
                 self.timer.add_checkpoint("all electron variables")
@@ -359,11 +346,15 @@ class DielectronProcessor(processor.ProcessorABC):
 
         # mass = output.dielectron_mass
         output["r"] = None
-        output.loc[((output.e1_eta < 1.442) & (output.e2_eta < 1.442)), "r"] = "bb"
-        output.loc[((output.e1_eta > 1.566) ^ (output.e2_eta > 1.566)), "r"] = "be"
-        output.loc[((output.e1_eta > 1.566) & (output.e2_eta > 1.566)), "r"] = "ee"
-        # output['s'] = dataset
-        # output['year'] = int(self.year)
+        output.loc[
+            ((abs(output.e1_eta) < 1.442) & (abs(output.e2_eta) < 1.442)), "r"
+        ] = "bb"
+        output.loc[
+            ((abs(output.e1_eta) > 1.566) ^ (abs(output.e2_eta) > 1.566)), "r"
+        ] = "be"
+        output.loc[
+            ((abs(output.e1_eta) > 1.566) & (abs(output.e2_eta) > 1.566)), "r"
+        ] = "ee"
 
         for wgt in weights.df.columns:
 
@@ -405,6 +396,14 @@ class DielectronProcessor(processor.ProcessorABC):
                 ]
                 * kFac(mass_be, "be", "mu")
             ).values
+            output.loc[((output.e1_eta < 1.2) & (output.e2_eta < 1.2)), "pu_wgt"] = (
+                output.loc[((output.e1_eta < 1.2) & (output.e2_eta < 1.2)), "pu_wgt"]
+                * kFac(mass_bb, "bb", "mu")
+            ).values
+            output.loc[((output.e1_eta > 1.2) | (output.e2_eta > 1.2)), "pu_wgt"] = (
+                output.loc[((output.e1_eta > 1.2) | (output.e2_eta > 1.2)), "pu_wgt"]
+                * kFac(mass_be, "be", "mu")
+            ).values
 
     def jet_loop(
         self,
@@ -439,13 +438,23 @@ class DielectronProcessor(processor.ProcessorABC):
             "mass",
             "btagDeepB",
         ]
+        jet_branches_local = copy.copy(jet_branches)
         if is_mc:
-            jet_branches += ["partonFlavour", "hadronFlavour"]
-        if variation == "nominal":
-            if self.do_jec:
-                jet_branches += ["pt_jec", "mass_jec"]
-            if is_mc and self.do_jerunc:
-                jet_branches += ["pt_orig", "mass_orig"]
+            jet_branches_local += [
+                "partonFlavour",
+                "hadronFlavour",
+                "pt_gen",
+                "eta_gen",
+                "phi_gen",
+            ]
+            jets["pt_gen"] = jets.matched_gen.pt
+            jets["eta_gen"] = jets.matched_gen.eta
+            jets["phi_gen"] = jets.matched_gen.phi
+        # if variation == "nominal":
+        #    if self.do_jec:
+        #        jet_branches += ["pt_jec", "mass_jec"]
+        #    if is_mc and self.do_jerunc:
+        #        jet_branches += ["pt_orig", "mass_orig"]
         """
         # Find jets that have selected muons within dR<0.4 from them
         #matched_mu_pt = jets.matched_muons.pt_fsr
@@ -475,7 +484,7 @@ class DielectronProcessor(processor.ProcessorABC):
         ##    jets = jets[unc_name]['down'][jet_columns]
         #else:
         """
-        jets = jets[jet_branches]
+        jets = jets[jet_branches_local]
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
         if jets.index.nlevels == 3:
@@ -553,7 +562,7 @@ class DielectronProcessor(processor.ProcessorABC):
         jet1 = jets.groupby("entry").nth(0)
         jet2 = jets.groupby("entry").nth(1)
         Jets = [jet1, jet2]
-        fill_jets(output, variables, Jets, "el")
+        fill_jets(output, variables, Jets, "el", is_mc=is_mc)
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
 

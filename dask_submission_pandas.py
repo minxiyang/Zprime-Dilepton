@@ -99,8 +99,8 @@ parameters = {
     "global_out_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
     "out_path": f"{args.year}_{args.label}_{local_time}",
     # "server": "root://xrootd.rcac.purdue.edu/",
-    "server": "root://cmsxrootd.fnal.gov//",
-    # "server": "/mnt/hadoop/",
+    # "server": "root://cmsxrootd.fnal.gov//",
+    "server": "/mnt/hadoop/",
     "datasets_from": "Zprime",
     "from_das": True,
     "chunksize": int(args.chunksize),
@@ -110,7 +110,7 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "client": None,
     "channel": args.channel,
-    "n_workers": 40,
+    "n_workers": 32,
 }
 
 parameters["out_dir"] = f"{parameters['global_out_path']}/" f"{parameters['out_path']}"
@@ -226,6 +226,24 @@ if __name__ == "__main__":
             "dy4500to6000",
             "dy6000toInf",
         ],
+        "CI": [
+            "bbll_4TeV_M1000_negLL",
+            "bbll_4TeV_M1000_negLR",
+            "bbll_4TeV_M1000_posLL",
+            "bbll_4TeV_M1000_posLR",
+            "bbll_4TeV_M400_negLL",
+            "bbll_4TeV_M400_negLR",
+            "bbll_4TeV_M400_posLL",
+            "bbll_4TeV_M400_posLR",
+            "bbll_8TeV_M1000_negLL",
+            "bbll_8TeV_M1000_negLR",
+            "bbll_8TeV_M1000_posLL",
+            "bbll_8TeV_M1000_posLR",
+            "bbll_8TeV_M400_negLL",
+            "bbll_8TeV_M400_negLR",
+            "bbll_8TeV_M400_posLL",
+            "bbll_8TeV_M400_posLR",
+        ],
     }
 
     if parameters["local_cluster"]:
@@ -249,13 +267,15 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            # if  "ttbar" in sample:
+            if "data" not in sample:
+                continue
+
+            # if group != "other_mc":
+            #    continue
+            if sample not in ["data_A"]:
+                continue
             # if group != "data":
             #    continue
-            # if sample not in ["data_A"]:
-            #    continue
-            if group != "data":
-                continue
             if group == "data":
                 datasets_data.append(sample)
             else:

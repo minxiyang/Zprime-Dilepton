@@ -21,7 +21,6 @@ def load_sample(dataset, parameters):
         "timeout": 1200,
     }
     samp_info = SamplesInfo(**args)
-    # print(dataset)
     samp_info.load(
         dataset,
         use_dask=True,
@@ -45,6 +44,7 @@ def load_samples(datasets, parameters):
     for d in tqdm.tqdm(datasets):
         if d in samp_info_total.samples:
             continue
+        # print(load_sample(d, parameters))
         si = load_sample(d, parameters)[d]
         if "files" not in si.fileset[d].keys():
             continue
@@ -58,7 +58,11 @@ def load_samples(datasets, parameters):
 
 def read_via_xrootd(server, path, from_das=False):
     if from_das:
-        command = f'dasgoclient --query=="file dataset={path}"'
+        print(path)
+        if "USER" in path:
+            command = f'dasgoclient --query=="file dataset={path} instance=prod/phys03"'
+        else:
+            command = f'dasgoclient --query=="file dataset={path}"'
     else:
         command = f"xrdfs {server} ls -R {path} | grep '.root'"
     proc = subprocess.Popen(
@@ -148,7 +152,6 @@ class SamplesInfo(object):
 
         if self.debug:
             all_files = [all_files[0]]
-
         sumGenWgts = 0
         nGenEvts = 0
         if use_dask:

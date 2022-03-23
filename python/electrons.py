@@ -4,7 +4,7 @@ import math
 from python.utils import p4_sum, delta_r, cs_variables
 
 
-def find_dielectron(objs, is_mc=False):
+def find_dielectron(objs, is_mc=True):
 
     objs["el_idx"] = objs.index
     dmass = 20.0
@@ -99,7 +99,7 @@ def find_dielectron(objs, is_mc=False):
         return [idx1, idx2, dielectron_mass]
 
 
-def fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc):
+def fill_electrons(output, e1, e2, is_mc=True):
     e1_variable_names = [
         "e1_pt",
         "e1_pt_gen",
@@ -144,6 +144,9 @@ def fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc):
         "dielectron_pt_log",
         "dielectron_eta",
         "dielectron_phi",
+        "dielectron_pt_gen",
+        "dielectron_eta_gen",
+        "dielectron_phi_gen",
         "dielectron_dEta",
         "dielectron_dPhi",
         "dielectron_dR",
@@ -160,22 +163,44 @@ def fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc):
         output[n] = 0.0
 
     # Fill single electron variables
-    for v in ["pt", "eta", "phi", "pt_raw", "eta_raw", "phi_raw"]:
-        output[f"e1_{v}"] = e1[v]
-        output[f"e2_{v}"] = e2[v]
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "pt_raw",
+        "eta_raw",
+        "phi_raw",
+        "pt_gen",
+        "eta_gen",
+        "phi_gen",
+    ]:
+        try:
+            output[f"e1_{v}"] = e1[v]
+            output[f"e2_{v}"] = e2[v]
+        except:
+            output[f"e1_{v}"] = -999.0
+            output[f"e2_{v}"] = -999.0
 
     # Fill dielectron variables
-    output.dielectron_mass = dielectron_mass
-    if is_mc:
-        output.dielectron_mass_gen = dielectron_mass_gen
-    else:
-        output.dielectron_mass_gen = -999.0
 
-    ee = p4_sum(e1, e2)
-    for v in ["pt", "eta", "phi", "mass", "rap"]:
+    ee = p4_sum(e1, e2, is_mc)
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "mass",
+        "pt_gen",
+        "eta_gen",
+        "phi_gen",
+        "mass_gen",
+        "rap",
+    ]:
         name = f"dielectron_{v}"
-        output[name] = ee[v]
-        output[name] = output[name].fillna(-999.0)
+        try:
+            output[name] = ee[v]
+            output[name] = output[name].fillna(-999.0)
+        except:
+            output[name] = -999.0
 
     output["dielectron_pt_log"] = np.log(output.dielectron_pt[output.dielectron_pt > 0])
     output.loc[output.dielectron_pt < 0, "dielectron_pt_log"] = -999.0
@@ -187,7 +212,6 @@ def fill_electrons(output, e1, e2, dielectron_mass, dielectron_mass_gen, is_mc):
     output["dielectron_dEta"] = ee_deta
     output["dielectron_dPhi"] = ee_dphi
     output["dielectron_dR"] = ee_dr
-
     output["dielectron_cos_theta_cs"], output["dielectron_phi_cs"] = cs_variables(
         e1, e2
     )

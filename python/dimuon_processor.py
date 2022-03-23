@@ -146,7 +146,7 @@ class DimuonProcessor(processor.ProcessorABC):
 
         else:
             # For Data: apply Lumi mask
-            lumi_info = LumiMask(self.parameters["lumimask"])
+            lumi_info = LumiMask(self.parameters["lumimask_Pre-UL_mu"])
             mask = lumi_info(df.run, df.luminosityBlock)
 
         # Apply HLT to both Data and MC
@@ -166,12 +166,10 @@ class DimuonProcessor(processor.ProcessorABC):
         df["Muon", "pt_raw"] = df.Muon.pt
         df["Muon", "eta_raw"] = df.Muon.eta
         df["Muon", "phi_raw"] = df.Muon.phi
-        # df['Muon', 'tkRelIso'] = df.Muon.tkRelIso
-        # df['Muon', 'genPartIdx'] = df.Muon.genPartIdx
         if is_mc:
-            df["Muon", "pt_gen"] = df.GenPart[df.Muon.genPartIdx].pt
-            df["Muon", "eta_gen"] = df.GenPart[df.Muon.genPartIdx].eta
-            df["Muon", "phi_gen"] = df.GenPart[df.Muon.genPartIdx].phi
+            df["Muon", "pt_gen"] = df.Muon.matched_gen.pt
+            df["Muon", "eta_gen"] = df.Muon.matched_gen.eta
+            df["Muon", "phi_gen"] = df.Muon.matched_gen.phi
             df["Muon", "idx"] = df.Muon.genPartIdx
         # Rochester correction
         if self.do_roccor:
@@ -228,10 +226,6 @@ class DimuonProcessor(processor.ProcessorABC):
                     "idx",
                 ]
             muons = ak.to_pandas(df.Muon[muon_branches_local])
-            if is_mc:
-                muons.loc[muons.idx == -1, "pt_gen"] = -999.0
-                muons.loc[muons.idx == -1, "eta_gen"] = -999.0
-                muons.loc[muons.idx == -1, "phi_gen"] = -999.0
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
             muons = muons.dropna()
@@ -311,9 +305,6 @@ class DimuonProcessor(processor.ProcessorABC):
             if self.timer:
                 self.timer.add_checkpoint("muon object selection")
 
-            # output["r"] = None
-            # output["s"] = dataset
-            # output["year"] = int(self.year)
 
             if muons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
@@ -339,16 +330,8 @@ class DimuonProcessor(processor.ProcessorABC):
             mu2 = muons.loc[dimuon.idx2.values, :]
             mu1.index = mu1.index.droplevel("subentry")
             mu2.index = mu2.index.droplevel("subentry")
-            if not is_mc:
-                mu1["pt_gen"] = -999.0
-                mu1["eta_gen"] = -999.0
-                mu1["phi_gen"] = -999.0
-                mu1["genPartFlav"] = -999.0
-                mu2["pt_gen"] = -999.0
-                mu2["eta_gen"] = -999.0
-                mu2["phi_gen"] = -999.0
-                mu2["genPartFlav"] = -999.0
-            if self.timer:
+            
+           if self.timer:
                 self.timer.add_checkpoint("dimuon pair selection")
 
             output["bbangle"] = bbangle(mu1, mu2)
@@ -361,11 +344,6 @@ class DimuonProcessor(processor.ProcessorABC):
                 self.timer.add_checkpoint("back back angle calculation")
 
             dimuon_mass = dimuon.mass
-            if is_mc:
-                dimuon_mass_gen = dimuon.mass_gen
-            else:
-                dimuon_mass_gen = -999.0
-
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
             # and trigger matching
@@ -381,7 +359,7 @@ class DimuonProcessor(processor.ProcessorABC):
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
 
-            fill_muons(self, output, mu1, mu2, dimuon_mass, dimuon_mass_gen, is_mc)
+            fill_muons(self, output, mu1, mu2, is_mc=is_mc)
 
         # ------------------------------------------------------------#
         # Prepare jets
@@ -474,15 +452,9 @@ class DimuonProcessor(processor.ProcessorABC):
         # Fill outputs
         # ------------------------------------------------------------#
 
-        # mass = output.dimuon_mass
+        output.loc[((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)), "r"] = "bb"
+        output.loc[((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "r"] = "be"
 
-        # output['r'] = None
-        output.loc[((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)), "r"] = "bb"
-        output.loc[((output.mu1_eta > 1.2) | (output.mu2_eta > 1.2)), "r"] = "be"
-
-        # mass_bb = output[output["r"] == "bb"].dimuon_mass
-        # mass_be = output[output["r"] == "be"].dimuon_mass
-        # output['s'] = dataset
         output["year"] = int(self.year)
 
         for wgt in weights.df.columns:
@@ -491,12 +463,10 @@ class DimuonProcessor(processor.ProcessorABC):
                 continue
             output[f"wgt_{wgt}"] = weights.get_weight(wgt)
 
-        # if is_mc:
-        #    output = output[output.dimuon_mass_gen > 0]
 
         if is_mc and "dy" in output.s:
-            mass_bb = output[output["r"] == "bb"].dimuon_mass.to_numpy()
-            mass_be = output[output["r"] == "be"].dimuon_mass.to_numpy()
+            mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
+            mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
             output.loc[
                 ((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)), "wgt_nominal"
             ] = (
@@ -543,15 +513,17 @@ class DimuonProcessor(processor.ProcessorABC):
         numevents,
         output,
     ):
-        # weights = copy.deepcopy(weights)
 
         if not is_mc and variation != "nominal":
             return
 
         variables = pd.DataFrame(index=output.index)
-
+        jet_branches_local = copy.copy(jet_branches)
         if is_mc:
-            jet_branches += ["partonFlavour", "hadronFlavour"]
+            jet_branches_local += ["partonFlavour", "hadronFlavour", "pt_gen", "eta_gen", "phi_gen"]
+            jets["pt_gen"] = jets.matched_gen.pt
+            jets["eta_gen"] = jets.matched_gen.eta
+            jets["phi_gen"] = jets.matched_gen.phi
         # if variation == "nominal":
         #    if self.do_jec:
         #        jet_branches += ["pt_jec", "mass_jec"]
@@ -586,9 +558,10 @@ class DimuonProcessor(processor.ProcessorABC):
         ##    jets = jets[unc_name]['down'][jet_columns]
         #else:
         """
-
+        
         # --- conversion from awkward to pandas --- #
-        jets = ak.to_pandas(jets[jet_branches])
+        jets = ak.to_pandas(jets[jet_branches_local])
+     
         jets = jets.dropna()
         if jets.index.nlevels == 3:
             # sometimes there are duplicates?
@@ -673,7 +646,7 @@ class DimuonProcessor(processor.ProcessorABC):
         jet1 = jets.groupby("entry").nth(0)
         jet2 = jets.groupby("entry").nth(1)
         Jets = [jet1, jet2]
-        fill_jets(output, variables, Jets)
+        fill_jets(output, variables, Jets, is_mc=is_mc)
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
         """
