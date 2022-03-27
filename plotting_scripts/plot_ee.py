@@ -38,9 +38,6 @@ def chunk(files, size):
 
 
 def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=True):
-    # if not iswgt:
-    #    df = df.drop_duplicates(subset=["dielectron_mass"])
-    # df["dielectron_mass"].compute()
     if njets == -1:
 
         var_array = df.loc[
@@ -53,7 +50,6 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
             ].compute()
             wgt[wgt < 0] = 0
             if iscut:
-                # print(wgt[genmass > masscut])
                 genmass = df.loc[
                     (df["dielectron_mass"] > 120) & (df["r"] != "ee"), "dielectron_mass"
                 ].compute()
@@ -146,7 +142,6 @@ def plots(axes, data, MCs, labels, colors, name):
         step="post",
     )
     axes[0].legend(loc=(0.75, 0.40), fontsize="xx-small")
-    # axes[2].legend(loc=(0.45,0.55),fontsize='xx-small')
     hep.histplot(r_vals - 1, bins, ax=axes[1], histtype="errorbar", color="black")
     axes[1].fill_between(
         x=bins_mid,
@@ -166,7 +161,7 @@ if __name__ == "__main__":
     client_args = {
         "n_workers": 40,
         "memory_limit": "4.0GB",
-        "timeout": 120,
+        "timeout": 240,
     }
 
     bins_mass = (
@@ -185,28 +180,28 @@ if __name__ == "__main__":
     bins_cs = np.linspace(-1.0, 1.0, 26)
     bins_jets = np.linspace(0, 7, 8)
     path = "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/"
-    path_dy = path + "dy_eev2/*/*.parquet"
+    path_dy = path + "dt_eev3/*/*.parquet"
     dy_files = glob.glob(path_dy)
-    path_data = path + "UL_eev2/*/*.parquet"
+    path_data = path + "pre-UL_eev2/*/*.parquet"
     data_files = glob.glob(path_data)
-    path_tt_inclusive = path + "other_mc_eev2/ttbar_lep/*.parquet"
+    path_tt_inclusive = path + "other_mc_eev3/ttbar_lep/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
-    path_tt = path + "other_mc_eev2/ttbar_lep_*/*.parquet"
+    path_tt = path + "other_mc_eev3/ttbar_lep_*/*.parquet"
     tt_files = glob.glob(path_tt)
     tt_files = [file_ for file_ in tt_files if "ext" not in file_]
-    path_wz = path + "other_mc_eev2/WZ*/*.parquet"
+    path_wz = path + "other_mc_eev3/WZ*/*.parquet"
     wz_files = glob.glob(path_wz)
-    path_tw1 = path + "other_mc_eev2/tW/*.parquet"
-    path_tw2 = path + "other_mc_eev2/Wantitop/*.parquet"
+    path_tw1 = path + "other_mc_eev3/tW/*.parquet"
+    path_tw2 = path + "other_mc_eev3/Wantitop/*.parquet"
     tw_files = glob.glob(path_tw1) + glob.glob(path_tw2)
-    path_zz = path + "other_mc_eev2/ZZ*/*.parquet"
+    path_zz = path + "other_mc_eev3/ZZ*/*.parquet"
     zz_files = glob.glob(path_zz)
     zz_files = [file_ for file_ in zz_files if "ext" not in file_]
-    path_tau = path + "other_mc_eev2/dyInclusive50/*.parquet"
+    path_tau = path + "other_mc_eev3/dyInclusive50/*.parquet"
     tau_files = glob.glob(path_tau)
-    path_ww = path + "other_mc_eev2/WW*0/*.parquet"
+    path_ww = path + "other_mc_eev3/WW*0/*.parquet"
     ww_files = glob.glob(path_ww)
-    path_ww_inclusive = path + "other_mc_eev2/WWinclusive/*.parquet"
+    path_ww_inclusive = path + "other_mc_eev3/WWinclusive/*.parquet"
     ww_inclusive_files = glob.glob(path_ww_inclusive)
 
     file_dict = {
@@ -244,7 +239,6 @@ if __name__ == "__main__":
         "ww_inclu",
         "data",
     ]:
-        print(key)
         file_bag = chunk(file_dict[key], client_args["n_workers"])
         if len(file_bag) == 1:
             df = load2df_mc(file_dict[key])
@@ -264,7 +258,6 @@ if __name__ == "__main__":
             iscut = False
 
         if key == "data":
-            df = df.drop_duplicates(subset=["dielectron_mass"])
             iswgt = False
             client.close()
         else:
@@ -359,7 +352,6 @@ if __name__ == "__main__":
             scale=False,
         )
 
-    # client.close()
     labels = [
         "$\\tau\\tau$",
         "$ZZ$",
@@ -407,16 +399,18 @@ if __name__ == "__main__":
         mass_2j["tt"],
         mass_2j["dy"],
     ]
-    name = "dielectron_mass_2nbjets"
+    name = "dielectron_mass_2nbjets_pre"
     axes_mass2j = setFrame(
         "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
         "Events/GeV",
-        True,
-        True,
-        [120, 6000],
-        [1e-7, 1e5],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=True,
+        logy=True,
+        xRange=[120, 6000],
+        yRange=[1e-7, 1e5],
+        flavor="el",
+        year="2018",
     )
     plots(axes_mass2j, data_2j, MCs, labels, colors, name)
 
@@ -429,16 +423,18 @@ if __name__ == "__main__":
         mass_1j["tt"],
         mass_1j["dy"],
     ]
-    name = "dielectron_mass_1nbjets"
+    name = "dielectron_mass_1nbjets_pre"
     axes_mass1j = setFrame(
         "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
         "Events/GeV",
-        True,
-        True,
-        [120, 6000],
-        [1e-6, 1e6],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=True,
+        logy=True,
+        xRange=[120, 6000],
+        yRange=[1e-6, 1e6],
+        flavor="el",
+        year="2018",
     )
     plots(axes_mass1j, data_1j, MCs, labels, colors, name)
 
@@ -451,16 +447,18 @@ if __name__ == "__main__":
         mass_0j["tt"],
         mass_0j["dy"],
     ]
-    name = "dielectron_mass_0nbjets"
+    name = "dielectron_mass_0nbjets_pre"
     axes_mass0j = setFrame(
         "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
         "Events/GeV",
-        True,
-        True,
-        [120, 6000],
-        [1e-5, 1e7],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=True,
+        logy=True,
+        xRange=[120, 6000],
+        yRange=[1e-5, 1e7],
+        flavor="el",
+        year="2018",
     )
     plots(axes_mass0j, data_0j, MCs, labels, colors, name)
 
@@ -473,16 +471,18 @@ if __name__ == "__main__":
         mass_inclu["tt"],
         mass_inclu["dy"],
     ]
-    name = "dielectron_mass_inclu"
+    name = "dielectron_mass_inclu_pre"
     axes_mass = setFrame(
         "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
         "Events/GeV",
-        True,
-        True,
-        [120, 6000],
-        [1e-5, 1e7],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=True,
+        logy=True,
+        xRange=[120, 6000],
+        yRange=[1e-5, 1e7],
+        flavor="el",
+        year="2018",
     )
     plots(axes_mass, data_inclu, MCs, labels, colors, name)
 
@@ -518,16 +518,18 @@ if __name__ == "__main__":
         cs_2j["tt"],
         cs_2j["dy"],
     ]
-    name = "dielectron_cs_2nbjets"
+    name = "dielectron_cs_2nbjets_pre"
     axes_cs2j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
-        False,
-        False,
-        [-1.0, 1.0],
-        [0, 3000],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=False,
+        xRange=[-1.0, 1.0],
+        yRange=[0, 3000],
+        flavor="el",
+        year="2018",
     )
     plots(axes_cs2j, data_2j, MCs, labels, colors, name)
 
@@ -540,16 +542,18 @@ if __name__ == "__main__":
         cs_1j["tt"],
         cs_1j["dy"],
     ]
-    name = "dielectron_cs_1nbjets"
+    name = "dielectron_cs_1nbjets_pre"
     axes_cs1j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
-        False,
-        False,
-        [-1.0, 1.0],
-        [0, 15000],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=False,
+        xRange=[-1.0, 1.0],
+        yRange=[0, 15000],
+        flavor="el",
+        year="2018",
     )
     plots(axes_cs1j, data_1j, MCs, labels, colors, name)
 
@@ -562,16 +566,18 @@ if __name__ == "__main__":
         cs_0j["tt"],
         cs_0j["dy"],
     ]
-    name = "dielectron_cs_0nbjets"
+    name = "dielectron_cs_0nbjets_pre"
     axes_cs0j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
-        False,
-        False,
-        [-1.0, 1.0],
-        [0, 75000],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=False,
+        xRange=[-1.0, 1.0],
+        yRange=[0, 75000],
+        flavor="el",
+        year="2018",
     )
     plots(axes_cs0j, data_0j, MCs, labels, colors, name)
 
@@ -584,16 +590,18 @@ if __name__ == "__main__":
         cs_inclu["tt"],
         cs_inclu["dy"],
     ]
-    name = "dielectron_cs_inclusive"
+    name = "dielectron_cs_inclusive_pre"
     axes_cs = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
-        False,
-        False,
-        [-1.0, 1.0],
-        [0, 75000],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=False,
+        xRange=[-1.0, 1.0],
+        yRange=[0, 75000],
+        flavor="el",
+        year="2018",
     )
     plots(axes_cs, data_inclu, MCs, labels, colors, name)
 
@@ -614,15 +622,17 @@ if __name__ == "__main__":
         nbjets["tt"],
         nbjets["dy"],
     ]
-    name = "dielectron_nbjets"
+    name = "dielectron_nbjets_pre"
     axes = setFrame(
-        "Number of B-jets",
+        "Number of b-jets",
         "Events",
-        False,
-        True,
-        [0, 7.0],
-        [1e-5, 1e11],
-        "el",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=True,
+        xRange=[0, 7.0],
+        yRange=[1e-5, 1e11],
+        flavor="el",
+        year="2018",
     )
     plots(axes, data, MCs, labels, colors, name)

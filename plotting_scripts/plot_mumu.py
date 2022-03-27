@@ -38,17 +38,22 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
     if njets == -1:
 
         var_array = df.loc[df["dimuon_mass"] > 120, var].compute()
-        print(var_array)
+        # print(var_array)
         if iswgt:
 
             wgt = df.loc[(df["dimuon_mass"] > 120), "wgt_nominal"].compute()
             wgt[wgt < 0] = 0
             if iscut:
                 # print(wgt[genmass > masscut])
-                genmass = df.loc[(df["dimuon_mass"] > 120), "dimuon_mass"].compute()
+                genmass = df.loc[(df["dimuon_mass"] > 120), "dimuon_mass_gen"].compute()
+                # print(genmass)
                 wgt[genmass > masscut] = 0
+                # print(wgt[genmass > masscut])
             vals, bins = np.histogram(var_array, bins=bins, weights=wgt)
             vals2, bins = np.histogram(var_array, bins=bins, weights=wgt ** 2)
+            # if masscut == 500:
+            #    print(vals)
+            #    print(bins)
             errs = np.sqrt(vals2)
         else:
             vals, bins = np.histogram(var_array, bins=bins)
@@ -67,7 +72,8 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
             wgt[wgt < 0] = 0
             if iscut:
                 genmass = df.loc[
-                    (df["dimuon_mass"] > 120) & (df["njets"] == njets), "dimuon_mass"
+                    (df["dimuon_mass"] > 120) & (df["njets"] == njets),
+                    "dimuon_mass_gen",
                 ].compute()
                 wgt[genmass > masscut] = 0
             vals, bins = np.histogram(var_array, bins=bins, weights=wgt)
@@ -169,11 +175,11 @@ if __name__ == "__main__":
     path = "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/"
     path_dy = path + "dy_mumu/*/*.parquet"
     dy_files = glob.glob(path_dy)
-    path_data = path + "pre_UL_mumu/*/*.parquet"
+    path_data = path + "pre-UL_mumu/*/*.parquet"
     data_files = glob.glob(path_data)
-    path_tt_inclusive = path + "other_mc_mumuv2/ttbar_lep/*.parquet"
+    path_tt_inclusive = path + "ttbar_test/ttbar_lep/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
-    path_tt = path + "other_mc_mumuv2/ttbar_lep_*/*.parquet"
+    path_tt = path + "ttbar_test/ttbar_lep_*/*.parquet"
     tt_files = glob.glob(path_tt)
     tt_files = [file_ for file_ in tt_files if "ext" not in file_]
     path_wz = path + "other_mc_mumuv2/WZ*/*.parquet"
@@ -380,12 +386,14 @@ if __name__ == "__main__":
     axes_mass2j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
-        True,
-        True,
-        [120, 6000],
-        [1e-7, 1e5],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=True,
+        logy=True,
+        xRange=[120, 6000],
+        yRange=[1e-7, 1e5],
+        flavor="mu",
+        year="2018",
     )
     plots(axes_mass2j, data_2j, MCs, labels, colors, name)
 
@@ -402,12 +410,14 @@ if __name__ == "__main__":
     axes_mass1j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
-        True,
-        True,
-        [120, 6000],
-        [1e-6, 1e6],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=True,
+        logy=True,
+        xRange=[120, 6000],
+        yRange=[1e-6, 1e6],
+        flavor="mu",
+        year="2018",
     )
     plots(axes_mass1j, data_1j, MCs, labels, colors, name)
 
@@ -424,12 +434,14 @@ if __name__ == "__main__":
     axes_mass0j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
-        True,
-        True,
-        [120, 6000],
-        [1e-5, 1e7],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=True,
+        logy=True,
+        xRange=[120, 6000],
+        yRange=[1e-5, 1e7],
+        flavor="mu",
+        year="2018",
     )
     plots(axes_mass0j, data_0j, MCs, labels, colors, name)
 
@@ -446,12 +458,14 @@ if __name__ == "__main__":
     axes_mass = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
-        True,
-        True,
-        [120, 6000],
-        [1e-5, 1e7],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=True,
+        logy=True,
+        xRange=[120, 6000],
+        yRange=[1e-5, 1e7],
+        flavor="mu",
+        year="2018",
     )
     plots(axes_mass, data_inclu, MCs, labels, colors, name)
 
@@ -491,12 +505,14 @@ if __name__ == "__main__":
     axes_cs2j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
-        False,
-        False,
-        [-1.0, 1.0],
-        [0, 3000],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=False,
+        xRange=[-1.0, 1.0],
+        yRange=[0, 3000],
+        flavor="mu",
+        year="2018",
     )
     plots(axes_cs2j, data_2j, MCs, labels, colors, name)
 
@@ -513,12 +529,14 @@ if __name__ == "__main__":
     axes_cs1j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
-        False,
-        False,
-        [-1.0, 1.0],
-        [0, 15000],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=False,
+        xRange=[-1.0, 1.0],
+        yRange=[0, 15000],
+        flavor="mu",
+        year="2018",
     )
     plots(axes_cs1j, data_1j, MCs, labels, colors, name)
 
@@ -535,12 +553,14 @@ if __name__ == "__main__":
     axes_cs0j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
-        False,
-        False,
-        [-1.0, 1.0],
-        [0, 75000],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=False,
+        xRange=[-1.0, 1.0],
+        yRange=[0, 75000],
+        flavor="mu",
+        year="2018",
     )
     plots(axes_cs0j, data_0j, MCs, labels, colors, name)
 
@@ -557,12 +577,14 @@ if __name__ == "__main__":
     axes_cs = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
-        False,
-        False,
-        [-1.0, 1.0],
-        [0, 75000],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=False,
+        xRange=[-1.0, 1.0],
+        yRange=[0, 75000],
+        flavor="mu",
+        year="2018",
     )
     plots(axes_cs, data_inclu, MCs, labels, colors, name)
 
@@ -585,13 +607,15 @@ if __name__ == "__main__":
     ]
     name = "dimuon_nbjets"
     axes = setFrame(
-        "Number of B-jets",
+        "Number of b-jets",
         "Events",
-        False,
-        True,
-        [0, 7.0],
-        [1e-5, 1e11],
-        "mu",
-        "2018",
+        signal=True,
+        ratio=True,
+        logx=False,
+        logy=True,
+        xRange=[0, 7.0],
+        yRange=[1e-5, 1e11],
+        flavor="mu",
+        year="2018",
     )
     plots(axes, data, MCs, labels, colors, name)
