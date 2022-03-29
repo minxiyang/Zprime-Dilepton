@@ -8,7 +8,8 @@ from setFrame import setFrame
 import mplhep as hep
 import time
 import matplotlib.pyplot as plt
-
+import copy
+import random as rand
 
 def load2df(files):
 
@@ -149,7 +150,7 @@ if __name__ == "__main__":
     )
     bins_met = [j for j in range(20, 820, 10)]
     path = "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/"
-
+    
     path_tt_inclusive = path + "ttbar_test/ttbar_lep/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
     path_tt = path + "ttbar_test/ttbar_lep_*/*.parquet"
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     met_0j = {}
     met_1j = {}
     met_2j = {}
-
+    df_dict={}
     for key in path_CI.keys():
 
         if key == "tt_inclu":
@@ -208,6 +209,7 @@ if __name__ == "__main__":
             dfs = client.gather(results)
             df = dd.concat(dfs)
         iswgt = True
+        df_dict[key] = copy.deepcopy(df)
         mass_inclu[key] = df2hist(
             "dimuon_mass",
             df,
@@ -323,8 +325,18 @@ if __name__ == "__main__":
     for sample in CI_list:
 
         if "1000" in sample:
-
             sample_b = sample.replace("1000", "400")
+            #df_tt = df_dict["tt"].sample(frac=0.01)
+            #df_inclu = df_dict["tt_inclu"].sample(frac=0.01)
+            #CI400 = df_dict[sample_b].sample(frac=0.5)
+            #CI1000 = df_dict[sample].sample(frac=0.5)
+            #plt.scatter(df_tt["dimuon_mass"].compute(), df_tt["met"].compute(), df_tt["wgt_nominal"].compute(), c="r")
+            #plt.scatter(df_inclu["dimuon_mass"].compute(), df_inclu["met"].compute(), df_inclu["wgt_nominal"].compute(), c="r")
+            #plt.scatter(CI400["dimuon_mass"].compute(), CI400["met"].compute(), CI400["wgt_nominal"].compute(), c="b")
+            #plt.scatter(CI1000["dimuon_mass"].compute(), CI1000["met"].compute(), CI1000["wgt_nominal"].compute(), c="b")
+            #plt_name = sample.replace("1000", "")+"_MllVsMet_inclu.pdf"
+            #plt.savefig("plots/"+plt_name)
+            #plt.clf()
             mass_2j[sample_b][0] += mass_2j[sample][0]
             mass_2j[sample_b][1] = np.sqrt(
                 mass_2j[sample_b][1] ** 2 + mass_2j[sample][1] ** 2
@@ -626,3 +638,70 @@ if __name__ == "__main__":
     )
 
     plots(axes_met4_2j, MCs_met4_2j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_2j")
+
+
+    for sample in CI_list:
+
+        if "1000" in sample:
+            if "LL" in sample:
+                CI_label = "LL"
+            elif "LR" in sample:
+                CI_label = "LR"
+            if "pos" in sample:
+                CI_label += " pos"
+            elif "neg" in sample:
+                CI_label += " neg"
+            CI_label += " $\Lambda$"  
+            if "4TeV" in sample: 
+                CI_label += " 4 TeV"
+            elif "8TeV" in sample:
+                CI_label += " 8 TeV"
+            sample_b = sample.replace("1000", "400")
+            df_tt = df_dict["tt"].sample(frac=0.01)
+            df_inclu = df_dict["tt_inclu"].sample(frac=0.01)
+            CI400 = df_dict[sample_b].sample(frac=0.5)
+            CI1000 = df_dict[sample].sample(frac=0.5)
+            plt.xlabel("mll")
+            plt.ylabel("MET")
+            plt.xlim([0, 3000])
+            plt.ylim([0, 700]) 
+            plt.scatter(df_tt["dimuon_mass"].compute(), df_tt["met"].compute(), 100.*df_tt["wgt_nominal"].compute(), c="r", alpha=0.5)
+            plt.scatter(df_inclu["dimuon_mass"].compute(), df_inclu["met"].compute(), 100.*df_inclu["wgt_nominal"].compute(), c="r", label="$t\\bar{t}$", alpha=0.5)
+            plt.scatter(CI400["dimuon_mass"].compute(), CI400["met"].compute(), 100.*CI400["wgt_nominal"].compute(), c="b", alpha=0.5)
+            plt.scatter(CI1000["dimuon_mass"].compute(), CI1000["met"].compute(), 100.*CI1000["wgt_nominal"].compute(), c="b", label = CI_label, alpha=0.5)
+            leg = plt.legend(loc="upper right")
+            leg.legendHandles[0]._sizes = [30]
+            leg.legendHandles[1]._sizes = [30]
+            plt_name = sample.replace("1000", "")+"_MllVsMet_inclu.pdf"
+            plt.savefig("plots/"+plt_name)
+            plt.clf()
+            plt.scatter(df_tt.loc[df_tt["njets"]==1 ,"dimuon_mass"].compute(), df_tt.loc[df_tt["njets"]==1 ,"met"].compute(), 100.*df_tt.loc[df_tt["njets"]==1,"wgt_nominal"].compute(), c="r", alpha=0.5)
+            plt.scatter(df_inclu.loc[df_inclu["njets"]==1, "dimuon_mass"].compute(), df_inclu.loc[df_inclu["njets"]==1, "met"].compute(), 100.*df_inclu.loc[df_inclu["njets"]==1, "wgt_nominal"].compute(), c="r", label="$t\\bar{t}$", alpha=0.5)
+            plt.scatter(CI400.loc[CI400["njets"]==1, "dimuon_mass"].compute(), CI400.loc[CI400["njets"]==1, "met"].compute(), 100.*CI400.loc[CI400["njets"]==1, "wgt_nominal"].compute(), c="b", alpha=0.5)
+            plt.scatter(CI1000.loc[CI1000["njets"]==1 ,"dimuon_mass"].compute(), CI1000.loc[CI1000["njets"]==1, "met"].compute(), 100.*CI1000.loc[CI1000["njets"]==1 ,"wgt_nominal"].compute(), c="b", label = CI_label, alpha=0.5)
+
+            leg = plt.legend(loc="upper right")
+            leg.legendHandles[0]._sizes = [30]
+            leg.legendHandles[1]._sizes = [30]
+
+            plt_name = sample.replace("1000", "")+"_MllVsMet_1j.pdf"
+            plt.savefig("plots/"+plt_name)
+            plt.clf()
+
+            plt.scatter(df_tt.loc[df_tt["njets"]>1 ,"dimuon_mass"].compute(), df_tt.loc[df_tt["njets"]>1 ,"met"].compute(), 300.*df_tt.loc[df_tt["njets"]>1,"wgt_nominal"].compute(), c="r", alpha=0.5)
+            plt.scatter(df_inclu.loc[df_inclu["njets"]>1, "dimuon_mass"].compute(), df_inclu.loc[df_inclu["njets"]>1, "met"].compute(), 300.*df_inclu.loc[df_inclu["njets"]>1, "wgt_nominal"].compute(), c="r", label="$t\\bar{t}$", alpha=0.5)
+            plt.scatter(CI400.loc[CI400["njets"]>1, "dimuon_mass"].compute(), CI400.loc[CI400["njets"]>1, "met"].compute(), 300.*CI400.loc[CI400["njets"]>1, "wgt_nominal"].compute(), c="b", alpha=0.5)
+            plt.scatter(CI1000.loc[CI1000["njets"]>1 ,"dimuon_mass"].compute(), CI1000.loc[CI1000["njets"]>1, "met"].compute(), 300.**CI1000.loc[CI1000["njets"]>1 ,"wgt_nominal"].compute(), c="b", label = CI_label, alpha=0.5)
+           
+            leg = plt.legend(loc="upper right")
+            leg.legendHandles[0]._sizes = [30]
+            leg.legendHandles[1]._sizes = [30]
+
+            plt_name = sample.replace("1000", "")+"_MllVsMet_2j.pdf"
+            plt.savefig("plots/"+plt_name)
+            plt.clf()
+
+
+
+           
+
