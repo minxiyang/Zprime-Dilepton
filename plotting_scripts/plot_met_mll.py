@@ -675,6 +675,11 @@ if __name__ == "__main__":
             plt_name = sample.replace("1000", "")+"_MllVsMet_inclu.pdf"
             plt.savefig("plots/"+plt_name)
             plt.clf()
+            plt.xlabel("mll")
+            plt.ylabel("MET")
+            plt.xlim([0, 3000])
+            plt.ylim([0, 700])
+
             plt.scatter(df_tt.loc[df_tt["njets"]==1 ,"dimuon_mass"].compute(), df_tt.loc[df_tt["njets"]==1 ,"met"].compute(), 100.*df_tt.loc[df_tt["njets"]==1,"wgt_nominal"].compute(), c="r", alpha=0.5)
             plt.scatter(df_inclu.loc[df_inclu["njets"]==1, "dimuon_mass"].compute(), df_inclu.loc[df_inclu["njets"]==1, "met"].compute(), 100.*df_inclu.loc[df_inclu["njets"]==1, "wgt_nominal"].compute(), c="r", label="$t\\bar{t}$", alpha=0.5)
             plt.scatter(CI400.loc[CI400["njets"]==1, "dimuon_mass"].compute(), CI400.loc[CI400["njets"]==1, "met"].compute(), 100.*CI400.loc[CI400["njets"]==1, "wgt_nominal"].compute(), c="b", alpha=0.5)
@@ -687,6 +692,10 @@ if __name__ == "__main__":
             plt_name = sample.replace("1000", "")+"_MllVsMet_1j.pdf"
             plt.savefig("plots/"+plt_name)
             plt.clf()
+            plt.xlabel("mll")
+            plt.ylabel("MET")
+            plt.xlim([0, 3000])
+            plt.ylim([0, 700])
 
             plt.scatter(df_tt.loc[df_tt["njets"]>1 ,"dimuon_mass"].compute(), df_tt.loc[df_tt["njets"]>1 ,"met"].compute(), 300.*df_tt.loc[df_tt["njets"]>1,"wgt_nominal"].compute(), c="r", alpha=0.5)
             plt.scatter(df_inclu.loc[df_inclu["njets"]>1, "dimuon_mass"].compute(), df_inclu.loc[df_inclu["njets"]>1, "met"].compute(), 300.*df_inclu.loc[df_inclu["njets"]>1, "wgt_nominal"].compute(), c="r", label="$t\\bar{t}$", alpha=0.5)
