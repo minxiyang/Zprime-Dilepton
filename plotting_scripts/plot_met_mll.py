@@ -35,17 +35,20 @@ def chunk(files, size):
     ]
     return file_bag
 
-
 def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=True):
+    cut = 120
+    if var=="met":
+        cut = 400
 
     if njets == -1:
-        var_array = df.loc[df["dimuon_mass"] > 120, var].compute()
+        
+        var_array = df.loc[df["dimuon_mass"] > cut, var].compute()
         if iswgt:
 
-            wgt = df.loc[(df["dimuon_mass"] > 120), "wgt_nominal"].compute()
+            wgt = df.loc[(df["dimuon_mass"] > cut), "wgt_nominal"].compute()
             wgt[wgt < 0] = 0
             if iscut:
-                genmass = df.loc[(df["dimuon_mass"] > 120), "dimuon_mass_gen"].compute()
+                genmass = df.loc[(df["dimuon_mass"] > cut), "dimuon_mass_gen"].compute()
                 wgt[genmass > masscut] = 0
             vals, bins = np.histogram(var_array, bins=bins, weights=wgt)
             vals2, bins = np.histogram(var_array, bins=bins, weights=wgt ** 2)
@@ -57,33 +60,33 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
     else:
         if njets == 1:
             var_array = df.loc[
-                (df["njets"] == njets) & (df["dimuon_mass"] > 120), var
+                (df["njets"] == njets) & (df["dimuon_mass"] > cut), var
             ].compute()
         else:
             var_array = df.loc[
-                (df["njets"] > 1) & (df["dimuon_mass"] > 120), var
+                (df["njets"] > 1) & (df["dimuon_mass"] > cut), var
             ].compute()
 
         if iswgt:
             if njets == 1:
                 wgt = df.loc[
-                    (df["njets"] == njets) & (df["dimuon_mass"] > 120), "wgt_nominal"
+                    (df["njets"] == njets) & (df["dimuon_mass"] > cut), "wgt_nominal"
                 ].compute()
             else:
                 wgt = df.loc[
-                    (df["njets"] > 1) & (df["dimuon_mass"] > 120), "wgt_nominal"
+                    (df["njets"] > 1) & (df["dimuon_mass"] > cut), "wgt_nominal"
                 ].compute()
 
             wgt[wgt < 0] = 0
             if iscut:
                 if njets == 1:
                     genmass = df.loc[
-                        (df["dimuon_mass"] > 120) & (df["njets"] == njets),
+                        (df["dimuon_mass"] > cut) & (df["njets"] == njets),
                         "dimuon_mass_gen",
                     ].compute()
                 else:
                     genmass = df.loc[
-                        (df["dimuon_mass"] > 120) & (df["njets"] > 1), "dimuon_mass_gen"
+                        (df["dimuon_mass"] > cut) & (df["njets"] > 1), "dimuon_mass_gen"
                     ].compute()
 
                 wgt[genmass > masscut] = 0
@@ -326,17 +329,6 @@ if __name__ == "__main__":
 
         if "1000" in sample:
             sample_b = sample.replace("1000", "400")
-            #df_tt = df_dict["tt"].sample(frac=0.01)
-            #df_inclu = df_dict["tt_inclu"].sample(frac=0.01)
-            #CI400 = df_dict[sample_b].sample(frac=0.5)
-            #CI1000 = df_dict[sample].sample(frac=0.5)
-            #plt.scatter(df_tt["dimuon_mass"].compute(), df_tt["met"].compute(), df_tt["wgt_nominal"].compute(), c="r")
-            #plt.scatter(df_inclu["dimuon_mass"].compute(), df_inclu["met"].compute(), df_inclu["wgt_nominal"].compute(), c="r")
-            #plt.scatter(CI400["dimuon_mass"].compute(), CI400["met"].compute(), CI400["wgt_nominal"].compute(), c="b")
-            #plt.scatter(CI1000["dimuon_mass"].compute(), CI1000["met"].compute(), CI1000["wgt_nominal"].compute(), c="b")
-            #plt_name = sample.replace("1000", "")+"_MllVsMet_inclu.pdf"
-            #plt.savefig("plots/"+plt_name)
-            #plt.clf()
             mass_2j[sample_b][0] += mass_2j[sample][0]
             mass_2j[sample_b][1] = np.sqrt(
                 mass_2j[sample_b][1] ** 2 + mass_2j[sample][1] ** 2
@@ -420,90 +412,96 @@ if __name__ == "__main__":
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[400, 3970],
-        yRange=[1e-5, 1e6],
+        #yRange=[1e-5, 1e6],
+        yRange=[0,40],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_mass8, MCs8, labels_8TeV, colors, "bbll_muon_mass_CI8TeV_inclu")
+    plots(axes_mass8, MCs8, labels_8TeV, colors, "bbll_muon_mass_CI8TeV_inclu_nolog")
 
     axes_mass4 = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[400, 3970],
-        yRange=[1e-5, 1e6],
+        #yRange=[1e-5, 1e6],
+        yRange=[0,40],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_mass4, MCs4, labels_4TeV, colors, "bbll_muon_mass_CI4TeV_inclu")
+    plots(axes_mass4, MCs4, labels_4TeV, colors, "bbll_muon_mass_CI4TeV_inclu_nolog")
 
     axes_mass8_1j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[400, 3970],
-        yRange=[1e-6, 1e4],
+        #yRange=[1e-6, 1e4],
+        yRange=[0,20],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_mass8_1j, MCs8_1j, labels_8TeV, colors, "bbll_muon_mass_CI8TeV_1j")
+    plots(axes_mass8_1j, MCs8_1j, labels_8TeV, colors, "bbll_muon_mass_CI8TeV_1j_nolog")
 
     axes_mass4_1j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[400, 3970],
-        yRange=[1e-6, 1e4],
+        #yRange=[1e-6, 1e4],
+        yRange=[0,20],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_mass4_1j, MCs4_1j, labels_4TeV, colors, "bbll_muon_mass_CI4TeV_1j")
+    plots(axes_mass4_1j, MCs4_1j, labels_4TeV, colors, "bbll_muon_mass_CI4TeV_1j_nolog")
 
     axes_mass8_2j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[400, 3970],
-        yRange=[1e-6, 1e3],
+        #yRange=[1e-6, 1e3],
+        yRange=[0,10],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_mass8_2j, MCs8_2j, labels_8TeV, colors, "bbll_muon_mass_CI8TeV_2j")
+    plots(axes_mass8_2j, MCs8_2j, labels_8TeV, colors, "bbll_muon_mass_CI8TeV_2j_nolog")
 
     axes_mass4_2j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[400, 3970],
-        yRange=[1e-6, 1e3],
+        #yRange=[1e-6, 1e3],
+        yRange=[0,10],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_mass4_2j, MCs4_2j, labels_4TeV, colors, "bbll_muon_mass_CI4TeV_2j")
+    plots(axes_mass4_2j, MCs4_2j, labels_4TeV, colors, "bbll_muon_mass_CI4TeV_2j_nolog")
 
     MCs_met8 = [
         met_inclu["tt"],
@@ -554,90 +552,96 @@ if __name__ == "__main__":
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[20, 820],
-        yRange=[1e-4, 1e7],
+        #yRange=[1e-4, 1e7],
+        yRange=[0,50],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met8, MCs_met8, labels_8TeV, colors, "bbll_muon_met_CI8TeV_inclu")
+    plots(axes_met8, MCs_met8, labels_8TeV, colors, "bbll_muon_met_CI8TeV_inclu_nolog")
 
     axes_met4 = setFrame(
         "MET [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[20, 820],
-        yRange=[1e-4, 1e7],
+        #yRange=[1e-4, 1e7],
+        yRange=[0,50],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met4, MCs_met4, labels_4TeV, colors, "bbll_muon_met_CI4TeV_inclu")
+    plots(axes_met4, MCs_met4, labels_4TeV, colors, "bbll_muon_met_CI4TeV_inclu_nolog")
 
     axes_met8_1j = setFrame(
         "MET [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[20, 820],
-        yRange=[1e-4, 1e7],
+        #yRange=[1e-4, 1e7],
+        yRange=[0,20],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met8_1j, MCs_met8_1j, labels_8TeV, colors, "bbll_muon_met_CI8TeV_1j")
+    plots(axes_met8_1j, MCs_met8_1j, labels_8TeV, colors, "bbll_muon_met_CI8TeV_1j_nolog")
 
     axes_met4_1j = setFrame(
         "MET [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[20, 820],
-        yRange=[1e-4, 1e7],
+        #yRange=[1e-4, 1e7],
+        yRange=[0,20],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met4_1j, MCs_met4_1j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_1j")
+    plots(axes_met4_1j, MCs_met4_1j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_1j_nolog")
 
     axes_met8_2j = setFrame(
         "MET [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[20, 820],
-        yRange=[1e-4, 1e7],
+        #yRange=[1e-4, 1e7],
+        yRange=[0,10],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met8_2j, MCs_met8_2j, labels_8TeV, colors, "bbll_muon_met_CI8TeV_2j")
+    plots(axes_met8_2j, MCs_met8_2j, labels_8TeV, colors, "bbll_muon_met_CI8TeV_2j_nolog")
 
     axes_met4_2j = setFrame(
         "MET [GeV]",
         "Events/GeV",
         ratio=False,
         signal=True,
-        logx=True,
-        logy=True,
+        logx=False,
+        logy=False,
         xRange=[20, 820],
-        yRange=[1e-4, 1e7],
+        #yRange=[1e-4, 1e7],
+        yRange=[0,10],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met4_2j, MCs_met4_2j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_2j")
+    plots(axes_met4_2j, MCs_met4_2j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_2j_nolog")
 
 
     for sample in CI_list:
