@@ -9,7 +9,6 @@ def find_dimuon(objs, is_mc=False):
     objs2 = objs[objs.charge < 0]
     objs1["mu_idx"] = objs1.index
     objs2["mu_idx"] = objs2.index
-
     dmass = 20.0
 
     for i in range(objs1.shape[0]):

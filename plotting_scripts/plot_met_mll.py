@@ -135,6 +135,31 @@ def plots(axes, MCs, labels, colors, name):
     axes[2].clf()
 
 
+def plot_sen(axes, MC_sig, MC_bkg, colors, name):
+
+    bins = MC_sig[2]
+    MC_sig_vals = np.cumsum(MC_sig[0][::-1])[::-1]
+    MC_bkg_vals = np.cumsum(MC_bkg[0][::-1])[::-1]
+    MC_sig_vals = MC_sig_vals[0] - MC_sig_vals
+    MC_bkg_vals = MC_bkg_vals[0] - MC_bkg_vals
+    sen = MC_sig_vals/(MC_sig_vals + MC_bkg_vals)
+    MC_sig_vals = MC_sig_vals/MC_sig_vals[-1]
+    MC_bkg_vals = MC_bkg_vals/MC_bkg_vals[-1]
+    hep.histplot(
+        [MC_sig_vals, MC_bkg_vals, sen],
+        bins,
+        ax=axes[0],
+        color=colors,
+        label=["signal efficiency", "ttbar", "sensitivity"],
+    )
+
+    axes[0].legend(loc=(0.55, 0.55), fontsize="medium")
+    axes[1].savefig(
+        f"/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/plots/{name}.pdf"
+    )
+    axes[1].clf()
+
+
 if __name__ == "__main__":
 
     client_args = {
@@ -151,12 +176,12 @@ if __name__ == "__main__":
         + [j for j in range(1610, 1890, 70)]
         + [j for j in range(1890, 3970, 80)]
     )
-    bins_met = [j for j in range(20, 820, 10)]
+    bins_met = [j for j in range(0, 820, 10)]
     path = "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/"
     
-    path_tt_inclusive = path + "ttbar_test/ttbar_lep/*.parquet"
+    path_tt_inclusive = path + "ttbar/ttbar_lep/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
-    path_tt = path + "ttbar_test/ttbar_lep_*/*.parquet"
+    path_tt = path + "ttbar/ttbar_lep_*/*.parquet"
     tt_files = glob.glob(path_tt)
     tt_files = [file_ for file_ in tt_files if "ext" not in file_]
 
@@ -406,7 +431,7 @@ if __name__ == "__main__":
         mass_2j["bbll_4TeV_M400_negLL"],
         mass_2j["bbll_4TeV_M400_negLR"],
     ]
-
+    
     axes_mass8 = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
@@ -547,6 +572,50 @@ if __name__ == "__main__":
         met_2j["bbll_4TeV_M400_negLR"],
     ]
 
+    for sample in CI_list:
+
+        if "1000" in sample:
+            continue
+        #if "4TeV" in sample:
+        #    MCs1j = MCs_met4_1j
+        #    MCs2j = MCs_met4_2j
+        #else:
+        #    MCs1j = MCs_met8_1j
+        #    MCs2j = MCs_met8_2j
+
+
+        axes = setFrame(
+            "MET [GeV]",
+            "percentage",
+            ratio=False,
+            signal=False,
+            logx=True,
+            logy=False,
+            xRange=[10, 800],
+            yRange=[0,1.7],
+            flavor="mu",
+            year="2018",
+            )
+
+        plot_sen(axes, met_1j[sample], met_1j["tt"], ["red", "green", "blue"], "signi_1j_"+sample.replace("400", ""))
+        axes = setFrame(
+            "MET [GeV]",
+            "percentage",
+            ratio=False,
+            signal=False,
+            logx=True,
+            logy=False,
+            xRange=[10, 800],
+            yRange=[0,1.7],
+            flavor="mu",
+            year="2018",
+            )
+
+        plot_sen(axes, met_2j[sample], met_2j["tt"], ["red", "green", "blue"], "signi_2j_"+sample.replace("400", ""))
+
+
+
+   
     axes_met8 = setFrame(
         "MET [GeV]",
         "Events/GeV",

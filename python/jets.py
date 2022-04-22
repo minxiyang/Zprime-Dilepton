@@ -34,6 +34,8 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
         "jet2_jetId",
         "jet2_puId",
         "jet2_btagDeepB",
+        "jet1_sf",
+        "jet2_sf",
         "jj_mass",
         "jj_mass_log",
         "jj_pt",
@@ -70,7 +72,17 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
     jet1 = jets[0]
     jet2 = jets[1]
     # Fill single jet variables
-    for v in ["pt", "eta", "phi", "pt_gen", "eta_gen", "phi_gen", "qgl", "btagDeepB"]:
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "pt_gen",
+        "eta_gen",
+        "phi_gen",
+        "qgl",
+        "btagDeepB",
+        "sf",
+    ]:
         try:
             variables[f"jet1_{v}"] = jet1[v]
             variables[f"jet2_{v}"] = jet2[v]

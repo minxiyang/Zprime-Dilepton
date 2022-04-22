@@ -32,6 +32,7 @@ if __name__ == "__main__":
 
     file_name = "ztomumu_file_NanoAODv7.root"
     file_path = f"{os.getcwd()}/tests/samples/{file_name}"
+    #file_path = "/mnt/hadoop//store/user/minxi/bbll_4FermionCI_M-400To1000_Lambda-4TeV_posLR/crab_bbll_4FermionCI_M-400To1000_Lambda-4TeV_posLR/220319_020708/0000/CI_NanoAODv9_274.root"
     dataset = {"test": file_path}
 
     samp_info = SamplesInfo(xrootd=False, datasets_from="mu", year="2018")

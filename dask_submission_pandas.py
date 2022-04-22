@@ -127,7 +127,7 @@ def saving_func(output, out_dir):
         return
     for ds in output.s.unique():
         df = output[output.s == ds]
-        df = df.drop_duplicates(subset=["run", "event", "luminosityBlock"])
+        #df = df.drop_duplicates(subset=["run", "event", "luminosityBlock"])
         if df.shape[0] == 0:
             continue
         mkdir(f"{out_dir}/{ds}")
@@ -144,6 +144,8 @@ def submit_job(arg_set, parameters):
         from python.dimuon_processor import DimuonProcessor as event_processor
     elif parameters["channel"] == "el":
         from python.dielectron_processor import DielectronProcessor as event_processor
+    elif parameters["channel"] == "eff_mu":
+        from python.dimuon_eff_processor import DimuonEffProcessor as event_processor
     else:
         print("wrong channel input")
     executor = dask_executor
@@ -267,13 +269,13 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            if "data" not in sample:
+            if "ttbar" not in sample:
                 continue
 
-            # if group != "other_mc":
-            #    continue
-            if sample not in ["data_A"]:
+            if group != "other_mc":
                 continue
+            #if sample not in ["bbll_4TeV_M400_posLL" ,"bbll_4TeV_M1000_posLL"]:
+            #    continue
             # if group != "data":
             #    continue
             if group == "data":

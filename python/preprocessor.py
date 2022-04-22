@@ -90,7 +90,7 @@ class SamplesInfo(object):
         self.parameters = {k: v[self.year] for k, v in parameters.items()}
 
         self.is_mc = True
-
+        print(datasets_from)
         if "mu" in datasets_from:
             from config.datasets_muon import datasets
         elif "el" in datasets_from:

@@ -11,8 +11,7 @@ datasets = {
         "dy6000toInf": "/ZToMuMu_NNPDF31_13TeV-powheg_M_6000_Inf/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM",
         "data_A": "/SingleMuon/Run2018A-02Apr2020-v1/NANOAOD",
         "data_B": "/SingleMuon/Run2018B-02Apr2020-v1/NANOAOD",
-        "data_C": "/SingleMuon/Run2018C-02Apr2020-v1/NANOAOD",
-        # "data_D": "/SingleMuon/Run2018D-22Jan2019_Nano14Dec2018-v1/NANOAOD",
+
         "data_D": "/SingleMuon/Run2018D-02Apr2020-v1/NANOAOD",
         # "data_D": "/SingleMuon/Run2018D-UL2018_MiniAODv2_JMENanoAODv9-v1/NANOAOD",
         # "data_A":"/SingleMuon/Run2018A-UL2018_MiniAODv2_NanoAODv9-v2/NANOAOD",

@@ -15,6 +15,7 @@ from python.corrections.l1prefiring_weights import l1pf_weights
 from python.electrons import find_dielectron, fill_electrons
 from python.jets import prepare_jets, fill_jets
 import copy
+from coffea.btag_tools import BTagScaleFactor
 
 # from python.jets import jet_id, jet_puid, gen_jet_pair_mass
 from python.corrections.kFac import kFac
@@ -446,10 +447,16 @@ class DielectronProcessor(processor.ProcessorABC):
                 "pt_gen",
                 "eta_gen",
                 "phi_gen",
+                "sf",
             ]
             jets["pt_gen"] = jets.matched_gen.pt
             jets["eta_gen"] = jets.matched_gen.eta
             jets["phi_gen"] = jets.matched_gen.phi
+            btag_sf = BTagScaleFactor(
+                "data/b-tagging/DeepCSV_102XSF_WP_V1.csv", "tight"
+            )
+            sf = btag_sf("central", jets.hadronFlavour, np.abs(jets.eta), jets.pt)
+            jets["sf"] = sf
         # if variation == "nominal":
         #    if self.do_jec:
         #        jet_branches += ["pt_jec", "mass_jec"]
