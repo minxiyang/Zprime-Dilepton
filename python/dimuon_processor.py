@@ -12,13 +12,13 @@ from coffea.btag_tools import BTagScaleFactor
 from python.timer import Timer
 from python.weights import Weights
 
-from python.corrections.pu_reweight import pu_lookups, pu_evaluator
-from python.corrections.lepton_sf import musf_lookup, musf_evaluator
-from python.corrections.rochester import apply_roccor
-from python.corrections.fsr_recovery import fsr_recovery
-from python.corrections.jec import jec_factories, apply_jec
-from python.corrections.geofit import apply_geofit
-from python.corrections.l1prefiring_weights import l1pf_weights
+from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
+from copperhead.stage1.corrections.lepton_sf import musf_lookup, musf_evaluator
+from copperhead.stage1.corrections.rochester import apply_roccor
+from copperhead.stage1.corrections.fsr_recovery import fsr_recovery
+from copperhead.stage1.corrections.jec import jec_factories, apply_jec
+from copperhead.stage1.corrections.geofit import apply_geofit
+from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
 from python.corrections.kFac import kFac
 from python.jets import prepare_jets, fill_jets
 import copy
@@ -37,12 +37,12 @@ class DimuonProcessor(processor.ProcessorABC):
         self.apply_to_output = kwargs.pop("apply_to_output", None)
         self.do_btag_syst = kwargs.pop("do_btag_syst", None)
         self.pt_variations = kwargs.pop("pt_variations", ["nominal"])
-
+        print ("doing init")
         if self.samp_info is None:
             print("Samples info missing!")
             return
 
-        self._accumulator = processor.defaultdict_accumulator(int)
+        #self._accumulator = processor.defaultdict_accumulator(int)
 
         self.do_pu = False
         self.auto_pu = False
@@ -81,16 +81,9 @@ class DimuonProcessor(processor.ProcessorABC):
         #        self.vars_to_save = set([v.name for v in variables])
         self.prepare_lookups()
 
-    @property
-    def accumulator(self):
-        return self._accumulator
-
-    @property
-    def columns(self):
-        return self._columns
-
+        print ("finished init")
     def process(self, df):
-
+        print ("start the processor")
         # Initialize timer
         if self.timer:
             self.timer.update()
@@ -490,6 +483,7 @@ class DimuonProcessor(processor.ProcessorABC):
             self.timer.add_checkpoint("Filled outputs")
             self.timer.summary()
 
+        print ("at the end of the processor")
         if self.apply_to_output is None:
             return output
         else:
@@ -821,6 +815,13 @@ class DimuonProcessor(processor.ProcessorABC):
 
         self.evaluator[self.zpt_path]._axes = self.evaluator[self.zpt_path]._axes[0]
         return
+    @property
+    def accumulator(self):
+        return processor.defaultdict_accumulator(int)
+
+    @property
+    def columns(self):
+        return branches
 
     def postprocess(self, accumulator):
         return accumulator
