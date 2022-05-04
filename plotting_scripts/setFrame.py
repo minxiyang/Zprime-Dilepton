@@ -18,7 +18,7 @@ def setFrame(xtitle, ytitle, ratio, signal, logx, logy, xRange, yRange, flavor, 
     style["mathtext.fontset"] = "cm"
     style["mathtext.default"] = "rm"
     plt.style.use(style)
-    hep.set_style(style)
+    hep.style.use(style)
     if ratio:
 
         fig, axs = plt.subplots(

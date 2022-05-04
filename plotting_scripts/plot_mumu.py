@@ -29,7 +29,7 @@ parameters = {
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.149.133"
+node_ip = "128.211.148.60"
 
 if use_local_cluster:
     ncpus_local = 40
@@ -38,6 +38,8 @@ if use_local_cluster:
 else:
     slurm_cluster_ip = f"{node_ip}:{args.slurm_port}"
     dashboard_address = f"{node_ip}:8787"
+    parameters['slurm_cluster_ip'] = slurm_cluster_ip
+
 
 
 def load2df(files):
@@ -153,6 +155,8 @@ def plots(axes, data, MCs, labels, colors, name):
     r_vals = data[0] / MC_vals
     r_errs = r_vals * np.sqrt((data[1] / data[0]) ** 2 + (MC_errs / MC_vals) ** 2)
     r_MCerrs = MC_errs / MC_vals
+
+    r_vals = np.nan_to_num(r_vals)
 
     axes[0].fill_between(
         x=bins[:-1],
