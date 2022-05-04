@@ -1,3 +1,7 @@
+import sys
+sys.path.append("copperhead/")
+
+
 import awkward
 import awkward as ak
 import numpy as np
@@ -12,14 +16,20 @@ from coffea.btag_tools import BTagScaleFactor
 from python.timer import Timer
 from python.weights import Weights
 
+#correction helpers included from copperhead
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
 from copperhead.stage1.corrections.lepton_sf import musf_lookup, musf_evaluator
-from copperhead.stage1.corrections.rochester import apply_roccor
-from copperhead.stage1.corrections.fsr_recovery import fsr_recovery
 from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 from copperhead.stage1.corrections.geofit import apply_geofit
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
+from copperhead.stage1.corrections.stxs_uncert import add_stxs_variations, stxs_lookups
+from copperhead.stage1.corrections.lhe_weights import lhe_weights
+from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
+from copperhead.stage1.corrections.btag_weights import btag_weights
+
+#high mass dilepton specific corrections
 from python.corrections.kFac import kFac
+
 from python.jets import prepare_jets, fill_jets
 import copy
 
@@ -29,31 +39,41 @@ from python.utils import bbangle
 
 from config.parameters import parameters, muon_branches, jet_branches
 
+from copperhead.config.jec_parameters import jec_parameters
 
 class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
         self.samp_info = kwargs.pop("samp_info", None)
         do_timer = kwargs.pop("do_timer", True)
+        self.pt_variations = kwargs.get("pt_variations", ["nominal"])
         self.apply_to_output = kwargs.pop("apply_to_output", None)
+
+        self.year = self.samp_info.year
+        self.parameters = {k: v[self.year] for k, v in parameters.items()}
+
         self.do_btag_syst = kwargs.pop("do_btag_syst", None)
-        self.pt_variations = kwargs.pop("pt_variations", ["nominal"])
-        print ("doing init")
+        if self.do_btag_syst:
+            self.btag_systs = self.parameters["btag_systs"]
+        else:
+            self.btag_systs = []
+
         if self.samp_info is None:
             print("Samples info missing!")
             return
 
-        #self._accumulator = processor.defaultdict_accumulator(int)
-
-        self.do_pu = False
+        self.do_pu = True
         self.auto_pu = False
         self.year = self.samp_info.year
-        self.do_roccor = False
-        self.do_fsr = False
-        self.do_geofit = False
-        self.do_l1pw = False  # L1 prefiring weights
-        self.do_jecunc = False
+        self.do_l1pw = True  # L1 prefiring weights
+        jec_pars = {k: v[self.year] for k, v in jec_parameters.items()}
+        self.do_jecunc = True
         self.do_jerunc = False
-        self.parameters = {k: v[self.year] for k, v in parameters.items()}
+        for ptvar in self.pt_variations:
+            if ptvar in jec_pars["jec_variations"]:
+                self.do_jecunc = True
+            if ptvar in jec_pars["jer_variations"]:
+                self.do_jerunc = True
+
 
         self.timer = Timer("global") if do_timer else None
 
@@ -78,12 +98,9 @@ class DimuonProcessor(processor.ProcessorABC):
         else:
             self.btag_systs = []
 
-        #        self.vars_to_save = set([v.name for v in variables])
         self.prepare_lookups()
 
-        print ("finished init")
     def process(self, df):
-        print ("start the processor")
         # Initialize timer
         if self.timer:
             self.timer.update()
@@ -164,49 +181,12 @@ class DimuonProcessor(processor.ProcessorABC):
             df["Muon", "eta_gen"] = df.Muon.matched_gen.eta
             df["Muon", "phi_gen"] = df.Muon.matched_gen.phi
             df["Muon", "idx"] = df.Muon.genPartIdx
-        # Rochester correction
-        if self.do_roccor:
-            apply_roccor(df, self.roccor_lookup, is_mc)
-            df["Muon", "pt"] = df.Muon.pt_roch
-
-            if self.timer:
-                self.timer.add_checkpoint("Rochester correction")
-
-            # variations will be in branches pt_roch_up and pt_roch_down
-            # muons_pts = {
-            #     'nominal': df.Muon.pt,
-            #     'roch_up':df.Muon.pt_roch_up,
-            #     'roch_down':df.Muon.pt_roch_down
-            # }
 
         # for ...
         if True:  # indent reserved for loop over muon pT variations
             # According to HIG-19-006, these variations have negligible
             # effect on significance, but it's better to have them
             # implemented in the future
-
-            # FSR recovery
-            if self.do_fsr:
-                has_fsr = fsr_recovery(df)
-                df["Muon", "pt"] = df.Muon.pt_fsr
-                df["Muon", "eta"] = df.Muon.eta_fsr
-                df["Muon", "phi"] = df.Muon.phi_fsr
-                df["Muon", "pfRelIso04_all"] = df.Muon.iso_fsr
-
-                if self.timer:
-                    self.timer.add_checkpoint("FSR recovery")
-
-            # if FSR was applied, 'pt_fsr' will be corrected pt
-            # if FSR wasn't applied, just copy 'pt' to 'pt_fsr'
-            df["Muon", "pt_fsr"] = df.Muon.pt
-
-            # GeoFit correction
-            if self.do_geofit and ("dxybs" in df.Muon.fields):
-                apply_geofit(df, self.year, ~has_fsr)
-                df["Muon", "pt"] = df.Muon.pt_fsr
-
-                if self.timer:
-                    self.timer.add_checkpoint("GeoFit correction")
 
             # --- conversion from awkward to pandas --- #
             muon_branches_local = copy.copy(muon_branches)
@@ -233,7 +213,7 @@ class DimuonProcessor(processor.ProcessorABC):
 
             # Apply event quality flag
             output["r"] = None
-            output["s"] = dataset
+            output["dataset"] = dataset
             output["year"] = int(self.year)
             if dataset == "dyInclusive50":
                 muons = muons[muons.genPartFlav == 15]
@@ -296,7 +276,6 @@ class DimuonProcessor(processor.ProcessorABC):
 
             if self.timer:
                 self.timer.add_checkpoint("muon object selection")
-
             if muons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
                 output = output[output.r.isin(self.regions)]
@@ -456,7 +435,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 continue
             output[f"wgt_{wgt}"] = weights.get_weight(wgt)
 
-        if is_mc and "dy" in output.s:
+        if is_mc and "dy" in output.dataset:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
             output.loc[
@@ -483,7 +462,6 @@ class DimuonProcessor(processor.ProcessorABC):
             self.timer.add_checkpoint("Filled outputs")
             self.timer.summary()
 
-        print ("at the end of the processor")
         if self.apply_to_output is None:
             return output
         else:
@@ -512,7 +490,12 @@ class DimuonProcessor(processor.ProcessorABC):
 
         variables = pd.DataFrame(index=output.index)
         jet_branches_local = copy.copy(jet_branches)
+
         if is_mc:
+            jets["pt_gen"] = jets.matched_gen.pt
+            jets["eta_gen"] = jets.matched_gen.eta
+            jets["phi_gen"] = jets.matched_gen.phi
+
             jet_branches_local += [
                 "partonFlavour",
                 "hadronFlavour",
@@ -521,51 +504,52 @@ class DimuonProcessor(processor.ProcessorABC):
                 "phi_gen",
                 "sf",
             ]
-            jets["pt_gen"] = jets.matched_gen.pt
-            jets["eta_gen"] = jets.matched_gen.eta
-            jets["phi_gen"] = jets.matched_gen.phi
             btag_sf = BTagScaleFactor(
                 "data/b-tagging/DeepCSV_102XSF_WP_V1.csv", "tight"
             )
             sf = btag_sf("central", jets.hadronFlavour, np.abs(jets.eta), jets.pt)
             jets["sf"] = sf
-        # if variation == "nominal":
-        #    if self.do_jec:
-        #        jet_branches += ["pt_jec", "mass_jec"]
-        #    if is_mc and self.do_jerunc:
-        #        jet_branches += ["pt_orig", "mass_orig"]
-        """
-        # Find jets that have selected muons within dR<0.4 from them
-        #matched_mu_pt = jets.matched_muons.pt_fsr
-        #matched_mu_iso = jets.matched_muons.pfRelIso04_all
-        #matched_mu_id = jets.matched_muons[self.parameters["muon_id"]]
-        #matched_mu_pass = (
-        #    (matched_mu_pt > self.parameters["muon_pt_cut"]) &
-        #    (matched_mu_iso < self.parameters["muon_iso_cut"]) &
-        #    matched_mu_id
-        #)
-        #clean = ~(ak.to_pandas(matched_mu_pass).astype(float).fillna(0.0)
-        #          .groupby(level=[0, 1]).sum().astype(bool))
 
-        # if self.timer:
-        #     self.timer.add_checkpoint("Clean jets from matched muons")
+
+
+
+        if variation == "nominal":
+            if self.do_jec:
+                jet_branches_local += ["pt_jec", "mass_jec"]
+            if is_mc and self.do_jerunc:
+                jet_branches_local += ["pt_orig", "mass_orig"]
+
+        # Find jets that have selected muons within dR<0.4 from them
+        matched_mu_pt = jets.matched_muons.pt
+        matched_mu_iso = jets.matched_muons.pfRelIso04_all
+        matched_mu_id = jets.matched_muons[self.parameters["muon_id"]]
+        matched_mu_pass = (
+            (matched_mu_pt > self.parameters["muon_pt_cut"]) &
+            (matched_mu_iso < self.parameters["muon_iso_cut"]) &
+            matched_mu_id
+        )
+        clean = ~(ak.to_pandas(matched_mu_pass).astype(float).fillna(0.0)
+                  .groupby(level=[0, 1]).sum().astype(bool))
+
+        if self.timer:
+             self.timer.add_checkpoint("Clean jets from matched muons")
 
         # Select particular JEC variation
-        #if '_up' in variation:
-        #    unc_name = 'JES_' + variation.replace('_up', '')
-        #    if unc_name not in jets.fields:
-        #        return
-        #    jets = jets[unc_name]['up'][jet_columns]
-        #elif '_down' in variation:
-        #    unc_name = 'JES_' + variation.replace('_down', '')
-        #    if unc_name not in jets.fields:
-        #        return
-        ##    jets = jets[unc_name]['down'][jet_columns]
-        #else:
-        """
+        if "_up" in variation:
+            unc_name = "JES_" + variation.replace("_up", "")
+            if unc_name not in jets.fields:
+                return
+            jets = jets[unc_name]["up"][jet_branches_local]
+        elif "_down" in variation:
+            unc_name = "JES_" + variation.replace("_down", "")
+            if unc_name not in jets.fields:
+                return
+            jets = jets[unc_name]["down"][jet_branches_local]
+        else:
+            jets = jets[jet_branches_local]
 
         # --- conversion from awkward to pandas --- #
-        jets = ak.to_pandas(jets[jet_branches_local])
+        jets = ak.to_pandas(jets)
 
         jets = jets.dropna()
 
@@ -588,46 +572,8 @@ class DimuonProcessor(processor.ProcessorABC):
                 jets["mass"] = jets["mass_orig"]
 
         # ------------------------------------------------------------#
-        # Apply jetID and PUID
+        # Apply jetID
         # ------------------------------------------------------------#
-        # pass_jet_id = jet_id(jets, self.parameters, self.year)
-        # pass_jet_puid = jet_puid(jets, self.parameters, self.year)
-
-        # Jet PUID scale factors
-        # if is_mc and False:  # disable for now
-        #     puid_weight = puid_weights(
-        #         self.evaluator, self.year, jets, pt_name,
-        #         jet_puid_opt, jet_puid, numevents
-        #     )
-        #     weights.add_weight('puid_wgt', puid_weight)
-
-        # ------------------------------------------------------------#
-        # Select jets
-        # ------------------------------------------------------------#
-        # jets['clean'] = clean
-
-        # jet_selection = (
-        #    pass_jet_id & pass_jet_puid &
-        #    (jets.qgl > -2) & jets.clean &
-        #    (jets.pt > self.parameters["jet_pt_cut"]) &
-        #    (abs(jets.eta) < self.parameters["jet_eta_cut"])
-        # )
-
-        # jets = jets[jet_selection]
-
-        # if self.timer:
-        #     self.timer.add_checkpoint("Selected jets")
-
-        # ------------------------------------------------------------#
-        # Fill jet-related variables
-        # ------------------------------------------------------------#
-
-        # njets = jets.reset_index().groupby("entry")["subentry"].nunique()
-        # variables["njets"] = njets
-
-        # one_jet = (njets > 0)
-        # two_jets = (njets > 1)
-
         # Sort jets by pT and reset their numbering in an event
         # jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
         jets.index = pd.MultiIndex.from_arrays(
@@ -655,112 +601,29 @@ class DimuonProcessor(processor.ProcessorABC):
         fill_jets(output, variables, Jets, is_mc=is_mc)
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
-        """
-        # ------------------------------------------------------------#
-        # Fill soft activity jet variables
-        # ------------------------------------------------------------#
-
-        # Effect of changes in jet acceptance should be negligible,
-        # no need to calcluate this for each jet pT variation
-        #if variation == 'nominal':
-        #    fill_softjets(df, output, variables, 2)
-        #    fill_softjets(df, output, variables, 5)
-
-            # if self.timer:
-            #     self.timer.add_checkpoint("Calculated SA variables")
+        
 
         # ------------------------------------------------------------#
-        # Apply remaining cuts
+        # Calculate btag SF
         # ------------------------------------------------------------#
+        # --- Btag weights --- #
+        if is_mc:
+            bjet_sel_mask = output.event_selection
 
-        # Cut has to be defined here because we will use it in
-        # b-tag weights calculation
-        #vbf_cut = (
-        #    (variables.jj_mass > 400) &
-        #    (variables.jj_dEta > 2.5) &
-        #    (jet1.pt > 35)
-        #)
-
-        # ------------------------------------------------------------#
-        # Calculate QGL weights, btag SF and apply btag veto
-        # ------------------------------------------------------------#
-
-        #if is_mc and variation == 'nominal':
-            # --- QGL weights --- #
-        #    isHerwig = ('herwig' in dataset)
-
-        #    qgl_wgts = qgl_weights(
-        #        jet1, jet2, isHerwig, output, variables, njets
-        #    )
-        #    weights.add_weight('qgl_wgt', qgl_wgts, how='all')
-
-            # --- Btag weights --- #
-        #    bjet_sel_mask = output.event_selection & two_jets & vbf_cut
-
-        #    btag_wgt, btag_syst = btag_weights(
-        #        self, self.btag_lookup, self.btag_systs, jets,
-        #        weights, bjet_sel_mask
-        #    )
-        #    weights.add_weight('btag_wgt', btag_wgt)
+            btag_wgt, btag_syst = btag_weights(
+                self, self.btag_lookup, self.btag_systs, jets, weights, bjet_sel_mask
+            )
+            weights.add_weight("btag_wgt", btag_wgt)
 
             # --- Btag weights variations --- #
-        #    for name, bs in btag_syst.items():
-        #        weights.add_weight(
-        #            f'btag_wgt_{name}', bs, how='only_vars'
-        #        )
+            for name, bs in btag_syst.items():
+                weights.add_weight(f"btag_wgt_{name}", bs, how="only_vars")
 
-            # if self.timer:
-            #     self.timer.add_checkpoint(
-            #         "Applied QGL and B-tag weights"
-            #     )
+            if self.timer:
+                self.timer.add_checkpoint(
+                    "Applied B-tag weights"
+                )
 
-        # Separate from ttH and VH phase space
-        #variables['nBtagLoose'] = jets[
-        #    (jets.btagDeepB > self.parameters["btag_loose_wp"]) &
-        #    (abs(jets.eta) < 2.5)
-        #].reset_index().groupby('entry')['subentry'].nunique()
-
-        #variables['nBtagMedium'] = jets[
-        #    (jets.btagDeepB > self.parameters["btag_medium_wp"]) &
-        #    (abs(jets.eta) < 2.5)
-        #].reset_index().groupby('entry')['subentry'].nunique()
-        #variables.nBtagLoose = variables.nBtagLoose.fillna(0.0)
-        #variables.nBtagMedium = variables.nBtagMedium.fillna(0.0)
-
-        #variables.selection = (
-        #    output.event_selection &
-        #    (variables.nBtagLoose < 2) &
-        #    (variables.nBtagMedium < 1)
-        #)
-
-        # ------------------------------------------------------------#
-        # Define categories
-        # ------------------------------------------------------------#
-        #variables['c'] = ''
-        #variables.c[
-        #    variables.selection & (variables.njets < 2)] = 'ggh_01j'
-        #variables.c[
-        #    variables.selection &
-        #    (variables.njets >= 2) & (~vbf_cut)] = 'ggh_2j'
-        #variables.c[
-        #    variables.selection &
-        #    (variables.njets >= 2) & vbf_cut] = 'vbf'
-
-        # if 'dy' in dataset:
-        #     two_jets_matched = np.zeros(numevents, dtype=bool)
-        #     matched1 =\
-        #         (jet1.matched_genjet.counts > 0)[two_jets[one_jet]]
-        #     matched2 = (jet2.matched_genjet.counts > 0)
-        #     two_jets_matched[two_jets] = matched1 & matched2
-        #     variables.c[
-        #         variables.selection &
-        #         (variables.njets >= 2) &
-        #         vbf_cut & (~two_jets_matched)] = 'vbf_01j'
-        #     variables.c[
-        #         variables.selection &
-        #         (variables.njets >= 2) &
-        #         vbf_cut & two_jets_matched] = 'vbf_2j'
-        """
         # --------------------------------------------------------------#
         # Fill outputs
         # --------------------------------------------------------------#
@@ -781,39 +644,28 @@ class DimuonProcessor(processor.ProcessorABC):
         return output
 
     def prepare_lookups(self):
-        # Rochester correction
-        rochester_data = txt_converters.convert_rochester_file(
-            self.parameters["roccor_file"], loaduncs=True
-        )
-        self.roccor_lookup = rochester_lookup.rochester_lookup(rochester_data)
         self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors
         self.musf_lookup = musf_lookup(self.parameters)
         # Pile-up reweighting
         self.pu_lookups = pu_lookups(self.parameters)
+        # Btag weights
+        self.btag_lookup = BTagScaleFactor(
+            self.parameters["btag_sf_csv"],
+            BTagScaleFactor.RESHAPE,
+            "iterativefit,iterativefit,iterativefit",
+        )
 
         # --- Evaluator
-        self.extractor = extractor()
+        #self.extractor = extractor()
+        # PU ID weights
+        #puid_filename = self.parameters["puid_sf_file"]
+        #self.extractor.add_weight_sets([f"* * {puid_filename}"])
 
-        # Z-pT reweigting (disabled)
-        zpt_filename = self.parameters["zpt_weights_file"]
-        self.extractor.add_weight_sets([f"* * {zpt_filename}"])
-        if "2016" in self.year:
-            self.zpt_path = "zpt_weights/2016_value"
-        else:
-            self.zpt_path = "zpt_weights/2017_value"
+        #self.extractor.finalize()
+        #self.evaluator = self.extractor.make_evaluator()
 
-        # Calibration of event-by-event mass resolution
-        for mode in ["Data", "MC"]:
-            label = f"res_calib_{mode}_{self.year}"
-            path = self.parameters["res_calib_path"]
-            file_path = f"{path}/{label}.root"
-            self.extractor.add_weight_sets([f"{label} {label} {file_path}"])
 
-        self.extractor.finalize()
-        self.evaluator = self.extractor.make_evaluator()
-
-        self.evaluator[self.zpt_path]._axes = self.evaluator[self.zpt_path]._axes[0]
         return
     @property
     def accumulator(self):

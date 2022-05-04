@@ -8,7 +8,8 @@ from functools import partial
 import coffea.processor as processor
 from coffea.processor import DaskExecutor, Runner
 from coffea.nanoevents import NanoAODSchema
-from copperhead.stage1.preprocessor import load_samples
+#from copperhead.stage1.preprocessor import load_samples
+from python.preprocessor import load_samples
 from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
@@ -69,7 +70,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.149.133"  # hammer-c000
+node_ip = "128.211.148.61"  # hammer-c000
 # node_ip = "128.211.149.135"
 #node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
@@ -157,7 +158,6 @@ def submit_job(parameters):
     mkdir(out_dir)
     out_dir += "/" + parameters["year"]
     mkdir(out_dir)
-    print ("in the submission function")
     executor_args = {"client": parameters["client"], "retries": 0}
     processor_args = {
         "samp_info": parameters["samp_infos"],
@@ -202,46 +202,6 @@ def submit_job(parameters):
 
 
 
-#def submit_job(arg_set, parameters):
-#    mkdir(parameters["out_dir"])
-#
-#    if parameters["channel"] == "mu":
-#        from python.dimuon_processor import DimuonProcessor as event_processor
-#    elif parameters["channel"] == "el":
-#        from python.dielectron_processor import DielectronProcessor as event_processor
-#    elif parameters["channel"] == "eff_mu":
-#        from python.dimuon_eff_processor import DimuonEffProcessor as event_processor
-#    else:
-#        print("wrong channel input")
-#    executor = dask_executor
-#    executor_args = {
-#        "client": parameters["client"],
-#        "schema": processor.NanoAODSchema,
-#        "retries": 0,
-#    }
-#    processor_args = {
-#        "samp_info": parameters["samp_infos"],
-#        "do_timer": False,
-#        "apply_to_output": partial(saving_func, out_dir=parameters["out_dir"]),
-#    }
-#
-#    try:
-#
-#        output = run_uproot_job(
-#            parameters["samp_infos"].fileset,
-#            "Events",
-#            event_processor(**processor_args),
-#            executor,
-#            executor_args=executor_args,
-#            chunksize=parameters["chunksize"],
-#            maxchunks=parameters["maxchunks"],
-#        )
-#
-#    except Exception as e:
-#        tb = traceback.format_exc()
-#        return "Failed: " + str(e) + " " + tb
-#
-#    return "Success!"
 
 
 if __name__ == "__main__":
@@ -338,7 +298,7 @@ if __name__ == "__main__":
             if "dy" not in sample:
                 continue
 
-            #if group != "other_mc":
+            #if group != "data":
             #    continue
             #if sample not in ["bbll_4TeV_M400_posLL" ,"bbll_4TeV_M1000_posLL"]:
             #    continue

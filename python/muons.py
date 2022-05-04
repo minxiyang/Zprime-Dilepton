@@ -7,8 +7,8 @@ def find_dimuon(objs, is_mc=False):
 
     objs1 = objs[objs.charge > 0]
     objs2 = objs[objs.charge < 0]
-    objs1["mu_idx"] = objs1.index
-    objs2["mu_idx"] = objs2.index
+    objs1["mu_idx"] = objs1.index.to_numpy()
+    objs2["mu_idx"] = objs2.index.to_numpy()
     dmass = 20.0
 
     for i in range(objs1.shape[0]):
@@ -235,10 +235,10 @@ def fill_muons(processor, output, mu1, mu2, is_mc):
     output["dimuon_dPhi"] = mm_dphi
     output["dimuon_dR"] = mm_dr
 
-    output["dimuon_ebe_mass_res"] = mass_resolution(
-        is_mc, processor.evaluator, output, processor.year
-    )
-    output["dimuon_ebe_mass_res_rel"] = output.dimuon_ebe_mass_res / output.dimuon_mass
+    #output["dimuon_ebe_mass_res"] = mass_resolution(
+    #    is_mc, processor.evaluator, output, processor.year
+    #)
+    #output["dimuon_ebe_mass_res_rel"] = output.dimuon_ebe_mass_res / output.dimuon_mass
     output["dimuon_cos_theta_cs"], output["dimuon_phi_cs"] = cs_variables(mu1, mu2)
 
 
