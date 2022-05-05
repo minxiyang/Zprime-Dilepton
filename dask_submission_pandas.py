@@ -1,16 +1,20 @@
+import sys
+sys.path.append("copperhead/")
 import time
 import argparse
 import traceback
 import datetime
 from functools import partial
 import coffea.processor as processor
-from coffea.processor import dask_executor, run_uproot_job
+from coffea.processor import DaskExecutor, Runner
+from coffea.nanoevents import NanoAODSchema
+#from copperhead.stage1.preprocessor import load_samples
 from python.preprocessor import load_samples
-from python.utils import mkdir
+from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
 
-dask.config.set({"temporary-directory": "/depot/cms/users/minxi/dask-temp/"})
+dask.config.set({"temporary-directory": "/depot/cms/users/schul105/dask-temp/"})
 
 parser = argparse.ArgumentParser()
 # Slurm cluster IP to use. If not specified, will create a local cluster
@@ -66,9 +70,11 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+node_ip = "128.211.148.61"  # hammer-c000
 # node_ip = "128.211.149.135"
-node_ip = "128.211.149.140"
+#node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
+
 
 
 if args.slurm_port is None:
@@ -96,10 +102,11 @@ local_time = (
 parameters = {
     "year": args.year,
     "label": args.label,
-    "global_out_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
+    "global_path": "/depot/cms/users/schul105/dileptonAnalysis/output/",
     "out_path": f"{args.year}_{args.label}_{local_time}",
     # "server": "root://xrootd.rcac.purdue.edu/",
     # "server": "root://cmsxrootd.fnal.gov//",
+    "xrootd": False,
     "server": "/mnt/hadoop/",
     "datasets_from": "Zprime",
     "from_das": True,
@@ -111,9 +118,13 @@ parameters = {
     "client": None,
     "channel": args.channel,
     "n_workers": 32,
+    "do_timer": True,
+    "do_btag_syst": False,
+    "save_output": True,
+
 }
 
-parameters["out_dir"] = f"{parameters['global_out_path']}/" f"{parameters['out_path']}"
+parameters["out_dir"] = f"{parameters['global_path']}/" f"{parameters['out_path']}"
 
 
 def saving_func(output, out_dir):
@@ -137,8 +148,26 @@ def saving_func(output, out_dir):
     del output
 
 
-def submit_job(arg_set, parameters):
-    mkdir(parameters["out_dir"])
+def submit_job(parameters):
+    # mkdir(parameters["out_path"])
+    out_dir = parameters["global_path"]
+    mkdir(out_dir)
+    out_dir += "/" + parameters["label"]
+    mkdir(out_dir)
+    out_dir += "/" + "stage1_output"
+    mkdir(out_dir)
+    out_dir += "/" + parameters["year"]
+    mkdir(out_dir)
+    executor_args = {"client": parameters["client"], "retries": 0}
+    processor_args = {
+        "samp_info": parameters["samp_infos"],
+        "do_timer": parameters["do_timer"],
+        "do_btag_syst": parameters["do_btag_syst"],
+        #"regions": parameters["regions"],
+        #"pt_variations": parameters["pt_variations"],
+        "apply_to_output": partial(save_stage1_output_to_parquet, out_dir=out_dir),
+    }
+
 
     if parameters["channel"] == "mu":
         from python.dimuon_processor import DimuonProcessor as event_processor
@@ -148,28 +177,21 @@ def submit_job(arg_set, parameters):
         from python.dimuon_eff_processor import DimuonEffProcessor as event_processor
     else:
         print("wrong channel input")
-    executor = dask_executor
-    executor_args = {
-        "client": parameters["client"],
-        "schema": processor.NanoAODSchema,
-        "retries": 0,
-    }
-    processor_args = {
-        "samp_info": parameters["samp_infos"],
-        "do_timer": False,
-        "apply_to_output": partial(saving_func, out_dir=parameters["out_dir"]),
-    }
+
+
+    executor = DaskExecutor(**executor_args)
+    run = Runner(
+        executor=executor,
+        schema=NanoAODSchema,
+        chunksize=parameters["chunksize"],
+        maxchunks=parameters["maxchunks"],
+    )
 
     try:
-
-        output = run_uproot_job(
+        run(
             parameters["samp_infos"].fileset,
             "Events",
-            event_processor(**processor_args),
-            executor,
-            executor_args=executor_args,
-            chunksize=parameters["chunksize"],
-            maxchunks=parameters["maxchunks"],
+            processor_instance=event_processor(**processor_args),
         )
 
     except Exception as e:
@@ -177,6 +199,9 @@ def submit_job(arg_set, parameters):
         return "Failed: " + str(e) + " " + tb
 
     return "Success!"
+
+
+
 
 
 if __name__ == "__main__":
@@ -247,20 +272,21 @@ if __name__ == "__main__":
             "bbll_8TeV_M400_posLR",
         ],
     }
-
+    # prepare Dask client
     if parameters["local_cluster"]:
-        parameters["client"] = dask.distributed.Client(
+        # create local cluster
+        parameters["client"] = Client(
             processes=True,
-            n_workers=parameters["n_workers"],
-            # dashboard_address=dash_local,
+            n_workers=40,
+            #dashboard_address=dash_local,
             threads_per_worker=1,
-            memory_limit="4.0GB",
+            memory_limit="8GB",
         )
     else:
-        parameters["client"] = Client(
-            parameters["slurm_cluster_ip"],
-        )
+        # connect to existing Slurm cluster
+        parameters["client"] = Client(parameters["slurm_cluster_ip"])
     print("Client created")
+
 
     datasets_mc = []
     datasets_data = []
@@ -269,11 +295,11 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            if "ttbar" not in sample:
+            if "dy" not in sample:
                 continue
 
-            if group != "other_mc":
-                continue
+            #if group != "data":
+            #    continue
             #if sample not in ["bbll_4TeV_M400_posLL" ,"bbll_4TeV_M1000_posLL"]:
             #    continue
             # if group != "data":
@@ -298,7 +324,7 @@ if __name__ == "__main__":
         timings[f"load {lbl}"] = time.time() - tick1
 
         tick2 = time.time()
-        out = submit_job({}, parameters)
+        out = submit_job(parameters)
         timings[f"process {lbl}"] = time.time() - tick2
 
         print(out)

@@ -1,0 +1,3 @@
+[submodule "copperhead"]
+	path = copperhead
+	url = https://github.com/Run3HmmAnalysis/copperhead

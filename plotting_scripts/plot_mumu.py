@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import dask.dataframe as dd
 from dask.distributed import Client, LocalCluster
@@ -7,6 +8,38 @@ from itertools import repeat
 from setFrame import setFrame
 import mplhep as hep
 import time
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-y", "--years", nargs="+", help="Years to process", default=["2018"]
+)
+parser.add_argument(
+    "-sl",
+    "--slurm",
+    dest="slurm_port",
+    default=None,
+    action="store",
+    help="Slurm cluster port (if not specified, will create a local cluster)",
+)
+args = parser.parse_args()
+
+# global parameters
+parameters = {
+}
+
+# Dask client settings
+use_local_cluster = args.slurm_port is None
+node_ip = "128.211.148.60"
+
+if use_local_cluster:
+    ncpus_local = 40
+    slurm_cluster_ip = ""
+    dashboard_address = f"{node_ip}:34875"
+else:
+    slurm_cluster_ip = f"{node_ip}:{args.slurm_port}"
+    dashboard_address = f"{node_ip}:8787"
+    parameters['slurm_cluster_ip'] = slurm_cluster_ip
+
 
 
 def load2df(files):
@@ -25,7 +58,6 @@ def load2df(files):
 
 
 def chunk(files, size):
-
     size = math.ceil(len(files) / float(size))
     file_bag = [
         files[i : min(i + size, len(files))] for i in range(0, len(files), size)
@@ -124,6 +156,8 @@ def plots(axes, data, MCs, labels, colors, name):
     r_errs = r_vals * np.sqrt((data[1] / data[0]) ** 2 + (MC_errs / MC_vals) ** 2)
     r_MCerrs = MC_errs / MC_vals
 
+    r_vals = np.nan_to_num(r_vals)
+
     axes[0].fill_between(
         x=bins[:-1],
         y1=MC_vals - MC_errs,
@@ -172,29 +206,29 @@ if __name__ == "__main__":
 
     bins_cs = np.linspace(-1.0, 1.0, 26)
     bins_jets = np.linspace(0, 7, 8)
-    path = "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/"
-    path_dy = path + "dy_mumu/*/*.parquet"
+    path = "/depot/cms/users/schul105/dileptonAnalysis/output/test/stage1_output/2018/"
+    path_dy = path + "dy*/*.parquet"
     dy_files = glob.glob(path_dy)
-    path_data = path + "pre-UL_mumu/*/*.parquet"
+    path_data = path + "data*/*.parquet"
     data_files = glob.glob(path_data)
-    path_tt_inclusive = path + "ttbar_test/ttbar_lep/*.parquet"
+    path_tt_inclusive = path + "ttbar_lep/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
-    path_tt = path + "ttbar_test/ttbar_lep_*/*.parquet"
+    path_tt = path + "ttbar_lep_*/*.parquet"
     tt_files = glob.glob(path_tt)
     tt_files = [file_ for file_ in tt_files if "ext" not in file_]
-    path_wz = path + "other_mc_mumuv2/WZ*/*.parquet"
+    path_wz = path + "WZ*/*.parquet"
     wz_files = glob.glob(path_wz)
-    path_tw1 = path + "other_mc_mumuv2/tW/*.parquet"
-    path_tw2 = path + "other_mc_mumuv2/Wantitop/*.parquet"
+    path_tw1 = path + "tW/*.parquet"
+    path_tw2 = path + "Wantitop/*.parquet"
     tw_files = glob.glob(path_tw1) + glob.glob(path_tw2)
-    path_zz = path + "other_mc_mumuv2/ZZ*/*.parquet"
+    path_zz = path + "ZZ*/*.parquet"
     zz_files = glob.glob(path_zz)
     zz_files = [file_ for file_ in zz_files if "ext" not in file_]
-    path_tau = path + "other_mc_mumuv2/dyInclusive50/*.parquet"
+    path_tau = path + "dyInclusive50/*.parquet"
     tau_files = glob.glob(path_tau)
-    path_ww = path + "other_mc_mumuv2/WW*0/*.parquet"
+    path_ww = path + "WW*0/*.parquet"
     ww_files = glob.glob(path_ww)
-    path_ww_inclusive = path + "other_mc_mumuv2/WWinclusive/*.parquet"
+    path_ww_inclusive = path + "WWinclusive/*.parquet"
     ww_inclusive_files = glob.glob(path_ww_inclusive)
 
     file_dict = {
@@ -210,7 +244,32 @@ if __name__ == "__main__":
         "ww_inclu": ww_inclusive_files,
     }
 
-    client = Client(LocalCluster(**client_args))
+    print (file_dict)
+    # prepare Dask client
+    if use_local_cluster:
+        print(
+            f"Creating local cluster with {ncpus_local} workers."
+            f" Dashboard address: {dashboard_address}"
+        )
+        client = Client(
+            processes=True,
+            #dashboard_address=dashboard_address,
+            n_workers=ncpus_local,
+            threads_per_worker=1,
+            memory_limit="4GB",
+        )
+    else:
+        print(
+            f"Connecting to Slurm cluster at {slurm_cluster_ip}."
+            f" Dashboard address: {dashboard_address}"
+        )
+        client = Client(parameters["slurm_cluster_ip"])
+    parameters["ncpus"] = len(client.scheduler_info()["workers"])
+    print(f"Connected to cluster! #CPUs = {parameters['ncpus']}")
+
+
+
+    #client = Client(LocalCluster(**client_args))
     mass_inclu = {}
     mass_0j = {}
     mass_1j = {}
@@ -222,7 +281,7 @@ if __name__ == "__main__":
     nbjets = {}
     for key in file_dict.keys():
         print(key)
-        file_bag = chunk(file_dict[key], client_args["n_workers"])
+        file_bag = chunk(file_dict[key], parameters["ncpus"])
         if len(file_bag) == 1:
             df = load2df_mc(file_dict[key])
         else:

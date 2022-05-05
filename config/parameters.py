@@ -36,10 +36,11 @@ parameters["el_hlt"] = {
 }
 
 
-parameters["roccor_file"] = {
-    "2016": "data/roch_corr/RoccoR2016.txt",
-    "2017": "data/roch_corr/RoccoR2017.txt",
-    "2018": "data/roch_corr/RoccoR2018.txt",
+parameters["btag_sf_csv"] = {
+    "2016": "data/b-tagging/DeepCSV_2016LegacySF_V1.csv",
+    "2017": "data/b-tagging/DeepCSV_94XSF_V5_B_F.csv",
+    #"2018": "data/b-tagging/DeepCSV_102XSF_WP_V1.csv",
+    "2018": "data/b-tagging/DeepCSV_102XSF_V1.csv",
 }
 
 
