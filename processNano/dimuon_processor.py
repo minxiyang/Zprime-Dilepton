@@ -13,8 +13,8 @@ from coffea.lookup_tools import extractor
 from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
 from coffea.btag_tools import BTagScaleFactor
-from python.timer import Timer
-from python.weights import Weights
+from processNano.timer import Timer
+from processNano.weights import Weights
 
 #correction helpers included from copperhead
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
@@ -28,14 +28,13 @@ from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
 from copperhead.stage1.corrections.btag_weights import btag_weights
 
 #high mass dilepton specific corrections
-from python.corrections.kFac import kFac
+from processNano.corrections.kFac import kFac
 
-from python.jets import prepare_jets, fill_jets
+from processNano.jets import prepare_jets, fill_jets
 import copy
 
-# from python.jets import jet_id, jet_puid, gen_jet_pair_mass
-from python.muons import find_dimuon, fill_muons
-from python.utils import bbangle
+from processNano.muons import find_dimuon, fill_muons
+from processNano.utils import bbangle
 
 from config.parameters import parameters, muon_branches, jet_branches
 
@@ -327,8 +326,7 @@ class DimuonProcessor(processor.ProcessorABC):
             # --------------------------------------------------------#
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
-
-            fill_muons(self, output, mu1, mu2, is_mc=is_mc)
+            fill_muons(self, output, mu1, mu2, is_mc,self.year,weights)
         # ------------------------------------------------------------#
         # Prepare jets
         # ------------------------------------------------------------#
@@ -439,18 +437,18 @@ class DimuonProcessor(processor.ProcessorABC):
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
             output.loc[
-                ((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)), "wgt_nominal"
+                ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)), "wgt_nominal"
             ] = (
                 output.loc[
-                    ((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)), "wgt_nominal"
+                    ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)), "wgt_nominal"
                 ]
                 * kFac(mass_bb, "bb", "mu")
             ).values
             output.loc[
-                ((output.mu1_eta > 1.2) | (output.mu2_eta > 1.2)), "wgt_nominal"
+                ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "wgt_nominal"
             ] = (
                 output.loc[
-                    ((output.mu1_eta > 1.2) | (output.mu2_eta > 1.2)), "wgt_nominal"
+                    ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "wgt_nominal"
                 ]
                 * kFac(mass_be, "be", "mu")
             ).values

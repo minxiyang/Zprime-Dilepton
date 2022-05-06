@@ -9,7 +9,7 @@ import coffea.processor as processor
 from coffea.processor import DaskExecutor, Runner
 from coffea.nanoevents import NanoAODSchema
 #from copperhead.stage1.preprocessor import load_samples
-from python.preprocessor import load_samples
+from processNano.preprocessor import load_samples
 from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
@@ -170,11 +170,11 @@ def submit_job(parameters):
 
 
     if parameters["channel"] == "mu":
-        from python.dimuon_processor import DimuonProcessor as event_processor
+        from processNano.dimuon_processor import DimuonProcessor as event_processor
     elif parameters["channel"] == "el":
-        from python.dielectron_processor import DielectronProcessor as event_processor
+        from processNano.dielectron_processor import DielectronProcessor as event_processor
     elif parameters["channel"] == "eff_mu":
-        from python.dimuon_eff_processor import DimuonEffProcessor as event_processor
+        from processNano.dimuon_eff_processor import DimuonEffProcessor as event_processor
     else:
         print("wrong channel input")
 
