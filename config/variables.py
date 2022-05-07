@@ -1,14 +1,30 @@
 class Variable(object):
-    def __init__(self, name_, caption_, nbins_, xmin_, xmax_):
+    def __init__(self, name_, caption_, nbins_, xmin_, xmax_, binning_ = [], norm_to_bin_width_ = False):
         self.name = name_
         self.caption = caption_
         self.nbins = nbins_
         self.xmin = xmin_
         self.xmax = xmax_
-
+        self.binning = binning_
+        self.norm_to_bin_width = norm_to_bin_width_
 
 variables = []
-variables.append(Variable("dimuon_mass", r"$m_{\mu\mu}$ [GeV]", 50, 110, 150))
+
+massBinningMuMu =  (
+        [j for j in range(120, 150, 5)]
+        + [j for j in range(150, 200, 10)]
+        + [j for j in range(200, 600, 20)]
+        + [j for j in range(600, 900, 30)]
+        + [j for j in range(900, 1250, 50)]
+        + [j for j in range(1250, 1610, 60)]
+        + [j for j in range(1610, 1890, 70)]
+        + [j for j in range(1890, 3970, 80)]
+        + [j for j in range(3970, 6070, 100)]
+        + [6070]
+    )
+
+
+variables.append(Variable("dimuon_mass", r"$m_{\mu\mu}$ [GeV]", len(massBinningMuMu)-1, 200, 4000, binning_ = massBinningMuMu, norm_to_bin_width_ = True))
 variables.append(Variable("dimuon_mass_res", r"$\Delta M_{\mu\mu}$ [GeV]", 50, 0, 10))
 variables.append(
     Variable(
