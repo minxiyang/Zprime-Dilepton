@@ -4,7 +4,18 @@ import pandas as pd
 from hist import Hist
 from config.variables import Variable
 from copperhead.python.io import save_stage2_output_hists
+from numpy import array, append
 
+def calc_binwidth_weight(data,binning):
+    weights = []
+    for val in data:
+        found = False
+        for i in range(0,len(binning)-1):
+            if val > binning[i] and val <= binning[i+1]:
+                found = True
+                weights.append(1. / (binning[i+1] - binning[i]))
+        if not found: weights.append(1.0)
+    return array(weights)
 
 def make_histograms(df, var_name, year, dataset, regions, channels, npart, parameters):
     # try to get binning from config
@@ -84,6 +95,8 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
         )
         data = df.loc[slicer, var_name]
         weight = df.loc[slicer, w]
+        #if var.norm_to_bin_width:
+        #   weight = weight * calc_binwidth_weight(data.to_numpy(), var.binning) 
 
         to_fill = {var.name: data, "region": region, "channel": channel}
 

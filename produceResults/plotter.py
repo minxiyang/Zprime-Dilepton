@@ -138,14 +138,7 @@ def plot(args, parameters={}):
         plottables = plottables_df["hist"].values.tolist()
         sumw2 = plottables_df["sumw2"].values.tolist()
         labels = plottables_df["label"].values.tolist()
-        print (plottables[0][5])
-        if var.norm_to_bin_width:
-            for i in range(0,len(plottables)-1):
-                for j in range(1,len(var.binning)-1):
-                    #print ("dividing the bin content by ", (var.binning[i+1] - var.binning[i]))
-                    plottables[i][j] = plottables[i][j] / (var.binning[j+1] - var.binning[j])
-	                
-        print (plottables[0][5])
+
         total_yield += sum([p.sum() for p in plottables])
         if len(plottables) == 0:
             continue
