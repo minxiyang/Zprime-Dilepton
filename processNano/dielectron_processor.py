@@ -1,3 +1,6 @@
+import sys
+sys.path.append("copperhead/")
+
 import awkward
 import awkward as ak
 import numpy as np
@@ -7,19 +10,19 @@ import pandas as pd
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
 from coffea.lumi_tools import LumiMask
-from python.timer import Timer
-from python.weights import Weights
+from copperhead.python.timer import Timer
+from copperhead.stage1.weights import Weights
 from config.parameters import parameters, ele_branches, jet_branches
-from python.corrections.pu_reweight import pu_lookups, pu_evaluator
-from python.corrections.l1prefiring_weights import l1pf_weights
-from python.electrons import find_dielectron, fill_electrons
-from python.jets import prepare_jets, fill_jets
+from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
+from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
+from processNano.electrons import find_dielectron, fill_electrons
+from processNano.jets import prepare_jets, fill_jets
 import copy
 from coffea.btag_tools import BTagScaleFactor
 
 # from python.jets import jet_id, jet_puid, gen_jet_pair_mass
-from python.corrections.kFac import kFac
-from python.corrections.jec import jec_factories, apply_jec
+from processNano.corrections.kFac import kFac
+from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 
 
 class DielectronProcessor(processor.ProcessorABC):

@@ -1,12 +1,12 @@
 import numpy as np
 import math
 
-from python.utils import p4_sum, delta_r, cs_variables
+from processNano.utils import p4_sum, delta_r, cs_variables
 
 
 def find_dielectron(objs, is_mc=True):
 
-    objs["el_idx"] = objs.index
+    objs["el_idx"] = objs.index.to_numpy()
     dmass = 20.0
     for i in range(objs.shape[0] - 1):
         for j in range(i + 1, objs.shape[0]):
