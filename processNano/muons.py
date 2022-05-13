@@ -195,7 +195,7 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
         "dxy",
         "dz",
         "genPartFlav",
-        "ip3d",
+        "ip3d"
         "sip3d",
         "tkRelIso",
     ]:

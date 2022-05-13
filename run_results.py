@@ -4,6 +4,7 @@ from dask.distributed import Client
 
 from config.variables import variables_lookup
 from produceResults.plotter import plotter
+from produceResults.make_templates import to_templates
 
 __all__ = ["dask"]
 
@@ -40,13 +41,13 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
-    "label": "muonUncert",
+    "label": "genCut",
     "channels": ["0b","1b","2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
     #
     # < plotting settings >
-    "plot_vars": ["dimuon_mass"],  # "dimuon_mass"],
+    "plot_vars": ["dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
@@ -56,7 +57,7 @@ parameters = {
     #
     # < templates and datacards >
     "save_templates": True,
-    "templates_vars": [],  # "dimuon_mass"],
+    "templates_vars": ["dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
 }
 
 parameters["grouping"] = {
@@ -77,12 +78,11 @@ parameters["grouping"] = {
     "dy3500to4500" : "DY",
     "dy4500to6000" : "DY",
     "dy6000toInf" : "DY",
-    "dyInclusive50" : "Other",
-    "ttbar_lep" : "Other",
-    "ttbar_lep_500to800" : "Other",
-    "ttbar_lep_800to1200" : "Other",
-    "ttbar_lep_1200to1800" : "Other",
-    "ttbar_lep_1800toInf" : "Other",
+    "ttbar_lep_inclusive" : "Other",
+    "ttbar_lep_M500to800" : "Other",
+    "ttbar_lep_M800to1200" : "Other",
+    "ttbar_lep_M1200to1800" : "Other",
+    "ttbar_lep_M1800toInf" : "Other",
     "tW" : "Other",
     "Wantitop" : "Other",
     "WWinclusive" : "Other",
@@ -94,6 +94,7 @@ parameters["grouping"] = {
     "WZ3LNu" : "Other",
     "ZZ2L2Nu" : "Other",
     "ZZ4L" : "Other",
+    "dyInclusive50" : "Other",
 }
 # parameters["grouping"] = {"vbf_powheg_dipole": "VBF",}
 
@@ -138,11 +139,9 @@ if __name__ == "__main__":
 
     # make plots
     yields = plotter(client, parameters)
-    print(yields)
 
     # save templates to ROOT files
     yield_df = to_templates(client, parameters)
-    print(yield_df)
 
     # make datacards
     #build_datacards("score_pytorch_test", yield_df, parameters)

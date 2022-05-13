@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 
-from python.workflow import parallelize
-from python.variable import Variable
-from python.io import load_stage2_output_hists, save_template, mkdir
+from copperhead.python.workflow import parallelize
+from copperhead.python.variable import Variable
+from copperhead.python.io import load_stage2_output_hists, save_template, mkdir
 
 import warnings
 
@@ -19,7 +19,7 @@ def to_templates(client, parameters, hist_df=None):
             "dataset": parameters["datasets"],
         }
         hist_rows = parallelize(
-            load_stage2_output_hists, argset_load, client, parameters
+            load_stage2_output_hists, argset_load, client, parameters, seq=True
         )
         hist_df = pd.concat(hist_rows).reset_index(drop=True)
         if hist_df.shape[0] == 0:

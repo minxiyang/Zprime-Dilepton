@@ -32,7 +32,7 @@ args = parser.parse_args()
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.148.60"
+node_ip = "128.211.148.61"
 
 if use_local_cluster:
     ncpus_local = 40
@@ -48,7 +48,7 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
     "years": args.years,
-    "label": "muonUncert",
+    "label": "genCut",
     "channels": ["0b","1b","2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
@@ -57,7 +57,7 @@ parameters = {
     # },
     #
     # < settings for histograms >
-    "hist_vars": ["dimuon_mass","dimuon_mass_resUnc","dimuon_mass_scaleUncUp","dimuon_mass_scaleUncDown"],
+    "hist_vars": ["dimuon_mass","dimuon_mass_gen","dimuon_mass_resUnc","dimuon_mass_scaleUncUp","dimuon_mass_scaleUncDown"],
     "variables_lookup": variables_lookup,
     "save_hists": True,
     #
@@ -95,12 +95,12 @@ parameters["datasets"] = [
     "dy4500to6000",
     "dy6000toInf",
     "dyInclusive50",
-    "ttbar_lep",
-    "ttbar_lep_500to800",
+    "ttbar_lep_inclusive",
+    "ttbar_lep_M500to800",
     #"ttbar_lep_500to800_ext",
-    "ttbar_lep_800to1200",
-    "ttbar_lep_1200to1800",
-    "ttbar_lep_1800toInf",
+    "ttbar_lep_M800to1200",
+    "ttbar_lep_M1200to1800",
+    "ttbar_lep_M1800toInf",
     "tW",
     "Wantitop",
     "WWinclusive",
@@ -113,6 +113,15 @@ parameters["datasets"] = [
     "ZZ2L2Nu",
     "ZZ4L",
 ]
+
+parameters["datasets"] = [
+    "ttbar_lep_inclusive",
+#    "ttbar_lep_M500to800",
+#    "ttbar_lep_M800to1200",
+#    "ttbar_lep_M1200to1800",
+#    "ttbar_lep_M1800toInf",
+]
+
 # using one small dataset for debugging
 # parameters["datasets"] = ["vbf_powheg_dipole"]
 

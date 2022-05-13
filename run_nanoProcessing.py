@@ -70,7 +70,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.148.60"  # hammer-c000
+node_ip = "128.211.148.61"  # hammer-c000
 # node_ip = "128.211.149.135"
 #node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
@@ -233,12 +233,12 @@ if __name__ == "__main__":
             "WW2500",
             "dyInclusive50",
             "Wjets",
-            "ttbar_lep",
-            "ttbar_lep_500to800_ext",
-            "ttbar_lep_500to800",
-            "ttbar_lep_800to1200",
-            "ttbar_lep_1200to1800",
-            "ttbar_lep_1800toInf",
+            "ttbar_lep_inclusive",
+            "ttbar_lep_M500to800_ext",
+            "ttbar_lep_M500to800",
+            "ttbar_lep_M800to1200",
+            "ttbar_lep_M1200to1800",
+            "ttbar_lep_M1800toInf",
             "Wantitop",
             "tW",
         ],
@@ -295,12 +295,12 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            #if "dy" not in sample:
+            #if "dy4500to6000" not in sample:
             #    continue
 
             #if group != "data":
             #    continue
-            #if sample not in ["bbll_4TeV_M400_posLL" ,"bbll_4TeV_M1000_posLL"]:
+            #if sample not in ["WWinclusive"]:
             #    continue
             # if group != "data":
             #    continue

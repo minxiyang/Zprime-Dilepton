@@ -57,7 +57,7 @@ parameters["pu_file_mc"] = {
 }
 
 parameters["muSFFileList"] = {
-    "2016": [
+   "2016": [
         {
             "id": (
                 "data/muon_sf/year2016/RunBCDEF_SF_ID.root",

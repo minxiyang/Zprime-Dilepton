@@ -68,7 +68,6 @@ def plotter(client, parameters, hist_df=None, timer=None):
             "var_name": parameters["plot_vars"],
             "dataset": parameters["datasets"],
         }
-        print (arg_load)
         hist_dfs = parallelize(load_stage2_output_hists, arg_load, client, parameters, seq=True)
         hist_df = pd.concat(hist_dfs).reset_index(drop=True)
         if hist_df.shape[0] == 0:
@@ -169,7 +168,8 @@ def plot(args, parameters={}):
                 )
 
     ax1.set_yscale("log")
-    ax1.set_ylim(0.01, 1e9)
+    ax1.set_ylim(var.ymin, var.ymax)
+    ax1.set_xlim(var.xminPlot, var.xmaxPlot)
     ax1.legend(prop={"size": "x-small"})
 
     if parameters["plot_ratio"]:
@@ -203,6 +203,7 @@ def plot(args, parameters={}):
         if len(num) * len(den) > 0:
             # compute Data/MC ratio
             ratio = np.divide(num, den)
+            ratio = np.nan_to_num(ratio)
             yerr = np.zeros_like(num)
             yerr[den > 0] = np.sqrt(num[den > 0]) / den[den > 0]
             hep.histplot(
@@ -241,6 +242,9 @@ def plot(args, parameters={}):
         path = parameters["plots_path"]
         mkdir(path)
         out_name = f"{path}/{var.name}_{region}_{channel}_{year}.png"
+        fig.savefig(out_name)
+        print(f"Saved: {out_name}")
+        out_name = f"{path}/{var.name}_{region}_{channel}_{year}.pdf"
         fig.savefig(out_name)
         print(f"Saved: {out_name}")
 

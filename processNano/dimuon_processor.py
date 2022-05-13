@@ -254,7 +254,6 @@ class DimuonProcessor(processor.ProcessorABC):
 
             output["two_muons"] = (nmuons == 2) | (nmuons > 2)
             output["two_muons"] = output["two_muons"].fillna(False)
-
             output["event_selection"] = (
                 mask
                 & (hlt > 0)
@@ -327,6 +326,7 @@ class DimuonProcessor(processor.ProcessorABC):
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
             fill_muons(self, output, mu1, mu2, is_mc,self.year,weights)
+
         # ------------------------------------------------------------#
         # Prepare jets
         # ------------------------------------------------------------#
