@@ -5,11 +5,10 @@ import argparse
 import traceback
 import datetime
 from functools import partial
-import coffea.processor as processor
 from coffea.processor import DaskExecutor, Runner
 from coffea.nanoevents import NanoAODSchema
 #from copperhead.stage1.preprocessor import load_samples
-from python.preprocessor import load_samples
+from processNano.preprocessor import load_samples
 from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
@@ -74,7 +73,6 @@ node_ip = "128.211.148.61"  # hammer-c000
 # node_ip = "128.211.149.135"
 #node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
-
 
 
 if args.slurm_port is None:
@@ -168,16 +166,14 @@ def submit_job(parameters):
         "apply_to_output": partial(save_stage1_output_to_parquet, out_dir=out_dir),
     }
 
-
     if parameters["channel"] == "mu":
-        from python.dimuon_processor import DimuonProcessor as event_processor
+        from processNano.dimuon_processor import DimuonProcessor as event_processor
     elif parameters["channel"] == "el":
-        from python.dielectron_processor import DielectronProcessor as event_processor
+        from processNano.dielectron_processor import DielectronProcessor as event_processor
     elif parameters["channel"] == "eff_mu":
-        from python.dimuon_eff_processor import DimuonEffProcessor as event_processor
+        from processNano.dimuon_eff_processor import DimuonEffProcessor as event_processor
     else:
         print("wrong channel input")
-
 
     executor = DaskExecutor(**executor_args)
     run = Runner(
@@ -199,9 +195,6 @@ def submit_job(parameters):
         return "Failed: " + str(e) + " " + tb
 
     return "Success!"
-
-
-
 
 
 if __name__ == "__main__":
@@ -233,12 +226,12 @@ if __name__ == "__main__":
             "WW2500",
             "dyInclusive50",
             "Wjets",
-            "ttbar_lep",
-            "ttbar_lep_500to800_ext",
-            "ttbar_lep_500to800",
-            "ttbar_lep_800to1200",
-            "ttbar_lep_1200to1800",
-            "ttbar_lep_1800toInf",
+            "ttbar_lep_inclusive",
+            "ttbar_lep_M500to800_ext",
+            "ttbar_lep_M500to800",
+            "ttbar_lep_M800to1200",
+            "ttbar_lep_M1200to1800",
+            "ttbar_lep_M1800toInf",
             "Wantitop",
             "tW",
         ],
@@ -287,7 +280,6 @@ if __name__ == "__main__":
         parameters["client"] = Client(parameters["slurm_cluster_ip"])
     print("Client created")
 
-
     datasets_mc = []
     datasets_data = []
     blackList = ["Wantitop", "tW"]
@@ -295,12 +287,12 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            if "dy" not in sample:
-                continue
+            #if "dy4500to6000" not in sample:
+            #    continue
 
             #if group != "data":
             #    continue
-            #if sample not in ["bbll_4TeV_M400_posLL" ,"bbll_4TeV_M1000_posLL"]:
+            #if sample not in ["WWinclusive"]:
             #    continue
             # if group != "data":
             #    continue

@@ -179,7 +179,7 @@ def plots(axes, data, MCs, labels, colors, name):
         alpha=0.3,
     )
     axes[3].savefig(
-        f"/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/plots/{name}.pdf"
+        f"/depot/cms/users/schul105/Zprime-Dilepton/plots/{name}.pdf"
     )
 
 

@@ -1,7 +1,6 @@
 import sys
 sys.path.append("copperhead/")
 
-
 import awkward
 import awkward as ak
 import numpy as np
@@ -10,77 +9,51 @@ import numpy as np
 import pandas as pd
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
-from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
-from coffea.btag_tools import BTagScaleFactor
-from python.timer import Timer
-from python.weights import Weights
-
-#correction helpers included from copperhead
+from copperhead.python.timer import Timer
+from copperhead.stage1.weights import Weights
+from config.parameters import parameters, ele_branches, jet_branches
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
-from copperhead.stage1.corrections.lepton_sf import musf_lookup, musf_evaluator
-from copperhead.stage1.corrections.jec import jec_factories, apply_jec
-from copperhead.stage1.corrections.geofit import apply_geofit
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
-from copperhead.stage1.corrections.stxs_uncert import add_stxs_variations, stxs_lookups
-from copperhead.stage1.corrections.lhe_weights import lhe_weights
-from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
-from copperhead.stage1.corrections.btag_weights import btag_weights
-
-#high mass dilepton specific corrections
-from python.corrections.kFac import kFac
-
-from python.jets import prepare_jets, fill_jets
+from processNano.electrons import find_dielectron, fill_electrons
+from processNano.jets import prepare_jets, fill_jets
 import copy
+from coffea.btag_tools import BTagScaleFactor
 
 # from python.jets import jet_id, jet_puid, gen_jet_pair_mass
-from python.muons import find_dimuon, fill_muons
-from python.utils import bbangle
+from processNano.corrections.kFac import kFac
+from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 
-from config.parameters import parameters, muon_branches, jet_branches
 
-from copperhead.config.jec_parameters import jec_parameters
-
-class DimuonProcessor(processor.ProcessorABC):
+class DielectronProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
         self.samp_info = kwargs.pop("samp_info", None)
         do_timer = kwargs.pop("do_timer", True)
-        self.pt_variations = kwargs.get("pt_variations", ["nominal"])
         self.apply_to_output = kwargs.pop("apply_to_output", None)
-
-        self.year = self.samp_info.year
-        self.parameters = {k: v[self.year] for k, v in parameters.items()}
-
         self.do_btag_syst = kwargs.pop("do_btag_syst", None)
-        if self.do_btag_syst:
-            self.btag_systs = self.parameters["btag_systs"]
-        else:
-            self.btag_systs = []
-
+        self.pt_variations = kwargs.pop("pt_variations", ["nominal"])
         if self.samp_info is None:
             print("Samples info missing!")
             return
 
-        self.do_pu = True
-        self.auto_pu = False
-        self.year = self.samp_info.year
-        self.do_l1pw = True  # L1 prefiring weights
-        jec_pars = {k: v[self.year] for k, v in jec_parameters.items()}
-        self.do_jecunc = True
-        self.do_jerunc = False
-        for ptvar in self.pt_variations:
-            if ptvar in jec_pars["jec_variations"]:
-                self.do_jecunc = True
-            if ptvar in jec_pars["jer_variations"]:
-                self.do_jerunc = True
+        self._accumulator = processor.defaultdict_accumulator(int)
 
+        self.do_pu = True
+        self.auto_pu = True
+        self.do_l1pw = False  # L1 prefiring weights
+        self.do_jecunc = False
+        self.do_jerunc = False
+
+        self.year = self.samp_info.year
+
+        self.parameters = {k: v[self.year] for k, v in parameters.items()}
 
         self.timer = Timer("global") if do_timer else None
 
         self._columns = self.parameters["proc_columns"]
 
-        self.regions = ["bb", "be"]
-        self.channels = ["mumu"]
+        self.regions = ["bb", "be", "ee"]
+        self.channels = ["ee"]
 
         self.lumi_weights = self.samp_info.lumi_weights
         if self.do_btag_syst:
@@ -100,7 +73,16 @@ class DimuonProcessor(processor.ProcessorABC):
 
         self.prepare_lookups()
 
+    @property
+    def accumulator(self):
+        return self._accumulator
+
+    @property
+    def columns(self):
+        return self._columns
+
     def process(self, df):
+
         # Initialize timer
         if self.timer:
             self.timer.update()
@@ -129,7 +111,7 @@ class DimuonProcessor(processor.ProcessorABC):
         # Separate dataframe to keep track on weights
         # and their systematic variations
         weights = Weights(output)
-
+        ele_branches_local = copy.copy(ele_branches)
         if is_mc:
             # For MC: Apply gen.weights, pileup weights, lumi weights,
             # L1 prefiring weights
@@ -154,164 +136,116 @@ class DimuonProcessor(processor.ProcessorABC):
                     else:
                         weights.add_weight("l1prefiring_wgt", how="dummy_vars")
 
+            df["Electron", "pt_gen"] = df.Electron.matched_gen.pt
+            df["Electron", "eta_gen"] = df.Electron.matched_gen.eta
+            df["Electron", "phi_gen"] = df.Electron.matched_gen.phi
+            df["Electron", "idx"] = df.Electron.genPartIdx
+            ele_branches_local += ["genPartFlav", "pt_gen", "eta_gen", "phi_gen", "idx"]
+
         else:
             # For Data: apply Lumi mask
-            lumi_info = LumiMask(self.parameters["lumimask_Pre-UL_mu"])
+            lumi_info = LumiMask(self.parameters["lumimask_Pre-UL_el"])
             mask = lumi_info(df.run, df.luminosityBlock)
-        # Apply HLT to both Data and MC
 
-        hlt = ak.to_pandas(df.HLT[self.parameters["mu_hlt"]])
-        hlt = hlt[self.parameters["mu_hlt"]].sum(axis=1)
+        # Apply HLT to both Data and MC
+        hlt = ak.to_pandas(df.HLT[self.parameters["el_hlt"]])
+        hlt = hlt[self.parameters["el_hlt"]].sum(axis=1)
 
         if self.timer:
             self.timer.add_checkpoint("Applied HLT and lumimask")
 
-        # ------------------------------------------------------------#
-        # Update muon kinematics with Rochester correction,
-        # FSR recovery and GeoFit correction
-        # Raw pT and eta are stored to be used in event selection
-        # ------------------------------------------------------------#
-
         # Save raw variables before computing any corrections
-        df["Muon", "pt_raw"] = df.Muon.pt
-        df["Muon", "eta_raw"] = df.Muon.eta
-        df["Muon", "phi_raw"] = df.Muon.phi
-        if is_mc:
-            df["Muon", "pt_gen"] = df.Muon.matched_gen.pt
-            df["Muon", "eta_gen"] = df.Muon.matched_gen.eta
-            df["Muon", "phi_gen"] = df.Muon.matched_gen.phi
-            df["Muon", "idx"] = df.Muon.genPartIdx
 
-        # for ...
-        if True:  # indent reserved for loop over muon pT variations
-            # According to HIG-19-006, these variations have negligible
-            # effect on significance, but it's better to have them
-            # implemented in the future
+        df["Electron", "pt_raw"] = df.Electron.pt
+        df["Electron", "eta_raw"] = df.Electron.eta
+        df["Electron", "phi_raw"] = df.Electron.phi
+
+        if True:  # indent reserved for loop over pT variations
 
             # --- conversion from awkward to pandas --- #
-            muon_branches_local = copy.copy(muon_branches)
+            electrons = ak.to_pandas(df.Electron[ele_branches_local])
+            electrons.pt = electrons.pt_raw * (electrons.scEtOverPt + 1.0)
+            electrons.eta = electrons.eta_raw + electrons.deltaEtaSC
+            electrons = electrons.dropna()
+            electrons = electrons.loc[:, ~electrons.columns.duplicated()]
             if is_mc:
-                muon_branches_local += [
-                    "genPartFlav",
-                    "genPartIdx",
-                    "pt_gen",
-                    "eta_gen",
-                    "phi_gen",
-                    "idx",
-                ]
-            muons = ak.to_pandas(df.Muon[muon_branches_local])
+                electrons.loc[electrons.idx == -1, "pt_gen"] = -999.0
+                electrons.loc[electrons.idx == -1, "eta_gen"] = -999.0
+                electrons.loc[electrons.idx == -1, "phi_gen"] = -999.0
+
             if self.timer:
-                self.timer.add_checkpoint("load muon data")
-            muons = muons.dropna()
-            muons = muons.loc[:, ~muons.columns.duplicated()]
+                self.timer.add_checkpoint("load electron data")
+
             # --------------------------------------------------------#
-            # Select muons that pass pT, eta, isolation cuts,
-            # muon ID and quality flags
-            # Select events with 2 OS muons, no electrons,
-            # passing quality cuts and at least one good PV
+            # Electron selection
             # --------------------------------------------------------#
 
             # Apply event quality flag
-            output["r"] = None
-            output["dataset"] = dataset
-            output["year"] = int(self.year)
-            if dataset == "dyInclusive50":
-                muons = muons[muons.genPartFlav == 15]
             flags = ak.to_pandas(df.Flag)
             flags = flags[self.parameters["event_flags"]].product(axis=1)
-            muons["pass_flags"] = True
-            if self.parameters["muon_flags"]:
-                muons["pass_flags"] = muons[self.parameters["muon_flags"]].product(
-                    axis=1
-                )
+
             # Define baseline muon selection (applied to pandas DF!)
-            muons["selection"] = (
-                (muons.pt_raw > self.parameters["muon_pt_cut"])
-                & (abs(muons.eta_raw) < self.parameters["muon_eta_cut"])
-                & (muons.tkRelIso < self.parameters["muon_iso_cut"])
-                & (muons[self.parameters["muon_id"]] > 0)
-                & (muons.dxy < self.parameters["muon_dxy"])
-                & (
-                    (muons.ptErr.values / muons.pt.values)
-                    < self.parameters["muon_ptErr/pt"]
-                )
-                & muons.pass_flags
+            electrons["selection"] = (
+                (electrons.pt > self.parameters["electron_pt_cut"])
+                & (abs(electrons.eta) < self.parameters["electron_eta_cut"])
+                & (electrons[self.parameters["electron_id"]] > 0)
             )
 
-            # Count muons
-            nmuons = (
-                muons[muons.selection]
+            if dataset == "dyInclusive50":
+                electrons = electrons[electrons.genPartFlav == 15]
+            # Count electrons
+            nelectrons = (
+                electrons[electrons.selection]
                 .reset_index()
                 .groupby("entry")["subentry"]
                 .nunique()
             )
-            # Find opposite-sign muons
-            sum_charge = muons.loc[muons.selection, "charge"].groupby("entry").sum()
-
-            # Find events with at least one good primary vertex
-            good_pv = ak.to_pandas(df.PV).npvsGood > 0
-
-            # Define baseline event selection
-
-            output["two_muons"] = (nmuons == 2) | (nmuons > 2)
-            output["two_muons"] = output["two_muons"].fillna(False)
-
-            output["event_selection"] = (
-                mask
-                & (hlt > 0)
-                & (flags > 0)
-                & (nmuons >= 2)
-                & (abs(sum_charge) < nmuons)
-                & good_pv
-            )
-            if self.timer:
-                self.timer.add_checkpoint("Selected events and muons")
-
-            # --------------------------------------------------------#
-            # Initialize muon variables
-            # --------------------------------------------------------#
-
-            # Find pT-leading and subleading muons
-            muons = muons[muons.selection & (nmuons >= 2) & (abs(sum_charge) < nmuons)]
+            output["event_selection"] = mask & (hlt > 0) & (nelectrons >= 2)
 
             if self.timer:
-                self.timer.add_checkpoint("muon object selection")
-            if muons.shape[0] == 0:
+                self.timer.add_checkpoint("Selected events and electrons")
+
+            # --------------------------------------------------------#
+            # Initialize electron variables
+            # --------------------------------------------------------#
+
+            electrons = electrons[electrons.selection & (nelectrons >= 2)]
+
+            if self.timer:
+                self.timer.add_checkpoint("electron object selection")
+
+            output["r"] = None
+            output["s"] = dataset
+            output["year"] = int(self.year)
+
+            if electrons.shape[0] == 0:
                 output = output.reindex(sorted(output.columns), axis=1)
                 output = output[output.r.isin(self.regions)]
-
-                # return output
                 if self.apply_to_output is None:
                     return output
                 else:
                     self.apply_to_output(output)
                     return self.accumulator.identity()
 
-            result = muons.groupby("entry").apply(find_dimuon, is_mc=is_mc)
+            result = electrons.groupby("entry").apply(find_dielectron, is_mc=is_mc)
             if is_mc:
-                dimuon = pd.DataFrame(
+                dielectron = pd.DataFrame(
                     result.to_list(), columns=["idx1", "idx2", "mass", "mass_gen"]
                 )
             else:
-                dimuon = pd.DataFrame(
+                dielectron = pd.DataFrame(
                     result.to_list(), columns=["idx1", "idx2", "mass"]
                 )
-            mu1 = muons.loc[dimuon.idx1.values, :]
-            mu2 = muons.loc[dimuon.idx2.values, :]
-            mu1.index = mu1.index.droplevel("subentry")
-            mu2.index = mu2.index.droplevel("subentry")
-
+            e1 = electrons.loc[dielectron.idx1.values, :]
+            e2 = electrons.loc[dielectron.idx2.values, :]
+            e1.index = e1.index.droplevel("subentry")
+            e2.index = e2.index.droplevel("subentry")
             if self.timer:
-                self.timer.add_checkpoint("dimuon pair selection")
-
-            output["bbangle"] = bbangle(mu1, mu2)
-
-            output["event_selection"] = output.event_selection & (
-                output.bbangle > self.parameters["3dangle"]
-            )
+                self.timer.add_checkpoint("dielectron pair selection")
 
             if self.timer:
                 self.timer.add_checkpoint("back back angle calculation")
+            dielectron_mass = dielectron.mass
 
             # --------------------------------------------------------#
             # Select events with muons passing leading pT cut
@@ -320,15 +254,18 @@ class DimuonProcessor(processor.ProcessorABC):
 
             # Events where there is at least one muon passing
             # leading muon pT cut
-
             # if self.timer:
             #    self.timer.add_checkpoint("Applied trigger matching")
 
             # --------------------------------------------------------#
-            # Fill dimuon and muon variables
+            # Fill dielectron and electron variables
             # --------------------------------------------------------#
 
-            fill_muons(self, output, mu1, mu2, is_mc=is_mc)
+            fill_electrons(output, e1, e2, is_mc)
+
+            if self.timer:
+                self.timer.add_checkpoint("all electron variables")
+
         # ------------------------------------------------------------#
         # Prepare jets
         # ------------------------------------------------------------#
@@ -340,6 +277,7 @@ class DimuonProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
 
         jets = df.Jet
+
         self.do_jec = False
 
         # We only need to reapply JEC for 2018 data
@@ -373,9 +311,9 @@ class DimuonProcessor(processor.ProcessorABC):
                 df,
                 dataset,
                 mask,
-                muons,
-                mu1,
-                mu2,
+                electrons,
+                e1,
+                e2,
                 jets,
                 jet_branches,
                 weights,
@@ -387,9 +325,12 @@ class DimuonProcessor(processor.ProcessorABC):
 
         if self.timer:
             self.timer.add_checkpoint("Jet loop")
+        # ------------------------------------------------------------#
+        # Calculate other event weights
+        # ------------------------------------------------------------#
 
+        """
         if is_mc:
-            """
             do_zpt = ('dy' in dataset)
             if do_zpt:
                 zpt_weight = np.ones(numevents, dtype=float)
@@ -398,62 +339,34 @@ class DimuonProcessor(processor.ProcessorABC):
                         output['dimuon_pt'][two_muons]
                     ).flatten()
                 weights.add_weight('zpt_wgt', zpt_weight)
-            """
-
-            do_musf = True
-            if do_musf:
-                muID, muIso, muTrig = musf_evaluator(
-                    self.musf_lookup, self.year, numevents, mu1, mu2
-                )
-                weights.add_weight("muID", muID, how="all")
-                weights.add_weight("muIso", muIso, how="all")
-                weights.add_weight("muTrig", muTrig, how="all")
-            else:
-                weights.add_weight("muID", how="dummy_all")
-                weights.add_weight("muIso", how="dummy_all")
-                weights.add_weight("muTrig", how="dummy_all")
 
         if self.timer:
             self.timer.add_checkpoint("Computed event weights")
+        """
 
         # ------------------------------------------------------------#
         # Fill outputs
         # ------------------------------------------------------------#
 
+        # mass = output.dielectron_mass
+        output["r"] = None
         output.loc[
-            ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)), "r"
+            ((abs(output.e1_eta) < 1.442) & (abs(output.e2_eta) < 1.442)), "r"
         ] = "bb"
         output.loc[
-            ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "r"
+            ((abs(output.e1_eta) > 1.566) ^ (abs(output.e2_eta) > 1.566)), "r"
         ] = "be"
-
-        output["year"] = int(self.year)
+        output.loc[
+            ((abs(output.e1_eta) > 1.566) & (abs(output.e2_eta) > 1.566)), "r"
+        ] = "ee"
 
         for wgt in weights.df.columns:
 
+            if wgt == "pu_wgt_off":
+                output["pu_wgt"] = weights.get_weight(wgt)
             if wgt != "nominal":
-                continue
-            output[f"wgt_{wgt}"] = weights.get_weight(wgt)
+                output[f"wgt_{wgt}"] = weights.get_weight(wgt)
 
-        if is_mc and "dy" in output.dataset:
-            mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
-            mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
-            output.loc[
-                ((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)), "wgt_nominal"
-            ] = (
-                output.loc[
-                    ((output.mu1_eta < 1.2) & (output.mu2_eta < 1.2)), "wgt_nominal"
-                ]
-                * kFac(mass_bb, "bb", "mu")
-            ).values
-            output.loc[
-                ((output.mu1_eta > 1.2) | (output.mu2_eta > 1.2)), "wgt_nominal"
-            ] = (
-                output.loc[
-                    ((output.mu1_eta > 1.2) | (output.mu2_eta > 1.2)), "wgt_nominal"
-                ]
-                * kFac(mass_be, "be", "mu")
-            ).values
         output = output.loc[output.event_selection, :]
         output = output.reindex(sorted(output.columns), axis=1)
         output = output[output.r.isin(self.regions)]
@@ -468,6 +381,34 @@ class DimuonProcessor(processor.ProcessorABC):
             self.apply_to_output(output)
             return self.accumulator.identity()
 
+        if is_mc and "dy" in output.s:
+            mass_bb = output[output["r"] == "bb"].dielectron_mass_gen.to_numpy()
+            mass_be = output[output["r"] == "be"].dielectron_mass_gen.to_numpy()
+            output.loc[
+                ((output.e1_eta < 1.2) & (output.e2_eta < 1.2)), "wgt_nominal"
+            ] = (
+                output.loc[
+                    ((output.e1_eta < 1.2) & (output.e2_eta < 1.2)), "wgt_nominal"
+                ]
+                * kFac(mass_bb, "bb", "mu")
+            ).values
+            output.loc[
+                ((output.e1_eta > 1.2) | (output.e2_eta > 1.2)), "wgt_nominal"
+            ] = (
+                output.loc[
+                    ((output.e1_eta > 1.2) | (output.e2_eta > 1.2)), "wgt_nominal"
+                ]
+                * kFac(mass_be, "be", "mu")
+            ).values
+            output.loc[((output.e1_eta < 1.2) & (output.e2_eta < 1.2)), "pu_wgt"] = (
+                output.loc[((output.e1_eta < 1.2) & (output.e2_eta < 1.2)), "pu_wgt"]
+                * kFac(mass_bb, "bb", "mu")
+            ).values
+            output.loc[((output.e1_eta > 1.2) | (output.e2_eta > 1.2)), "pu_wgt"] = (
+                output.loc[((output.e1_eta > 1.2) | (output.e2_eta > 1.2)), "pu_wgt"]
+                * kFac(mass_be, "be", "mu")
+            ).values
+
     def jet_loop(
         self,
         variation,
@@ -475,27 +416,34 @@ class DimuonProcessor(processor.ProcessorABC):
         df,
         dataset,
         mask,
-        muons,
-        mu1,
-        mu2,
+        electrons,
+        e1,
+        e2,
         jets,
         jet_branches,
         weights,
         numevents,
         output,
     ):
+        # weights = copy.deepcopy(weights)
 
         if not is_mc and variation != "nominal":
             return
 
         variables = pd.DataFrame(index=output.index)
+
+        jet_branches = [
+            "pt",
+            "eta",
+            "phi",
+            "jetId",
+            "qgl",
+            "puId",
+            "mass",
+            "btagDeepB",
+        ]
         jet_branches_local = copy.copy(jet_branches)
-
         if is_mc:
-            jets["pt_gen"] = jets.matched_gen.pt
-            jets["eta_gen"] = jets.matched_gen.eta
-            jets["phi_gen"] = jets.matched_gen.phi
-
             jet_branches_local += [
                 "partonFlavour",
                 "hadronFlavour",
@@ -504,60 +452,57 @@ class DimuonProcessor(processor.ProcessorABC):
                 "phi_gen",
                 "sf",
             ]
+            jets["pt_gen"] = jets.matched_gen.pt
+            jets["eta_gen"] = jets.matched_gen.eta
+            jets["phi_gen"] = jets.matched_gen.phi
             btag_sf = BTagScaleFactor(
                 "data/b-tagging/DeepCSV_102XSF_WP_V1.csv", "tight"
             )
             sf = btag_sf("central", jets.hadronFlavour, np.abs(jets.eta), jets.pt)
             jets["sf"] = sf
-
-
-
-
-        if variation == "nominal":
-            if self.do_jec:
-                jet_branches_local += ["pt_jec", "mass_jec"]
-            if is_mc and self.do_jerunc:
-                jet_branches_local += ["pt_orig", "mass_orig"]
-
+        # if variation == "nominal":
+        #    if self.do_jec:
+        #        jet_branches += ["pt_jec", "mass_jec"]
+        #    if is_mc and self.do_jerunc:
+        #        jet_branches += ["pt_orig", "mass_orig"]
+        """
         # Find jets that have selected muons within dR<0.4 from them
-        matched_mu_pt = jets.matched_muons.pt
-        matched_mu_iso = jets.matched_muons.pfRelIso04_all
-        matched_mu_id = jets.matched_muons[self.parameters["muon_id"]]
-        matched_mu_pass = (
-            (matched_mu_pt > self.parameters["muon_pt_cut"]) &
-            (matched_mu_iso < self.parameters["muon_iso_cut"]) &
-            matched_mu_id
-        )
-        clean = ~(ak.to_pandas(matched_mu_pass).astype(float).fillna(0.0)
-                  .groupby(level=[0, 1]).sum().astype(bool))
+        #matched_mu_pt = jets.matched_muons.pt_fsr
+        #matched_mu_iso = jets.matched_muons.pfRelIso04_all
+        #matched_mu_id = jets.matched_muons[self.parameters["muon_id"]]
+        #matched_mu_pass = (
+        #    (matched_mu_pt > self.parameters["muon_pt_cut"]) &
+        #    (matched_mu_iso < self.parameters["muon_iso_cut"]) &
+        #    matched_mu_id
+        #)
+        #clean = ~(ak.to_pandas(matched_mu_pass).astype(float).fillna(0.0)
+        #          .groupby(level=[0, 1]).sum().astype(bool))
 
-        if self.timer:
-             self.timer.add_checkpoint("Clean jets from matched muons")
+        # if self.timer:
+        #     self.timer.add_checkpoint("Clean jets from matched muons")
 
         # Select particular JEC variation
-        if "_up" in variation:
-            unc_name = "JES_" + variation.replace("_up", "")
-            if unc_name not in jets.fields:
-                return
-            jets = jets[unc_name]["up"][jet_branches_local]
-        elif "_down" in variation:
-            unc_name = "JES_" + variation.replace("_down", "")
-            if unc_name not in jets.fields:
-                return
-            jets = jets[unc_name]["down"][jet_branches_local]
-        else:
-            jets = jets[jet_branches_local]
-
+        #if '_up' in variation:
+        #    unc_name = 'JES_' + variation.replace('_up', '')
+        #    if unc_name not in jets.fields:
+        #        return
+        #    jets = jets[unc_name]['up'][jet_columns]
+        #elif '_down' in variation:
+        #    unc_name = 'JES_' + variation.replace('_down', '')
+        #    if unc_name not in jets.fields:
+        #        return
+        ##    jets = jets[unc_name]['down'][jet_columns]
+        #else:
+        """
+        jets = jets[jet_branches_local]
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
-
-        jets = jets.dropna()
-
         if jets.index.nlevels == 3:
             # sometimes there are duplicates?
             jets = jets.loc[pd.IndexSlice[:, :, 0], :]
             jets.index = jets.index.droplevel("subsubentry")
-
+        jets = jets.dropna()
+        jets = jets.loc[:, ~jets.columns.duplicated()]
         if variation == "nominal":
             # Update pt and mass if JEC was applied
             if self.do_jec:
@@ -570,18 +515,47 @@ class DimuonProcessor(processor.ProcessorABC):
             if is_mc and self.do_jerunc and not self.do_jec:
                 jets["pt"] = jets["pt_orig"]
                 jets["mass"] = jets["mass_orig"]
+        """
+        # ------------------------------------------------------------#
+        # Apply jetID and PUID
+        # ------------------------------------------------------------#
+        #pass_jet_id = jet_id(jets, self.parameters, self.year)
+        #pass_jet_puid = jet_puid(jets, self.parameters, self.year)
+
+        # Jet PUID scale factors
+        # if is_mc and False:  # disable for now
+        #     puid_weight = puid_weights(
+        #         self.evaluator, self.year, jets, pt_name,
+        #         jet_puid_opt, jet_puid, numevents
+        #     )
+        #     weights.add_weight('puid_wgt', puid_weight)
 
         # ------------------------------------------------------------#
-        # Apply jetID
+        # Select jets
         # ------------------------------------------------------------#
+        #jets['clean'] = clean
+
+        #jet_selection = (
+        #    pass_jet_id & pass_jet_puid &
+        #    (jets.qgl > -2) & jets.clean &
+        #    (jets.pt > self.parameters["jet_pt_cut"]) &
+        #    (abs(jets.eta) < self.parameters["jet_eta_cut"])
+        #)
+
+        #jets = jets[jet_selection]
+
+        # if self.timer:
+        #     self.timer.add_checkpoint("Selected jets")
+        """
+        # ------------------------------------------------------------#
+        # Fill jet-related variables
+        # ------------------------------------------------------------#
+
         # Sort jets by pT and reset their numbering in an event
-        # jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
         jets.index = pd.MultiIndex.from_arrays(
             [jets.index.get_level_values(0), jets.groupby(level=0).cumcount()],
             names=["entry", "subentry"],
         )
-        # Select two jets with highest pT
-
         jets["selection"] = 0
         jets.loc[
             (
@@ -598,31 +572,9 @@ class DimuonProcessor(processor.ProcessorABC):
         jet1 = jets.groupby("entry").nth(0)
         jet2 = jets.groupby("entry").nth(1)
         Jets = [jet1, jet2]
-        fill_jets(output, variables, Jets, is_mc=is_mc)
+        fill_jets(output, variables, Jets, "el", is_mc=is_mc)
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
-        
-
-        # ------------------------------------------------------------#
-        # Calculate btag SF
-        # ------------------------------------------------------------#
-        # --- Btag weights --- #
-        if is_mc:
-            bjet_sel_mask = output.event_selection
-
-            btag_wgt, btag_syst = btag_weights(
-                self, self.btag_lookup, self.btag_systs, jets, weights, bjet_sel_mask
-            )
-            weights.add_weight("btag_wgt", btag_wgt)
-
-            # --- Btag weights variations --- #
-            for name, bs in btag_syst.items():
-                weights.add_weight(f"btag_wgt_{name}", bs, how="only_vars")
-
-            if self.timer:
-                self.timer.add_checkpoint(
-                    "Applied B-tag weights"
-                )
 
         # --------------------------------------------------------------#
         # Fill outputs
@@ -635,45 +587,44 @@ class DimuonProcessor(processor.ProcessorABC):
 
         for key, val in variables.items():
             output.loc[:, key] = val
-
+        #        if is_mc:
+        #            output = output.drop_duplicates(subset=['event'])
+        #        else:
+        #            output = output.drop_duplicates(subset=['run'])
         del df
-        del muons
+        del electrons
         del jets
-        del mu1
-        del mu2
+        del e1
+        del e2
         return output
 
     def prepare_lookups(self):
-        self.jec_factories, self.jec_factories_data = jec_factories(self.year)
-        # Muon scale factors
-        self.musf_lookup = musf_lookup(self.parameters)
         # Pile-up reweighting
         self.pu_lookups = pu_lookups(self.parameters)
-        # Btag weights
-        self.btag_lookup = BTagScaleFactor(
-            self.parameters["btag_sf_csv"],
-            BTagScaleFactor.RESHAPE,
-            "iterativefit,iterativefit,iterativefit",
-        )
-
+        self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # --- Evaluator
-        #self.extractor = extractor()
-        # PU ID weights
-        #puid_filename = self.parameters["puid_sf_file"]
-        #self.extractor.add_weight_sets([f"* * {puid_filename}"])
+        self.extractor = extractor()
 
-        #self.extractor.finalize()
-        #self.evaluator = self.extractor.make_evaluator()
+        # Z-pT reweigting (disabled)
+        zpt_filename = self.parameters["zpt_weights_file"]
+        self.extractor.add_weight_sets([f"* * {zpt_filename}"])
+        if "2016" in self.year:
+            self.zpt_path = "zpt_weights/2016_value"
+        else:
+            self.zpt_path = "zpt_weights/2017_value"
 
+        # Calibration of event-by-event mass resolution
+        for mode in ["Data", "MC"]:
+            label = f"res_calib_{mode}_{self.year}"
+            path = self.parameters["res_calib_path"]
+            file_path = f"{path}/{label}.root"
+            self.extractor.add_weight_sets([f"{label} {label} {file_path}"])
 
+        self.extractor.finalize()
+        self.evaluator = self.extractor.make_evaluator()
+
+        self.evaluator[self.zpt_path]._axes = self.evaluator[self.zpt_path]._axes[0]
         return
-    @property
-    def accumulator(self):
-        return processor.defaultdict_accumulator(int)
-
-    @property
-    def columns(self):
-        return branches
 
     def postprocess(self, accumulator):
         return accumulator

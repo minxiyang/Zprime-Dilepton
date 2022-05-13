@@ -1,15 +1,43 @@
 class Variable(object):
-    def __init__(self, name_, caption_, nbins_, xmin_, xmax_):
+    def __init__(self, name_, caption_, nbins_, xmin_, xmax_, ymin_, ymax_, binning_ = [], norm_to_bin_width_ = False, xminPlot_ = None,xmaxPlot_ = None):
         self.name = name_
         self.caption = caption_
         self.nbins = nbins_
         self.xmin = xmin_
         self.xmax = xmax_
-
+        self.ymin = ymin_
+        self.ymax = ymax_
+        if xminPlot_ is not None:
+        	self.xminPlot = xminPlot_
+        else:	
+                self.xminPlot = xmin_
+        if xmaxPlot_ is not None:
+        	self.xmaxPlot = xmaxPlot_
+        else:
+        	self.xmaxPlot = xmax_
+        self.binning = binning_
+        self.norm_to_bin_width = norm_to_bin_width_
 
 variables = []
-variables.append(Variable("dimuon_mass", r"$m_{\mu\mu}$ [GeV]", 50, 110, 150))
-variables.append(Variable("dimuon_mass_res", r"$\Delta M_{\mu\mu}$ [GeV]", 50, 0, 10))
+
+massBinningMuMu =  (
+        [j for j in range(120, 150, 5)]
+        + [j for j in range(150, 200, 10)]
+        + [j for j in range(200, 600, 20)]
+        + [j for j in range(600, 900, 30)]
+        + [j for j in range(900, 1250, 50)]
+        + [j for j in range(1250, 1610, 60)]
+        + [j for j in range(1610, 1890, 70)]
+        + [j for j in range(1890, 3970, 80)]
+        + [j for j in range(3970, 6070, 100)]
+        + [6070]
+    )
+
+
+variables.append(Variable("dimuon_mass", r"$m_{\mu\mu}$ [GeV]", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_ = massBinningMuMu, norm_to_bin_width_ = True))
+variables.append(Variable("dimuon_mass_gen", r"generated $m_{\mu\mu}$ [GeV]", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_ = massBinningMuMu, norm_to_bin_width_ = True))
+
+'''variables.append(Variable("dimuon_mass_res", r"$\Delta M_{\mu\mu}$ [GeV]", 50, 0, 10))
 variables.append(
     Variable(
         "dimuon_mass_res_rel", r"$\Delta M_{\mu\mu} / M_{\mu\mu}$ [GeV]", 50, 0, 0.1
@@ -69,7 +97,7 @@ variables.append(Variable("mmj2_dPhi", r"$\Delta\phi (\mu\mu, jet2)$", 50, 0, 4)
 variables.append(Variable("jet1_has_matched_muon", "jet1_has_matched_muon", 4, -1, 3))
 variables.append(Variable("jet2_has_matched_muon", "jet2_has_matched_muon", 4, -1, 3))
 variables.append(Variable("jet1_matched_muon_dr", "jet1_matched_muon_dr", 50, 0, 0.8))
-variables.append(Variable("jet2_matched_muon_dr", "jet2_matched_muon_dr", 50, 0, 0.8))
+variables.append(Variable("jet2_matched_muon_dr", "jet2_matched_muon_dr", 50, 0, 0.8)) 
 variables.append(Variable("jet1_matched_muon_pt", "jet1_matched_muon_pt", 50, 0, 200))
 variables.append(Variable("jet2_matched_muon_pt", "jet2_matched_muon_pt", 50, 0, 200))
 variables.append(Variable("jet1_matched_muon_iso", "jet1_matched_muon_iso", 100, 0, 5))
@@ -103,7 +131,7 @@ variables.append(Variable("met", r"$E_{T}^{miss.}$ [GeV]", 50, 0, 200))
 variables.append(Variable("btag_wgt", r"b-tag weight", 50, 0, 2))
 variables.append(Variable("event", "event", 100, 0, 10000000))
 variables.append(Variable("run", "run", 1, 0, 1))
-
+'''
 variables_lookup = {}
 for v in variables:
     variables_lookup[v.name] = v

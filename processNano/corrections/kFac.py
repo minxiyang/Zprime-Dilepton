@@ -30,8 +30,15 @@ def kFac(mass, region, flavor):
             ]
         # else:
 
-    correction = pars[0]
-    for i in range(1, 6):
+        correction = pars[0]
+        for i in range(1, 6):
+            correction += pars[i] * mass ** i
+    else:
+        pars = [1.0678, -0.000120666, 3.22646e-08, -3.94886e-12 ]
 
-        correction += pars[i] * mass ** i
+        correction = pars[0]
+        for i in range(1,3):
+            correction += pars[i] * mass ** i
+
+
     return correction

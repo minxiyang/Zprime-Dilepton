@@ -6,8 +6,8 @@ import time
 
 import coffea.processor as processor
 from coffea.processor import dask_executor, run_uproot_job
-from python.dielectron_processor import DielectronProcessor
-from python.preprocessor import SamplesInfo
+from processNano.dielectron_processor import DielectronProcessor
+from processNano.preprocessor import SamplesInfo
 
 import dask
 from dask.distributed import Client
