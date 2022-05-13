@@ -5,7 +5,6 @@ import argparse
 import traceback
 import datetime
 from functools import partial
-import coffea.processor as processor
 from coffea.processor import DaskExecutor, Runner
 from coffea.nanoevents import NanoAODSchema
 #from copperhead.stage1.preprocessor import load_samples
@@ -74,7 +73,6 @@ node_ip = "128.211.148.61"  # hammer-c000
 # node_ip = "128.211.149.135"
 #node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
-
 
 
 if args.slurm_port is None:
@@ -168,7 +166,6 @@ def submit_job(parameters):
         "apply_to_output": partial(save_stage1_output_to_parquet, out_dir=out_dir),
     }
 
-
     if parameters["channel"] == "mu":
         from processNano.dimuon_processor import DimuonProcessor as event_processor
     elif parameters["channel"] == "el":
@@ -177,7 +174,6 @@ def submit_job(parameters):
         from processNano.dimuon_eff_processor import DimuonEffProcessor as event_processor
     else:
         print("wrong channel input")
-
 
     executor = DaskExecutor(**executor_args)
     run = Runner(
@@ -199,10 +195,6 @@ def submit_job(parameters):
         return "Failed: " + str(e) + " " + tb
 
     return "Success!"
-
-
-
-
 
 if __name__ == "__main__":
     tick = time.time()
@@ -286,7 +278,6 @@ if __name__ == "__main__":
         # connect to existing Slurm cluster
         parameters["client"] = Client(parameters["slurm_cluster_ip"])
     print("Client created")
-
 
     datasets_mc = []
     datasets_data = []

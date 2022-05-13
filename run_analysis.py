@@ -49,7 +49,7 @@ parameters = {
     "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
     "years": args.years,
     "label": "genCut",
-    "channels": ["0b","1b","2b"],
+    "channels": ["0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
     # "custom_npartitions": {
@@ -57,7 +57,7 @@ parameters = {
     # },
     #
     # < settings for histograms >
-    "hist_vars": ["dimuon_mass","dimuon_mass_gen","dimuon_mass_resUnc","dimuon_mass_scaleUncUp","dimuon_mass_scaleUncDown"],
+    "hist_vars": ["dimuon_mass", "dimuon_mass_gen", "dimuon_mass_resUnc", "dimuon_mass_scaleUncUp", "dimuon_mass_scaleUncDown"],
     "variables_lookup": variables_lookup,
     "save_hists": True,
     #
@@ -70,9 +70,7 @@ parameters = {
     #
     # < MVA settings >
     "models_path": "data/trained_models/",
-    "dnn_models": {
-#        "vbf": ["pytorch_test"],
-    },
+    "dnn_models": {},
     "bdt_models": {},
     "mva_bins_original": mva_bins,
 }
@@ -97,7 +95,6 @@ parameters["datasets"] = [
     "dyInclusive50",
     "ttbar_lep_inclusive",
     "ttbar_lep_M500to800",
-    #"ttbar_lep_500to800_ext",
     "ttbar_lep_M800to1200",
     "ttbar_lep_M1200to1800",
     "ttbar_lep_M1800toInf",
@@ -112,14 +109,6 @@ parameters["datasets"] = [
     "WZ3LNu",
     "ZZ2L2Nu",
     "ZZ4L",
-]
-
-parameters["datasets"] = [
-    "ttbar_lep_inclusive",
-#    "ttbar_lep_M500to800",
-#    "ttbar_lep_M800to1200",
-#    "ttbar_lep_M1200to1800",
-#    "ttbar_lep_M1800toInf",
 ]
 
 # using one small dataset for debugging

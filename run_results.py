@@ -42,12 +42,12 @@ parameters = {
     "years": args.years,
     "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
     "label": "genCut",
-    "channels": ["0b","1b","2b"],
+    "channels": ["0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
     #
     # < plotting settings >
-    "plot_vars": ["dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
+    "plot_vars": ["dimuon_mass", "dimuon_mass_gen"],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
@@ -57,7 +57,7 @@ parameters = {
     #
     # < templates and datacards >
     "save_templates": True,
-    "templates_vars": ["dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
+    "templates_vars": ["dimuon_mass", "dimuon_mass_gen"],  # "dimuon_mass"],
 }
 
 parameters["grouping"] = {
