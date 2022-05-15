@@ -150,9 +150,13 @@ def plotAcc(dfs, bins, name):
     for df in dfs:
         df = df.compute()
         df.drop_duplicates(subset=["dimuon_mass"], inplace=True)
-        df_deno["0j"].append(df[df['nJets']==0])
-        df_deno["1j"].append(df[df['nJets']==1])
-        df_deno["2j"].append(df[df['nJets']>=2])
+        #df_deno["0j"].append(df[df['nJets']==0])
+        #df_deno["1j"].append(df[df['nJets']==1])
+        #df_deno["2j"].append(df[df['nJets']>=2])
+
+        df_deno["0j"].append(df)
+        df_deno["1j"].append(df)
+        df_deno["2j"].append(df)
         df_no["0j"].append(df[(df['nJets']==0)&(df["accepted"])])
         df_no["1j"].append(df[(df['nJets']==1)&(df["accepted"])])
         df_no["2j"].append(df[(df['nJets']>=2)&(df["accepted"])])
@@ -356,7 +360,7 @@ if __name__ == "__main__":
     path_CI = {}
     df_list = {}
     for sig_name in CI_list:
-        files = glob.glob(path + "CI_eff/" + sig_name + "/*")
+        files = glob.glob(path + "CI_effv2/" + sig_name + "/*")
         path_CI[sig_name] = files
 
     client = Client(LocalCluster(**client_args))

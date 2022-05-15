@@ -1,4 +1,6 @@
-import awkward
+import sys
+sys.path.append("copperhead/")
+
 import awkward as ak
 import numpy as np
 
@@ -9,20 +11,20 @@ from coffea.lookup_tools import extractor
 from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
 
-from python.timer import Timer
-from python.weights import Weights
+from processNano.timer import Timer
+from processNano.weights import Weights
 
-from python.corrections.pu_reweight import pu_lookups, pu_evaluator
-from python.corrections.lepton_sf import musf_lookup
-from python.corrections.fsr_recovery import fsr_recovery
-from python.corrections.jec import jec_factories
-from python.corrections.l1prefiring_weights import l1pf_weights
-from python.jets import fill_jets
+from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
+from copperhead.stage1.corrections.lepton_sf import musf_lookup
+from copperhead.stage1.corrections.fsr_recovery import fsr_recovery
+from copperhead.stage1.corrections.jec import jec_factories
+from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
+from processNano.jets import fill_jets
 import copy
 
 # from python.jets import jet_id, jet_puid, gen_jet_pair_mass
-from python.muons import find_dimuon
-from python.utils import p4_sum
+from processNano.muons import find_dimuon
+from processNano.utils import p4_sum
 
 from config.parameters import parameters, muon_branches, jet_branches
 
@@ -314,7 +316,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
         )
         nJets = genJets.reset_index().groupby("entry")["subentry"].nunique()
         nJets_acc = (
-            genJets[abs(genJets.Jet_eta) < 2.4]
+            genJets[(abs(genJets.Jet_eta) < 2.4) & (genJets.Jet_pt > 30)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()
@@ -326,13 +328,13 @@ class DimuonEffProcessor(processor.ProcessorABC):
             .nunique()
         )
         nJets_match = (
-            genJets[genJets.Jet_match]
+            genJets[(genJets.Jet_match)&(genJets.Jet_pt > 30)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()
         )
         nJets_ID = (
-            genJets[(genJets.Jet_ID) & (genJets.Jet_match) & (genJets.Jet_pt > 30)]
+            genJets[(genJets.Jet_ID) & (genJets.Jet_match)&(genJets.Jet_pt > 30) ]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()
@@ -398,7 +400,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
         )
         pt_pass = pt_pass.to_frame("pt_pass")
         acc = (
-            genPart[abs(genPart["eta"]) < 2.4]
+            genPart[(abs(genPart["eta"]) < 2.4)&(genPart["pt"] > 53)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()
@@ -511,7 +513,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
         )
         genPart.fillna(0, inplace=True)
 
-        genPart["s"] = dataset
+        genPart["dataset"] = dataset
         if self.apply_to_output is None:
             return genPart
         else:
@@ -803,10 +805,10 @@ class DimuonEffProcessor(processor.ProcessorABC):
 
     def prepare_lookups(self):
         # Rochester correction
-        rochester_data = txt_converters.convert_rochester_file(
-            self.parameters["roccor_file"], loaduncs=True
-        )
-        self.roccor_lookup = rochester_lookup.rochester_lookup(rochester_data)
+        #rochester_data = txt_converters.convert_rochester_file(
+        #    self.parameters["roccor_file"], loaduncs=True
+        #)
+        #self.roccor_lookup = rochester_lookup.rochester_lookup(rochester_data)
         self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors
         self.musf_lookup = musf_lookup(self.parameters)
