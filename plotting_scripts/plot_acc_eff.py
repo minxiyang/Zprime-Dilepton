@@ -192,9 +192,9 @@ def plotAcc(dfs, bins, name):
         ratio=False,
         signal=False,
         logx=True,
-        logy=False,
+        logy=True,
         xRange=[400, 3000],
-        yRange=[0.75,1.2],
+        yRange=[1e-4,1.0],
         flavor="mu",
         year="2018",
         )
