@@ -51,7 +51,7 @@ def getRes(genMass, year, bb):
             b = 2.83e-05
             c = -9.71e-09
             d = 1.71e-12
-            e = -1.09e-16    
+            e = -1.09e-16 
 
     res = a + b*genMass + c*genMass**2 + d*genMass**3 + e*genMass**4
     return max(0, res)
@@ -59,11 +59,10 @@ def getRes(genMass, year, bb):
 
 def additionalSmearing(genMass, year, bb=True):
 
-    res = getRes(genMass,year,bb)
+    res = getRes(genMass, year, bb)
     extraSmear = 0
     if not bb:
         extraSmear = res*0.567
-
 
     return random.normal(1, max(0.0001, extraSmear))
 
@@ -73,7 +72,8 @@ def smearingForUnc(genMass, year, bb=True):
     res = getRes(genMass, year, bb)
 
     extraSmearSyst = res*0.567
-    if (year == 2017 or year == 2018): extraSmearSyst = res*0.42098099719583537
+    if (year == 2017 or year == 2018): 
+        extraSmearSyst = res*0.42098099719583537
 
     return random.normal(1, max(0.0001, extraSmearSyst))
 
