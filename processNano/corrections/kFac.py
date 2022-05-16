@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def calckFac(mass, region, flavor):
 
     if flavor == "mu":
@@ -36,17 +37,16 @@ def calckFac(mass, region, flavor):
         for i in range(1, 6):
             correction += pars[i] * mass ** i
     else:
-        pars = [1.0678, -0.000120666, 3.22646e-08, -3.94886e-12 ]
+        pars = [1.0678, -0.000120666, 3.22646e-08, -3.94886e-12]
 
         correction = pars[0]
-        for i in range(1,3):
+        for i in range(1, 3):
             correction += pars[i] * mass ** i
-
 
     return correction
 
 
 def kFac(masses, region, flavor):
 
-    result =[calckFac(mass, region, flavor) for mass in masses]
-    return result
+    result = [calckFac(mass, region, flavor) for mass in masses]
+    return np.array(result)
