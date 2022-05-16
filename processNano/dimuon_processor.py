@@ -589,7 +589,7 @@ class DimuonProcessor(processor.ProcessorABC):
         Jets = [jet1, jet2]
         fill_jets(output, variables, Jets, is_mc=is_mc)
         if self.timer:
-            self.timer.add_checkpoint("Filled jet variables") 
+            self.timer.add_checkpoint("Filled jet variables")
 
         # ------------------------------------------------------------#
         # Calculate btag SF
@@ -666,7 +666,6 @@ class DimuonProcessor(processor.ProcessorABC):
     @property
     def jetcolumns(self):
         return jet_branches
-
 
     def postprocess(self, accumulator):
         return accumulator
