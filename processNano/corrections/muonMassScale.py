@@ -19,7 +19,7 @@ def calcMassScaleUncert(mass, isBB, year, up=True):
         if (isBB):
             scaleUnc = 1. - (0.999032 + 3.36979e-06*mass - 3.4122e-09*mass**2 + 1.62541e-12*mass**3 - 3.12864e-16*mass**4 + 2.18417e-20*mass**5)
         else:
-            scaleUnc = 1. - (1.00051 - 2.21167e-06*mass + 2.21347e-09*mass**2 - 7.72178e-13*mass**3 + 1.28101e-16*mass**4  - 8.32675e-21*mass**5)
+            scaleUnc = 1. - (1.00051 - 2.21167e-06*mass + 2.21347e-09*mass**2 - 7.72178e-13*mass**3 + 1.28101e-16*mass**4 - 8.32675e-21*mass**5)
 
     if up:
         scaleUnc = 1 - scaleUnc

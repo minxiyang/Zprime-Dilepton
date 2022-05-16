@@ -11,7 +11,7 @@ def calcMuonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year):
     p2 = pT2 / (sin(arctan(2*exp(-1*eta2))))
 
     bb = True
-    if (abs(eta1) > 1.2 or abs(eta2) > 1.2): 
+    if (abs(eta1) > 1.2 or abs(eta2) > 1.2):
         bb = False
 
     if year == 2016:
@@ -44,15 +44,15 @@ def calcMuonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year):
                 d = -7.431e+06
                 e = -108.8
                 f = -1.138
-                eff_default = a - b * exp( -( (mass - c) / d) ) + e * mass**f
-			
+                eff_default = a - b * exp(-((mass - c) / d)) + e * mass**f
+
             else:
                 eff_a = 0.3148
                 eff_b = 0.04447
                 eff_c = 1.42
                 eff_d = -5108.
                 eff_e = 713.5
-                eff_default = eff_a + eff_b * mass**eff_c * exp(- ((mass - eff_d ) / eff_e))
+                eff_default = eff_a + eff_b * mass**eff_c * exp(-((mass - eff_d) / eff_e))
 
             if (mass <= 450):
                 a = 1.33901e+01
@@ -61,18 +61,17 @@ def calcMuonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year):
                 d = -7.43036e+06
                 e = -1.14263e+02
                 f = -1.15028e+00
-                eff_syst= a - b * exp( -( (mass - c) / d) ) + e * mass**f
-			
+                eff_syst = a - b * exp(-((mass - c) / d)) + e * mass**f
+
             else:
                 eff_a = 3.07958e-01
                 eff_b = 4.63280e-02
                 eff_c = 1.35632e+00
                 eff_d = -5.00475e+03
                 eff_e = 7.38088e+02
-                eff_syst =  eff_a + eff_b * mass**eff_c * exp(- ((mass - eff_d ) / eff_e))
+                eff_syst = eff_a + eff_b * mass**eff_c * exp(-((mass - eff_d) / eff_e))
 
             return eff_syst/eff_default
-
 
     elif year == 2018:
 
@@ -90,14 +89,14 @@ def calcMuonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year):
                 d = -7.431e+06
                 e = -108.8
                 f = -1.138
-                eff_default = a - b * exp( -( (mass - c) / d) ) + e * mass**f
+                eff_default = a - b * exp(-((mass - c) / d)) + e * mass**f
             else:
                 eff_a = 0.3148
                 eff_b = 0.04447
                 eff_c = 1.42
                 eff_d = -5108.
                 eff_e = 713.5
-                eff_default = eff_a + eff_b * mass**eff_c * exp(- ((mass - eff_d ) / eff_e))
+                eff_default = eff_a + eff_b * mass**eff_c * exp(-((mass - eff_d) / eff_e))
 
             if (mass <= 450):
                 a = 1.33901e+01
@@ -106,22 +105,22 @@ def calcMuonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year):
                 d = -7.43036e+06
                 e = -1.14263e+02
                 f = -1.15028e+00
-                eff_syst = a - b * exp( -( (mass - c) / d) ) + e * mass**f
+                eff_syst = a - b * exp(-((mass - c) / d)) + e * mass**f
             else:
                 eff_a = 3.07958e-01
                 eff_b = 4.63280e-02
                 eff_c = 1.35632e+00
                 eff_d = -5.00475e+03
                 eff_e = 7.38088e+02
-                eff_syst =  eff_a + eff_b * mass**eff_c * exp(- ((mass - eff_d ) / eff_e))
+                eff_syst = eff_a + eff_b * mass**eff_c * exp(-((mass - eff_d) / eff_e))
 
-            return eff_syst/eff_default;
+            return eff_syst/eff_default
 
 
 def muonRecoUncert(masses, pT1, pT2, eta1, eta2, isDimuon, year):
 
     weights = []
     for i in range(0, masses.size):
-        weights.append(calcMuonRecoUncert(masses[i], pT1[i], pT2[i], eta1[i], eta2[i], isDimuon[i], int(year))) 
+        weights.append(calcMuonRecoUncert(masses[i], pT1[i], pT2[i], eta1[i], eta2[i], isDimuon[i], int(year)))
 
     return np.array(weights)
