@@ -16,7 +16,7 @@ def calc_binwidth_weight(data, binning):
             if val > binning[i] and val <= binning[i+1]:
                 found = True
                 weights.append(1. / (binning[i+1] - binning[i]))
-        if not found: 
+        if not found:
             weights.append(1.0)
     return array(weights)
 
@@ -92,7 +92,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
                 continue
 
         slicer = (
-             (df.dataset == dataset)
+           (df.dataset == dataset)
            & (df.r == region)
            & (df.year == year)
            & (df["channel"] == channel)
