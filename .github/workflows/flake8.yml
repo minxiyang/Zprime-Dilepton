@@ -32,7 +32,7 @@ jobs:
       - name: flake8 - check processNano/corrections/*py
         run: flake8 processNano/corrections/*py
       - name: flake8 - check produceResults/*py
-         run: flake8 produceResults/*py
+        run: flake8 produceResults/*py
       - name: flake8 - check doAnalysis/*py
         run: flake8 doAnalysis/*py
       - name: flake8 - check config/*py
