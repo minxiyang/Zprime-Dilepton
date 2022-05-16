@@ -8,7 +8,7 @@ from copperhead.python.io import (
     save_stage2_output_parquet,
 )
 from doAnalysis.categorizer import split_into_channels
-from doAnalysis.mva_evaluators import evaluate_pytorch_dnn, evaluate_bdt
+#from doAnalysis.mva_evaluators import evaluate_pytorch_dnn, evaluate_bdt
 from doAnalysis.histogrammer import make_histograms
 
 import warnings
