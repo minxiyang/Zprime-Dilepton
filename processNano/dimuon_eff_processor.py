@@ -1,4 +1,7 @@
 # flake8: noqa
+import sys
+sys.path.append("copperhead/")
+
 import awkward
 import awkward as ak
 import numpy as np
