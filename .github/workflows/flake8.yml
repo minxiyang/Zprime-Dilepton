@@ -27,10 +27,14 @@ jobs:
         run: python -m pip install -q flake8
       - name: flake8 - check ./*py
         run: flake8 ./*py
-      - name: flake8 - check python/*py
-        run: flake8 python/*py
-      - name: flake8 - check python/corrections/*py
-        run: flake8 python/corrections/*py
+      - name: flake8 - check processNano/*py
+        run: flake8 processNano/*py
+      - name: flake8 - check processNano/corrections/*py
+        run: flake8 processNano/corrections/*py
+      - name: flake8 - check produceResults/*py
+         run: flake8 produceResults/*py
+      - name: flake8 - check doAnalysis/*py
+        run: flake8 doAnalysis/*py
       - name: flake8 - check config/*py
         run: flake8 config/*py
       - name: flake8 - check tests/*py
