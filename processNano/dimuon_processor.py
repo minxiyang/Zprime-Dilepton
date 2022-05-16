@@ -7,8 +7,6 @@ import numpy as np
 # np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
 import coffea.processor as processor
-from coffea.lookup_tools import extractor
-from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
 from processNano.timer import Timer
 from processNano.weights import Weights
@@ -16,12 +14,10 @@ from processNano.weights import Weights
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
 from copperhead.stage1.corrections.lepton_sf import musf_lookup, musf_evaluator
 from copperhead.stage1.corrections.jec import jec_factories, apply_jec
-from copperhead.stage1.corrections.geofit import apply_geofit
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
-from copperhead.stage1.corrections.stxs_uncert import add_stxs_variations, stxs_lookups
-from copperhead.stage1.corrections.lhe_weights import lhe_weights
-from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
-#from copperhead.stage1.corrections.btag_weights import btag_weights
+#from copperhead.stage1.corrections.lhe_weights import lhe_weights
+#from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
+from copperhead.stage1.corrections.btag_weights import btag_weights
 
 #high mass dilepton specific corrections
 from processNano.corrections.kFac import kFac
@@ -35,6 +31,7 @@ from processNano.utils import bbangle
 from config.parameters import parameters, muon_branches, jet_branches
 
 from copperhead.config.jec_parameters import jec_parameters
+
 
 class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
@@ -69,10 +66,8 @@ class DimuonProcessor(processor.ProcessorABC):
             if ptvar in jec_pars["jer_variations"]:
                 self.do_jerunc = True
 
+        self.timer = Timer("global") if do_timer else None
 
-        #self.timer = Timer("global") if do_timer else None
-        self.timer = Timer("global")
-        #self.timer = None
         self._columns = self.parameters["proc_columns"]
 
         self.regions = ["bb", "be"]
@@ -324,7 +319,8 @@ class DimuonProcessor(processor.ProcessorABC):
             # --------------------------------------------------------#
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
-            fill_muons(self, output, mu1, mu2, is_mc,self.year,weights)
+            fill_muons(self, output, mu1, mu2, is_mc, self.year, weights)
+
         # ------------------------------------------------------------#
         # Prepare jets
         # ------------------------------------------------------------#
@@ -498,9 +494,6 @@ class DimuonProcessor(processor.ProcessorABC):
                 "phi_gen",
             ]
 
-
-
-
         if variation == "nominal":
             if self.do_jec:
                 jet_branches_local += ["pt_jec", "mass_jec"]
@@ -520,7 +513,7 @@ class DimuonProcessor(processor.ProcessorABC):
                   .groupby(level=[0, 1]).sum().astype(bool))
 
         if self.timer:
-             self.timer.add_checkpoint("Clean jets from matched muons")
+            self.timer.add_checkpoint("Clean jets from matched muons")
 
         # Select particular JEC variation
         if "_up" in variation:
@@ -602,8 +595,7 @@ class DimuonProcessor(processor.ProcessorABC):
         Jets = [jet1, jet2]
         fill_jets(output, variables, Jets, is_mc=is_mc)
         if self.timer:
-            self.timer.add_checkpoint("Filled jet variables")
-        
+            self.timer.add_checkpoint("Filled jet variables") 
 
         # ------------------------------------------------------------#
         # Calculate btag SF
@@ -671,15 +663,20 @@ class DimuonProcessor(processor.ProcessorABC):
         #self.extractor.finalize()
         #self.evaluator = self.extractor.make_evaluator()
 
-
         return
+
     @property
     def accumulator(self):
         return processor.defaultdict_accumulator(int)
 
     @property
-    def columns(self):
-        return branches
+    def muoncolumns(self):
+        return muon_branches
+
+    @property
+    def jetcolumns(self):
+        return jet_branches
+
 
     def postprocess(self, accumulator):
         return accumulator

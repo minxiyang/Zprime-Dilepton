@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
-from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
 
 from processNano.timer import Timer
