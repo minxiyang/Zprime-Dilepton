@@ -1,3 +1,4 @@
+import numpy as np
 from numpy import random
 
 def getRes(genMass, year, bb):
@@ -54,22 +55,18 @@ def getRes(genMass, year, bb):
 	    
     
     res = a + b*genMass + c*genMass**2 + d*genMass**3 + e*genMass**4
-    return res
+    return max(0,res)
 
 
 def additionalSmearing(genMass, year, bb = True):
 
-
     res = getRes(genMass,year,bb)
-
-    #if in be category, apply 15% additional smearing to the mass value
     extraSmear = 0
     if not bb:
         extraSmear = res*0.567;
 
 
-    #return recoMass * random.normal(1,extraSmear)
-    return random.normal(1,extraSmear)
+    return random.normal(1,max(0.0001,extraSmear))
 
 
 def smearingForUnc(genMass, year, bb = True):
@@ -81,4 +78,14 @@ def smearingForUnc(genMass, year, bb = True):
     if year == 2017 or year ==2018: extraSmearSyst = res*0.42098099719583537
 
     
-    return random.normal(1,extraSmearSyst)
+    return random.normal(1,max(0.0001,extraSmearSyst))
+
+
+def smearMass(genMasses, year, bb = True, forUnc = True):
+
+    if forUnc:
+    	result = np.array([smearingForUnc(genMass, int(year), bb) for genMass in genMasses])
+    else:
+    	result = np.array([additionalSmearing(genMass, int(year), bb) for genMass in genMasses])
+
+    return result

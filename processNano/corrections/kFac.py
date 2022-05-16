@@ -1,4 +1,6 @@
-def kFac(mass, region, flavor):
+import numpy as np
+
+def calckFac(mass, region, flavor):
 
     if flavor == "mu":
         if region == "all":
@@ -42,3 +44,9 @@ def kFac(mass, region, flavor):
 
 
     return correction
+
+
+def kFac(masses, region, flavor):
+
+    result =[calckFac(mass, region, flavor) for mass in masses]
+    return result

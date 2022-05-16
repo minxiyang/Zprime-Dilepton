@@ -35,6 +35,9 @@ massBinningMuMu =  (
 
 
 variables.append(Variable("dimuon_mass", r"$m_{\mu\mu}$ [GeV]", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_ = massBinningMuMu, norm_to_bin_width_ = True))
+variables.append(Variable("dimuon_mass_resUnc", r"$m_{\mu\mu}$ [GeV] (res. unc.)", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_ = massBinningMuMu, norm_to_bin_width_ = True))
+variables.append(Variable("dimuon_mass_scaleUncUp", r"$m_{\mu\mu}$ [GeV] (scale unc. up)", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_ = massBinningMuMu, norm_to_bin_width_ = True))
+variables.append(Variable("dimuon_mass_scaleUncDown", r"$m_{\mu\mu}$ [GeV] (scale unc. down)", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_ = massBinningMuMu, norm_to_bin_width_ = True))
 variables.append(Variable("dimuon_mass_gen", r"generated $m_{\mu\mu}$ [GeV]", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_ = massBinningMuMu, norm_to_bin_width_ = True))
 
 '''variables.append(Variable("dimuon_mass_res", r"$\Delta M_{\mu\mu}$ [GeV]", 50, 0, 10))

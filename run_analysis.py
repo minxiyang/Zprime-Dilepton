@@ -32,7 +32,7 @@ args = parser.parse_args()
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.148.61"
+node_ip = "128.211.148.60"
 
 if use_local_cluster:
     ncpus_local = 40
@@ -48,7 +48,7 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
     "years": args.years,
-    "label": "genCut",
+    "label": "uncertTest2",
     "channels": ["0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],

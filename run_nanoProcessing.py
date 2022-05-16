@@ -69,7 +69,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.148.61"  # hammer-c000
+node_ip = "128.211.148.60"  # hammer-c000
 # node_ip = "128.211.149.135"
 #node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
