@@ -41,13 +41,13 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
-    "label": "genCut",
+    "label": "uncertTest2",
     "channels": ["0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
     #
     # < plotting settings >
-    "plot_vars": ["dimuon_mass", "dimuon_mass_gen"],  # "dimuon_mass"],
+    "plot_vars": ["dimuon_mass", "dimuon_mass_gen", "dimuon_mass_resUnc", "dimuon_mass_scaleUncUp", "dimuon_mass_scaleUncDown"],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,

@@ -431,8 +431,7 @@ class DimuonProcessor(processor.ProcessorABC):
             if wgt != "nominal":
                 continue
             output[f"wgt_{wgt}"] = weights.get_weight(wgt)
-
-        if is_mc and "dy" in output.dataset:
+        if is_mc and "dy" in dataset:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
             output.loc[
@@ -444,10 +443,10 @@ class DimuonProcessor(processor.ProcessorABC):
                 * kFac(mass_bb, "bb", "mu")
             ).values
             output.loc[
-                ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "wgt_nominal"
+                ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "wgt_nominal"
             ] = (
                 output.loc[
-                    ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "wgt_nominal"
+                    ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "wgt_nominal"
                 ]
                 * kFac(mass_be, "be", "mu")
             ).values

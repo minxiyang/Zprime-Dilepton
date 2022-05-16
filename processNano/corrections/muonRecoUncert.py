@@ -1,8 +1,9 @@
 from numpy import exp, sin, arctan
+import numpy as np
 
-def muonRecoUncert(mass, pT1, pT2, eta1, eta2,isDimuon,year):
+def calcMuonRecoUncert(mass, pT1, pT2, eta1, eta2,isDimuon,year):
 
-    if isDimuon: return 1.0
+    if not isDimuon: return 1.0
 
     p1 = pT1 / (sin(arctan(2*exp(-1*eta1)))) 
     p2 = pT2 / (sin(arctan(2*exp(-1*eta2)))) 
@@ -107,3 +108,11 @@ def muonRecoUncert(mass, pT1, pT2, eta1, eta2,isDimuon,year):
 
 	
             return eff_syst/eff_default;
+
+def muonRecoUncert(masses, pT1, pT2, eta1, eta2,isDimuon,year):
+
+    weights = []
+    for i in range(0,masses.size):
+        weights.append(calcMuonRecoUncert(masses[i], pT1[i], pT2[i], eta1[i], eta2[i],isDimuon[i],int(year))) 
+
+    return np.array(weights)

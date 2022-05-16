@@ -68,7 +68,7 @@ def plotter(client, parameters, hist_df=None, timer=None):
             "var_name": parameters["plot_vars"],
             "dataset": parameters["datasets"],
         }
-        hist_dfs = parallelize(load_stage2_output_hists, arg_load, client, parameters, seq=True)
+        hist_dfs = parallelize(load_stage2_output_hists, arg_load, client, parameters)
         hist_df = pd.concat(hist_dfs).reset_index(drop=True)
         if hist_df.shape[0] == 0:
             print("Nothing to plot!")
