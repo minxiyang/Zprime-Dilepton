@@ -238,7 +238,7 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
 
     #calculate mass values smeared by mass resolution uncertainty
     output["dimuon_mass_resUnc"] = output.dimuon_mass.values
-    output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_resUnc"] = (output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_resUnc"] * smearMass(genMassBB ,year, bb=True)).values
+    output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_resUnc"] = (output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_resUnc"] * smearMass(genMassBB, year, bb=True)).values
     output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_resUnc"] = (output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_resUnc"] * smearMass(genMassBE, year, bb=False)).values
 
     #calculate mass values shifted by mass scale uncertainty
