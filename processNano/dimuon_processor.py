@@ -42,7 +42,7 @@ from copperhead.config.jec_parameters import jec_parameters
 class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
         self.samp_info = kwargs.pop("samp_info", None)
-        do_timer = kwargs.pop("do_timer", True)
+        do_timer = kwargs.pop("do_timer", False)
         self.pt_variations = kwargs.get("pt_variations", ["nominal"])
         self.apply_to_output = kwargs.pop("apply_to_output", None)
 
@@ -73,8 +73,8 @@ class DimuonProcessor(processor.ProcessorABC):
                 self.do_jerunc = True
 
 
-        self.timer = Timer("global") if do_timer else None
-
+        #self.timer = Timer("global") if do_timer else None
+        self.timer = None
         self._columns = self.parameters["proc_columns"]
 
         self.regions = ["bb", "be"]
@@ -325,11 +325,12 @@ class DimuonProcessor(processor.ProcessorABC):
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
             fill_muons(self, output, mu1, mu2, is_mc,self.year,weights)
-
         # ------------------------------------------------------------#
         # Prepare jets
         # ------------------------------------------------------------#
-
+        #array = output.dimuon_mass_gen[output.dimuon_mass_gen<4500]
+        #array = array[array>0.]
+        #print(array)
         prepare_jets(df, is_mc)
 
         # ------------------------------------------------------------#

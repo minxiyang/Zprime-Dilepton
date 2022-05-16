@@ -13,7 +13,7 @@ from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
 
-dask.config.set({"temporary-directory": "/depot/cms/users/schul105/dask-temp/"})
+dask.config.set({"temporary-directory": "/depot/cms/users/minxi/dask-temp/"})
 
 parser = argparse.ArgumentParser()
 # Slurm cluster IP to use. If not specified, will create a local cluster
@@ -100,9 +100,9 @@ local_time = (
 parameters = {
     "year": args.year,
     "label": args.label,
-    "global_path": "/depot/cms/users/schul105/dileptonAnalysis/output/",
+    "global_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
     "out_path": f"{args.year}_{args.label}_{local_time}",
-    # "server": "root://xrootd.rcac.purdue.edu/",
+    #"server": "root://xrootd.rcac.purdue.edu/",
     # "server": "root://cmsxrootd.fnal.gov//",
     "xrootd": False,
     "server": "/mnt/hadoop/",
@@ -148,7 +148,11 @@ def saving_func(output, out_dir):
 
 def submit_job(parameters):
     # mkdir(parameters["out_path"])
-    out_dir = parameters["global_path"]
+    if parameters["channel"] == "eff_mu":
+        out_dir = parameters["global_path"]+parameters["out_path"]
+    else:
+        out_dir = parameters["global_path"]
+    print(out_dir)
     mkdir(out_dir)
     out_dir += "/" + parameters["label"]
     mkdir(out_dir)
@@ -273,7 +277,7 @@ if __name__ == "__main__":
             n_workers=40,
             #dashboard_address=dash_local,
             threads_per_worker=1,
-            memory_limit="8GB",
+            memory_limit="3.6GB",
         )
     else:
         # connect to existing Slurm cluster
@@ -282,7 +286,7 @@ if __name__ == "__main__":
 
     datasets_mc = []
     datasets_data = []
-    blackList = ["Wantitop", "tW"]
+   
     for group, samples in smp.items():
         for sample in samples:
             # if sample not in blackList:
@@ -290,8 +294,8 @@ if __name__ == "__main__":
             #if "dy4500to6000" not in sample:
             #    continue
 
-            #if group != "data":
-            #    continue
+            if group != "CI":
+                continue
             #if sample not in ["WWinclusive"]:
             #    continue
             # if group != "data":
