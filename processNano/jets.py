@@ -4,16 +4,17 @@ import awkward as ak
 from processNano.utils import p4_sum, delta_r, rapidity
 import correctionlib
 
-def btagSF(year, hadronFlavour, eta, pt, correction="deepCSV_comb", syst="central"):
+def btagSF(year, hadronFlavour, eta, pt, mva, correction="deepJet_shape", syst="central"):
     cset = correctionlib.CorrectionSet.from_file("data/b-tagging/btagging.json")
     eta = np.abs(eta.to_numpy())
     eta[eta>2.4999] = 2.4999
     pt = pt.to_numpy()
     pt[pt<20] = 20.001
-    pt[pt>1000] = 999.99
+    #pt[pt>1000] = 999.99
     flavor = hadronFlavour.to_numpy()
-    flavor[flavor==0] = 4
-    sf = cset[correction].evaluate(syst, "M", flavor, eta, pt)
+    mva = mva.to_numpy()
+    #flavor[flavor==0] = 4
+    sf = cset[correction].evaluate(syst, flavor, eta, pt, mva)
     return sf
 
 
@@ -94,7 +95,7 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
         "phi_gen",
         "qgl",
         "btagDeepB",
-        "sf",
+        "btagDeepFlavB",
     ]:
         try:
             variables[f"jet1_{v}"] = jet1[v]

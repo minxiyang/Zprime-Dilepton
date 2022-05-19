@@ -183,9 +183,12 @@ parameters.update(
         "electron_pt_cut": for_all_years(35.0),
         "electron_eta_cut": for_all_years(2.5),
         "electron_id": for_all_years("cutBased_HEEP"),
-        "UL_btag_loose": {"2016": 0.1918, "2017": 0.1355, "2018": 0.1208},
-        "UL_btag_medium": {"2016": 0.5848, "2017": 0.4506, "2018": 0.4168},
-        "UL_btag_tight": {"2016": 0.8767, "2017": 0.7738, "2018": 0.7665},
+        #"UL_btag_loose": {"2016": 0.1918, "2017": 0.1355, "2018": 0.1208},
+        #"UL_btag_medium": {"2016": 0.5848, "2017": 0.4506, "2018": 0.4168},
+        #"UL_btag_tight": {"2016": 0.8767, "2017": 0.7738, "2018": 0.7665},
+        "UL_btag_loose": {"2016": 0.1918, "2017": 0.1355, "2018": 0.0490},
+        "UL_btag_medium": {"2016": 0.5848, "2017": 0.4506, "2018": 0.2783},
+        "UL_btag_tight": {"2016": 0.8767, "2017": 0.7738, "2018": 0.7100},
         "preUL_btag_loose": {"2018": 0.1241},
         "preUL_btag_medium": {"2018": 0.4184},
         "preUL_btag_tight": {"2018": 0.7527},
@@ -281,6 +284,7 @@ jet_branches = [
     "puId",
     "mass",
     "btagDeepB",
+    "btagDeepFlavB",
 ]
 genjet_branches = ["nGenJet", "GenJet_pt", "GenJet_eta", "GenJet_phi", "GenJet_mass"]
 sajet_branches = [

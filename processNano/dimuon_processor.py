@@ -4,7 +4,7 @@ sys.path.append("copperhead/")
 import awkward
 import awkward as ak
 import numpy as np
-
+import correctionlib
 # np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
 import coffea.processor as processor
@@ -29,7 +29,7 @@ from copperhead.stage1.corrections.btag_weights import btag_weights
 #high mass dilepton specific corrections
 from processNano.corrections.kFac import kFac
 
-from processNano.jets import prepare_jets, fill_jets
+from processNano.jets import prepare_jets, fill_jets, btagSF 
 import copy
 
 from processNano.muons import find_dimuon, fill_muons
@@ -500,13 +500,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 "pt_gen",
                 "eta_gen",
                 "phi_gen",
-                "sf",
             ]
-            btag_sf = BTagScaleFactor(
-                "data/b-tagging/DeepCSV_102XSF_WP_V1.csv", "tight"
-            )
-            sf = btag_sf("central", jets.hadronFlavour, np.abs(jets.eta), jets.pt)
-            jets["sf"] = sf
 
 
 
@@ -545,10 +539,12 @@ class DimuonProcessor(processor.ProcessorABC):
             jets = jets[unc_name]["down"][jet_branches_local]
         else:
             jets = jets[jet_branches_local]
-
+        
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
-
+        if is_mc:
+            sf = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB)
+            jets["btag_sf_shape"] = sf
         jets = jets.dropna()
 
         if jets.index.nlevels == 3:
@@ -579,17 +575,33 @@ class DimuonProcessor(processor.ProcessorABC):
             names=["entry", "subentry"],
         )
         # Select two jets with highest pT
+        jets["pre_selection"] = 0
+        jets.loc[
+            (
+                (jets.pt > 20.0)
+                & (abs(jets.eta) < 2.4)
+                & (jets.jetId >= 6)
+            ),
+            "pre_selection",
+        ] = 1
 
         jets["selection"] = 0
         jets.loc[
             (
                 (jets.pt > 30.0)
                 & (abs(jets.eta) < 2.4)
-                & (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
-                & (jets.jetId >= 2)
+                #& (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
+                &(jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year])
+                & (jets.jetId >= 6)
             ),
             "selection",
         ] = 1
+        if is_mc:
+             variables["btag_sf_shape"] = jets.loc[jets.pre_selection == 1, "btag_sf_shape"].groupby("entry").prod()
+             variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
+        else:
+             variables["btag_sf_shape"] = 1.0
+
         nBjets = jets.loc[:, "selection"].groupby("entry").sum()
         variables["njets"] = nBjets
         jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
@@ -653,6 +665,7 @@ class DimuonProcessor(processor.ProcessorABC):
             BTagScaleFactor.RESHAPE,
             "iterativefit,iterativefit,iterativefit",
         )
+        #self.btag_lookup = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB) 
 
         # --- Evaluator
         #self.extractor = extractor()

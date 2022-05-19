@@ -65,6 +65,7 @@ def read_via_xrootd(server, path, from_das=False):
             command = f'dasgoclient --query=="file dataset={path}"'
     else:
         command = f"xrdfs {server} ls -R {path} | grep '.root'"
+    print(command)
     proc = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
@@ -118,7 +119,6 @@ class SamplesInfo(object):
             self.is_mc = False
 
         res = self.load_sample(sample, from_das, use_dask, client)
-
         self.sample = sample
         self.samples = [sample]
         self.fileset = {sample: res["files"]}
@@ -140,18 +140,22 @@ class SamplesInfo(object):
         all_files = []
         metadata = {}
         data_entries = 0
+        
         if self.xrootd:
             all_files = read_via_xrootd(self.server, self.paths[sample], from_das)
             # all_files = [self.server + _file for _file in self.paths[sample]]
         elif self.paths[sample].endswith(".root"):
             all_files = [self.paths[sample]]
         else:
+            print("check")
+            print(self.paths[sample])
             all_files = [
                 self.server + f for f in glob.glob(self.paths[sample] + "/**/**/*.root")
             ]
 
         if self.debug:
             all_files = [all_files[0]]
+        
         sumGenWgts = 0
         nGenEvts = 0
         if use_dask:
