@@ -2,6 +2,19 @@ import numpy as np
 import pandas as pd
 import awkward as ak
 from processNano.utils import p4_sum, delta_r, rapidity
+import correctionlib
+
+def btagSF(year, hadronFlavour, eta, pt, correction="deepCSV_comb", syst="central"):
+    cset = correctionlib.CorrectionSet.from_file("data/b-tagging/btagging.json")
+    eta = np.abs(eta.to_numpy())
+    eta[eta>2.4999] = 2.4999
+    pt = pt.to_numpy()
+    pt[pt<20] = 20.001
+    pt[pt>1000] = 999.99
+    flavor = hadronFlavour.to_numpy()
+    flavor[flavor==0] = 4
+    sf = cset[correction].evaluate(syst, "M", flavor, eta, pt)
+    return sf
 
 
 def prepare_jets(df, is_mc):
