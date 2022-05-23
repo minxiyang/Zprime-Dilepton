@@ -293,7 +293,7 @@ jet_branches = [
     "btagDeepB",
     "btagDeepFlavB",
 ]
-genjet_branches = ["nGenJet", "GenJet_pt", "GenJet_eta", "GenJet_phi", "GenJet_mass"]
+genjet_branches = ["nGenJet", "GenJet_pt", "GenJet_eta", "GenJet_phi", "GenJet_mass", "GenJet_partonFlavour"]
 sajet_branches = [
     "nSoftActivityJet",
     "SoftActivityJet_pt",

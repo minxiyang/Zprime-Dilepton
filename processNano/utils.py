@@ -9,8 +9,71 @@ def mkdir(path):
     except Exception:
         pass
 
+def p4(obj, is_mc=True):
+    result = pd.DataFrame(
+        index=obj.index,
+        columns=[
+            "px",
+            "py",
+            "pz",
+            "px_gen",
+            "py_gen",
+            "pz_gen",
+            "e",
+            "e_gen",
+            "pt",
+            "eta",
+            "phi",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+            "mass",
+            "mass_gen",
+            "rap",
+        ],
+    ).fillna(0.0)
+    px_ = obj.pt * np.cos(obj.phi)
+    py_ = obj.pt * np.sin(obj.phi)
+    pz_ = obj.pt * np.sinh(obj.eta)
+    e_ = np.sqrt(px_ ** 2 + py_ ** 2 + pz_ ** 2 + obj.mass ** 2)
+    result.px += px_
+    result.py += py_
+    result.pz += pz_
+    result.e += e_
+    if is_mc:
+        px_gen_ = obj.pt_gen * np.cos(obj.phi_gen)
+        py_gen_ = obj.pt_gen * np.sin(obj.phi_gen)
+        pz_gen_ = obj.pt_gen * np.sinh(obj.eta_gen)
+        e_gen_ = np.sqrt(px_gen_ ** 2 + py_gen_ ** 2 + pz_gen_ ** 2 + obj.mass ** 2)
+
+        result.px_gen += px_gen_
+        result.py_gen += py_gen_
+        result.pz_gen += pz_gen_
+        result.e_gen += e_gen_
+
+    result.pt = np.sqrt(result.px ** 2 + result.py ** 2)
+    result.eta = np.arcsinh(result.pz / result.pt)
+    result.phi = np.arctan2(result.py, result.px)
+    result.mass = np.sqrt(
+        result.e ** 2 - result.px ** 2 - result.py ** 2 - result.pz ** 2
+    )
+    if is_mc:
+        result.pt_gen = np.sqrt(result.px_gen ** 2 + result.py_gen ** 2)
+        result.eta_gen = np.arcsinh(result.pz_gen / result.pt_gen)
+        result.phi_gen = np.arctan2(result.py_gen, result.px_gen)
+        result.mass_gen = np.sqrt(
+            result.e_gen ** 2
+            - result.px_gen ** 2
+            - result.py_gen ** 2
+            - result.pz_gen ** 2
+        )
+    result.rap = 0.5 * np.log((result.e + result.pz) / (result.e - result.pz))
+    return result
+
+
 
 def p4_sum(obj1, obj2, is_mc=True):
+
     result = pd.DataFrame(
         index=obj1.index.union(obj2.index),
         columns=[
@@ -54,7 +117,9 @@ def p4_sum(obj1, obj2, is_mc=True):
             result.pz_gen += pz_gen_
             result.e_gen += e_gen_
 
-    result.pt = np.sqrt(result.px ** 2 + result.py ** 2)
+#    print (result.py ** 2 + result.py ** 2)
+
+    result.pt  = np.sqrt(result.py ** 2 + result.py ** 2)
     result.eta = np.arcsinh(result.pz / result.pt)
     result.phi = np.arctan2(result.py, result.px)
     result.mass = np.sqrt(

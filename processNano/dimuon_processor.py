@@ -22,7 +22,8 @@ from copperhead.stage1.corrections.btag_weights import btag_weights
 #high mass dilepton specific corrections
 from processNano.corrections.kFac import kFac
 
-from processNano.jets import prepare_jets, fill_jets, btagSF 
+from processNano.jets import prepare_jets, fill_jets, fill_bjets, btagSF 
+
 import copy
 
 from processNano.muons import find_dimuon, fill_muons
@@ -52,7 +53,7 @@ class DimuonProcessor(processor.ProcessorABC):
         if self.samp_info is None:
             print("Samples info missing!")
             return
-
+        self.applykFac = True
         self.do_pu = True
         self.auto_pu = False
         self.year = self.samp_info.year
@@ -425,7 +426,7 @@ class DimuonProcessor(processor.ProcessorABC):
             if wgt != "nominal":
                 continue
             output[f"wgt_{wgt}"] = weights.get_weight(wgt)
-        if is_mc and "dy" in dataset:
+        if is_mc and "dy" in dataset and self.applykFac:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
             output.loc[
@@ -587,8 +588,31 @@ class DimuonProcessor(processor.ProcessorABC):
         else:
              variables["btag_sf_shape"] = 1.0
              variables["btag_sf_wp"] = 1.0
-        nBjets = jets.loc[:, "selection"].groupby("entry").sum()
-        variables["njets"] = nBjets
+
+        njets = jets.loc[:, "selection"].groupby("entry").sum()
+        variables["njets"] = njets
+
+        jets["bselection"] = 0
+        jets.loc[
+            (
+                (jets.pt > 30.0)
+                & (abs(jets.eta) < 2.4)
+                & (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
+                & (jets.jetId >= 2)
+            ),
+            "bselection",
+        ] = 1
+
+        nbjets = jets.loc[:, "bselection"].groupby("entry").sum()
+        variables["nbjets"] = nbjets
+
+        bjets = jets.query('bselection==1')
+        bjets = bjets.sort_values(["entry", "pt"], ascending=[True, False])
+        bjet1 = bjets.groupby("entry").nth(0)
+        bjet2 = bjets.groupby("entry").nth(1)
+        bJets = [bjet1, bjet2]
+        fill_bjets(output, variables, bJets, is_mc=is_mc)
+
         jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
         jet1 = jets.groupby("entry").nth(0)
         jet2 = jets.groupby("entry").nth(1)
@@ -633,6 +657,7 @@ class DimuonProcessor(processor.ProcessorABC):
         del df
         del muons
         del jets
+        del bjets
         del mu1
         del mu2
         return output

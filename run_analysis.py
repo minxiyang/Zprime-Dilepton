@@ -48,16 +48,17 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
     "years": args.years,
-    "label": "uncertTest2",
-    "channels": ["0b", "1b", "2b"],
+    "label": "bjetvars",
+    "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
-    "syst_variations": ["nominal"],
+    "syst_variations": ["nominal","resUnc","scaleUncUp","scaleUncDown"],
     # "custom_npartitions": {
     #     "vbf_powheg_dipole": 1,
     # },
     #
     # < settings for histograms >
-    "hist_vars": ["dimuon_mass", "dimuon_mass_gen", "dimuon_mass_resUnc", "dimuon_mass_scaleUncUp", "dimuon_mass_scaleUncDown"],
+    "hist_vars": ["bmmj1_mass","dimuon_mass", "dimuon_mass_gen",'njets','nbjets'],
+    "hist_vars_2d": [["dimuon_mass", "met"]],
     "variables_lookup": variables_lookup,
     "save_hists": True,
     #
@@ -109,6 +110,22 @@ parameters["datasets"] = [
     "WZ3LNu",
     "ZZ2L2Nu",
     "ZZ4L",
+    "bbll_4TeV_M1000_negLL",
+    "bbll_4TeV_M1000_negLR",
+    "bbll_4TeV_M1000_posLL",
+    "bbll_4TeV_M1000_posLR",
+    "bbll_4TeV_M400_negLL",
+    "bbll_4TeV_M400_negLR",
+    "bbll_4TeV_M400_posLL",
+    "bbll_4TeV_M400_posLR",
+    "bbll_8TeV_M1000_negLL",
+    "bbll_8TeV_M1000_negLR",
+    "bbll_8TeV_M1000_posLL",
+    "bbll_8TeV_M1000_posLR",
+    "bbll_8TeV_M400_negLL",
+    "bbll_8TeV_M400_negLR",
+    "bbll_8TeV_M400_posLL",
+    "bbll_8TeV_M400_posLR",
 ]
 
 # using one small dataset for debugging

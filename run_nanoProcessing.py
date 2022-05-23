@@ -291,7 +291,7 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            #if "dy4500to6000" not in sample:
+            #if "ttbar_lep_M500to800" not in sample:
             #    continue
 
             if group != "CI":

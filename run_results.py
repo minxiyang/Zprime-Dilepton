@@ -3,7 +3,7 @@ import dask
 from dask.distributed import Client
 
 from config.variables import variables_lookup
-from produceResults.plotter import plotter
+from produceResults.plotter import plotter, plotter2D
 from produceResults.make_templates import to_templates
 
 __all__ = ["dask"]
@@ -28,7 +28,7 @@ use_local_cluster = args.slurm_port is None
 node_ip = "128.211.148.60"
 
 if use_local_cluster:
-    ncpus_local = 40
+    ncpus_local = 1
     slurm_cluster_ip = ""
     dashboard_address = f"{node_ip}:34875"
 else:
@@ -41,17 +41,20 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
-    "label": "uncertTest2",
-    "channels": ["0b", "1b", "2b"],
+    "label": "bjetvars",
+    #"channels": ["inclusive", "0b", "1b", "2b"],
+    "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
     #
     # < plotting settings >
-    "plot_vars": ["dimuon_mass", "dimuon_mass_gen", "dimuon_mass_resUnc", "dimuon_mass_scaleUncUp", "dimuon_mass_scaleUncDown"],  # "dimuon_mass"],
+    #"plot_vars": ["dimuon_mass", "dimuon_mass_gen", "dimuon_mass_resUnc", "dimuon_mass_scaleUncUp", "dimuon_mass_scaleUncDown"],  # "dimuon_mass"],
+    "plot_vars": ["bmmj1_mass","dimuon_mass","njets","nbjets"],  # "dimuon_mass"],
+    "plot_vars_2d": [["dimuon_mass","met"]],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
-    "plots_path": "./plots/2022may06/",
+    "plots_path": "./plots/2022may17/",
     "dnn_models": {},
     "bdt_models": {},
     #
@@ -95,13 +98,20 @@ parameters["grouping"] = {
     "ZZ2L2Nu" : "Other",
     "ZZ4L" : "Other",
     "dyInclusive50" : "Other",
+    "bbll_4TeV_M400_posLL" : "bbll_4TeV_posLL",
+    "bbll_4TeV_M1000_posLL" : "bbll_4TeV_posLL",
+    "bbll_8TeV_M400_posLL" : "bbll_8TeV_posLL",
+    "bbll_8TeV_M1000_posLL" : "bbll_8TeV_posLL",
+
 }
 # parameters["grouping"] = {"vbf_powheg_dipole": "VBF",}
 
 parameters["plot_groups"] = {
     "stack": ["DY", "Other"],
-    "step": [],
+    "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
     "errorbar": ["Data"],
+    #"2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
+    #"2D": ["DY","Other"],
 }
 
 
@@ -137,8 +147,11 @@ if __name__ == "__main__":
 
     parameters["datasets"] = parameters["grouping"].keys()
 
-    # make plots
+    # make 1D plots
     yields = plotter(client, parameters)
+
+    # make 1D plots
+    #yields2D = plotter2D(client, parameters)
 
     # save templates to ROOT files
     yield_df = to_templates(client, parameters)

@@ -86,7 +86,6 @@ def prepare_jets(df, is_mc):
             ak.fill_none(df.Jet.matched_gen.pt, 0), np.float32
         )
 
-
 def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
     variable_names = [
         "jet1_pt",
@@ -161,10 +160,12 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
             variables[f"jet1_{v}"] = -999.0
             variables[f"jet2_{v}"] = -999.0
     variables.jet1_rap = rapidity(jet1)
+
     if njet > 1:
         variables.jet2_rap = rapidity(jet2)
         # Fill dijet variables
         jj = p4_sum(jet1, jet2, is_mc=is_mc)
+
         for v in [
             "pt",
             "eta",
@@ -263,6 +264,8 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
                 variables[f"mmjj_{v}"] = mmjj[v]
             except Exception:
                 variables[f"mmjj_{v}"] = -999.0
+
+
         if flavor == "mu":
             dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = (
                 output.dimuon_pt,
@@ -311,6 +314,226 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
             variables.mmj2_dPhi,
             (variables.mmj1_dPhi < variables.mmj2_dPhi),
         )
+
+def fill_bjets(output, variables, jets, flavor="mu", is_mc=True):
+    variable_names = [
+        "bjet1_pt",
+        "bjet1_eta",
+        "bjet1_rap",
+        "bjet1_phi",
+        "bjet1_qgl",
+        "bjet1_jetId",
+        "bjet1_puId",
+        "bjet1_btagDeepB",
+        "bjet2_pt",
+        "bjet2_eta",
+        "bjet2_rap",
+        "bjet2_phi",
+        "bjet2_qgl",
+        "bjet2_jetId",
+        "bjet2_puId",
+        "bjet2_btagDeepB",
+        "bjet1_sf",
+        "bjet2_sf",
+        "bjj_mass",
+        "bjj_mass_log",
+        "bjj_pt",
+        "bjj_eta",
+        "bjj_phi",
+        "bjj_dEta",
+        "bjj_dPhi",
+        "bmmj1_dEta",
+        "bmmj1_dPhi",
+        "bmmj1_dR",
+        "bmmj2_dEta",
+        "bmmj2_dPhi",
+        "bmmj2_dR",
+        "bmmj_min_dEta",
+        "bmmj_min_dPhi",
+        "bmmjj_pt",
+        "bmmjj_eta",
+        "bmmjj_phi",
+        "bmmjj_mass",
+        "bmmj1_pt",
+        "bmmj1_eta",
+        "bmmj1_phi",
+        "bmmj1_mass",
+#        "mmbj2_pt",
+#        "mmbj2_eta",
+#        "mmbj2_phi",
+#        "mmbj2_mass",
+        "bselection",
+    ]
+
+    for v in variable_names:
+        variables[v] = -999.0
+    njet = len(jets)
+
+    jet1 = jets[0]
+    jet2 = jets[1]
+    # Fill single jet variables
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "pt_gen",
+        "eta_gen",
+        "phi_gen",
+        "qgl",
+        "btagDeepB",
+        "sf",
+    ]:
+        try:
+            variables[f"bjet1_{v}"] = jet1[v]
+            variables[f"bjet2_{v}"] = jet2[v]
+        except Exception:
+            variables[f"bjet1_{v}"] = -999.0
+            variables[f"bjet2_{v}"] = -999.0
+    variables.bjet1_rap = rapidity(jet1)
+
+    if flavor == "mu":
+        mm_columns = [
+            "dimuon_pt",
+            "dimuon_eta",
+            "dimuon_phi",
+            "dimuon_mass",
+            "dimuon_pt_gen",
+            "dimuon_eta_gen",
+             "dimuon_phi_gen",
+             "dimuon_mass_gen",
+        ]
+    else:
+        mm_columns = [
+            "dielectron_pt",
+            "dielectron_eta",
+            "dielectron_phi",
+            "dielectron_mass",
+            "dielectron_pt_gen",
+            "dielectron_eta_gen",
+            "dielectron_phi_gen",
+            "dielectron_mass_gen",
+        ]
+
+    dileptons = output.loc[:, mm_columns]
+    dileptons.columns = [
+        "mass",
+        "pt",
+        "eta",
+        "phi",
+        "mass_gen",
+        "pt_gen",
+        "eta_gen",
+        "phi_gen",
+    ]
+
+    if njet > 0:
+        bjet = p4(jet1,is_mc=is_mc)
+        mmj = p4_sum(dileptons, bjet, is_mc=is_mc)
+        for v in [
+            "pt",
+            "eta",
+            "phi",
+            "mass",
+            "mass_gen",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+        ]:
+            try:
+                variables[f"bmmj1_{v}"] = mmj[v]
+            except Exception:
+                variables[f"bmmj1_{v}"] = -999.0
+
+    if njet > 1:
+
+        #bjet2 = p4(jet2,is_mc=is_mc)
+        #bjet2 = bjet2.dropna()
+        #print (bjet2)
+        #print (dileptons)
+        #mmj = p4_sum(dileptons, bjet2, is_mc=is_mc)
+        #for v in [
+        #    "pt",
+        #    "eta",
+        #    "phi",
+        #    "mass",
+        #    "mass_gen",
+        #    "pt_gen",
+        #    "eta_gen",
+        #    "phi_gen",
+        #]:
+        #    try:
+        #        variables[f"bmmj2_{v}"] = mmjj[v]
+        #    except Exception:
+        #        variables[f"bmmj2_{v}"] = -999.0
+
+        variables.bjet2_rap = rapidity(jet2)
+        # Fill dijet variables
+        jj = p4_sum(jet1, jet2, is_mc=is_mc)
+        for v in [
+            "pt",
+            "eta",
+            "phi",
+            "mass",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+            "mass_gen",
+        ]:
+            try:
+                variables[f"bjj_{v}"] = jj[v]
+            except Exception:
+                variables[f"bjj_{v}"] = -999.0
+
+        variables.bjj_mass_log = np.log(variables.bjj_mass)
+
+        variables.bjj_dEta, variables.bjj_dPhi, _ = delta_r(
+            variables.bjet1_eta,
+            variables.bjet2_eta,
+            variables.bjet1_phi,
+            variables.bjet2_phi,
+        )
+
+        # Fill dimuon-dibjet system variables
+        jj_columns = [
+            "bjj_pt",
+            "bjj_eta",
+            "bjj_phi",
+            "bjj_mass",
+            "bjj_pt_gen",
+            "bjj_eta_gen",
+            "bjj_phi_gen",
+            "bjj_mass_gen",
+        ]
+
+        dijets = variables.loc[:, jj_columns]
+
+        # careful with renaming
+        dijets.columns = [
+            "pt",
+            "eta",
+            "phi",
+            "mass",
+            "mass_gen",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+        ]
+
+        mmjj = p4_sum(dileptons, dijets, is_mc=is_mc)
+        for v in [
+            "pt",
+            "eta",
+            "phi",
+            "mass",
+            "mass_gen",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+        ]:
+            try:
+                variables[f"bmmjj_{v}"] = mmjj[v]
+            except Exception:
+                variables[f"bmmjj_{v}"] = -999.0
 
 
 def jet_id(jets, parameters, year):

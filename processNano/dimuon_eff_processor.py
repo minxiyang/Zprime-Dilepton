@@ -25,7 +25,7 @@ import copy
 from processNano.muons import find_dimuon
 from processNano.utils import p4_sum
 
-from config.parameters import parameters, muon_branches, jet_branches
+from config.parameters import parameters, muon_branches, jet_branches, genjet_branches
 
 
 class DimuonEffProcessor(processor.ProcessorABC):
