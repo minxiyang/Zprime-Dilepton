@@ -34,7 +34,7 @@ source activate hmumu
 ```
 Installation:
 ```bash
-git https://github.com/minxiyang/Zprime-Dilepton
+git clone -recursive https://github.com/minxiyang/Zprime-Dilepton
 cd Zprime-Dilepton
 python3 -m pip install --user --upgrade -r requirements.txt
 ```

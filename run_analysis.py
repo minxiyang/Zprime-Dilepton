@@ -32,7 +32,7 @@ args = parser.parse_args()
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.148.60"
+node_ip = "128.211.148.61"
 
 if use_local_cluster:
     ncpus_local = 40

@@ -40,7 +40,7 @@ variables.append(Variable("dimuon_mass_scaleUncUp", r"$m_{\mu\mu}$ [GeV] (scale 
 variables.append(Variable("dimuon_mass_scaleUncDown", r"$m_{\mu\mu}$ [GeV] (scale unc. down)", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_=massBinningMuMu, norm_to_bin_width_=True))
 variables.append(Variable("dimuon_mass_gen", r"generated $m_{\mu\mu}$ [GeV]", len(massBinningMuMu)-1, 200, 4900, 1e-5, 1e5, binning_=massBinningMuMu, norm_to_bin_width_=True))
 
-variables.append(Variable("bmmj1_mass", r"m($\ell\ell b)", 500, 0, 5000, 1e-5, 1e5))
+variables.append(Variable("bmmj1_mass", r"m(\ell\ell b) [GeV]", 200, 0, 4000, 1e-5, 1e5))
 
 variables.append(Variable("njets", r"$N_{jet}$", 10, -0.5, 9.5, 0.5, 1e6))
 variables.append(Variable("nbjets", r"$N_{b-tagged jet}$", 10, -0.5, 9.5, 0.5, 1e6))
