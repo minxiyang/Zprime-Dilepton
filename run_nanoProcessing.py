@@ -13,7 +13,7 @@ from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
 
-dask.config.set({"temporary-directory": "/depot/cms/users/minxi/dask-temp/"})
+dask.config.set({"temporary-directory": "/depot/cms/users/schul105/dask-temp/"})
 
 parser = argparse.ArgumentParser()
 # Slurm cluster IP to use. If not specified, will create a local cluster
@@ -100,7 +100,7 @@ local_time = (
 parameters = {
     "year": args.year,
     "label": args.label,
-    "global_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
+    "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
     "out_path": f"{args.year}_{args.label}_{local_time}",
     #"server": "root://xrootd.rcac.purdue.edu/",
     # "server": "root://cmsxrootd.fnal.gov//",
@@ -291,14 +291,16 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
+            #if "dy200to400" not in sample:
+            if "dy" not in sample:
             #if "ttbar_lep_M500to800" not in sample:
-            #    continue
-
-            if group != "CI":
                 continue
+
+            #if group != "CI":
+            #    continue
             #if sample not in ["WWinclusive"]:
             #    continue
-            # if group != "data":
+            #if group != "data":
             #    continue
             if group == "data":
                 datasets_data.append(sample)

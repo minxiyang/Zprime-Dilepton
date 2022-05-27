@@ -315,7 +315,7 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
             (variables.mmj1_dPhi < variables.mmj2_dPhi),
         )
 
-def fill_bjets(output, variables, jets, flavor="mu", is_mc=True):
+def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
     variable_names = [
         "bjet1_pt",
         "bjet1_eta",
@@ -342,22 +342,25 @@ def fill_bjets(output, variables, jets, flavor="mu", is_mc=True):
         "bjj_phi",
         "bjj_dEta",
         "bjj_dPhi",
-        "bmmj1_dEta",
-        "bmmj1_dPhi",
-        "bmmj1_dR",
-        "bmmj2_dEta",
-        "bmmj2_dPhi",
-        "bmmj2_dR",
-        "bmmj_min_dEta",
-        "bmmj_min_dPhi",
-        "bmmjj_pt",
-        "bmmjj_eta",
-        "bmmjj_phi",
-        "bmmjj_mass",
-        "bmmj1_pt",
-        "bmmj1_eta",
-        "bmmj1_phi",
-        "bmmj1_mass",
+        "bllj1_dEta",
+        "bllj1_dPhi",
+        "bllj1_dR",
+        "bllj2_dEta",
+        "bllj2_dPhi",
+        "bllj2_dR",
+        "bllj_min_dEta",
+        "bllj_min_dPhi",
+        "blljj_pt",
+        "blljj_eta",
+        "blljj_phi",
+        "blljj_mass",
+        "bllj1_pt",
+        "bllj1_eta",
+        "bllj1_phi",
+        "bllj1_mass",
+        "bl1_mass",
+        "bl2_mass",
+        "min_bl_mass",
 #        "mmbj2_pt",
 #        "mmbj2_eta",
 #        "mmbj2_phi",
@@ -371,6 +374,8 @@ def fill_bjets(output, variables, jets, flavor="mu", is_mc=True):
 
     jet1 = jets[0]
     jet2 = jets[1]
+    lepton1 = leptons[0]
+    lepton2 = leptons[1]
     # Fill single jet variables
     for v in [
         "pt",
@@ -393,25 +398,25 @@ def fill_bjets(output, variables, jets, flavor="mu", is_mc=True):
 
     if flavor == "mu":
         mm_columns = [
+            "dimuon_mass",
             "dimuon_pt",
             "dimuon_eta",
             "dimuon_phi",
-            "dimuon_mass",
+             "dimuon_mass_gen",
             "dimuon_pt_gen",
             "dimuon_eta_gen",
              "dimuon_phi_gen",
-             "dimuon_mass_gen",
         ]
     else:
         mm_columns = [
+            "dielectron_mass",
             "dielectron_pt",
             "dielectron_eta",
             "dielectron_phi",
-            "dielectron_mass",
+            "dielectron_mass_gen",
             "dielectron_pt_gen",
             "dielectron_eta_gen",
             "dielectron_phi_gen",
-            "dielectron_mass_gen",
         ]
 
     dileptons = output.loc[:, mm_columns]
@@ -443,6 +448,24 @@ def fill_bjets(output, variables, jets, flavor="mu", is_mc=True):
                 variables[f"bmmj1_{v}"] = mmj[v]
             except Exception:
                 variables[f"bmmj1_{v}"] = -999.0
+
+        lep1 = p4(lepton1, is_mc=is_mc)
+        lep2 = p4(lepton2, is_mc=is_mc)
+         
+        ml1 = p4_sum(jet1, lepton1, is_mc=is_mc)
+        ml2 = p4_sum(jet1, lepton2, is_mc=is_mc)
+        try:
+            variables[f"bl1_mass"] = ml1["mass"]
+        except Exception:
+            variables[f"bl1_mass"] = 100000
+        try:
+            variables[f"bl2_mass"] = ml2["mass"]
+        except Exception:
+            variables[f"bl2_mass"] = 100000
+
+        variables['min_bl_mass'] = variables[['bl1_mass','bl2_mass']].min(axis=1)
+       
+
 
     if njet > 1:
 

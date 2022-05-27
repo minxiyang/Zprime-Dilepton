@@ -32,7 +32,7 @@ args = parser.parse_args()
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.148.61"
+node_ip = "128.211.148.60"
 
 if use_local_cluster:
     ncpus_local = 40
@@ -46,9 +46,9 @@ else:
 parameters = {
     # < general settings >
     "slurm_cluster_ip": slurm_cluster_ip,
-    "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
+    "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
     "years": args.years,
-    "label": "bjetvars",
+    "label": "correctionFix",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal","resUnc","scaleUncUp","scaleUncDown"],
@@ -57,7 +57,7 @@ parameters = {
     # },
     #
     # < settings for histograms >
-    "hist_vars": ["bmmj1_mass","dimuon_mass", "dimuon_mass_gen",'njets','nbjets'],
+    "hist_vars": ["min_bl_mass","bmmj1_mass","dimuon_mass", "dimuon_mass_gen",'njets','nbjets'],
     "hist_vars_2d": [["dimuon_mass", "met"]],
     "variables_lookup": variables_lookup,
     "save_hists": True,
@@ -76,14 +76,14 @@ parameters = {
     "mva_bins_original": mva_bins,
 }
 parameters["datasets"] = [
-    "data_A",
-    "data_B",
-    "data_C",
-    "data_D",
-    "data_E",
-    "data_F",
-    "data_G",
-    "data_H",
+#    "data_A",
+#    "data_B",
+#    "data_C",
+#    "data_D",
+#    "data_E",
+#    "data_F",
+#    "data_G",
+#    "data_H",
     "dy120to200",
     "dy200to400",
     "dy400to800",

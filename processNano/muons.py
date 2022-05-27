@@ -7,7 +7,7 @@ from processNano.corrections.muonRecoUncert import muonRecoUncert
 
 
 def find_dimuon(objs, is_mc=False):
-
+    is_mc = False
     objs1 = objs[objs.charge > 0]
     objs2 = objs[objs.charge < 0]
     objs1["mu_idx"] = objs1.index.to_numpy()
@@ -155,7 +155,7 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
     ]
     dimuon_variable_names = [
         "dimuon_mass",
-        "dimuon_mass_gen",
+        #"dimuon_mass_gen",
         "dimuon_mass_res",
         "dimuon_mass_res_rel",
         "dimuon_ebe_mass_res",
@@ -164,9 +164,9 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
         "dimuon_pt_log",
         "dimuon_eta",
         "dimuon_phi",
-        "dimuon_pt_gen",
-        "dimuon_eta_gen",
-        "dimuon_phi_gen",
+        #"dimuon_pt_gen",
+       # "dimuon_eta_gen",
+       # "dimuon_phi_gen",
         "dimuon_dEta",
         "dimuon_dPhi",
         "dimuon_dR",
@@ -213,10 +213,10 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
         "eta",
         "phi",
         "mass",
-        "pt_gen",
-        "eta_gen",
-        "phi_gen",
-        "mass_gen",
+#        "pt_gen",
+#        "eta_gen",
+#        "phi_gen",
+#        "mass_gen",
         "rap",
     ]:
         name = f"dimuon_{v}"

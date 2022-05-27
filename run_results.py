@@ -40,8 +40,8 @@ parameters = {
     # < general settings >
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
-    "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
-    "label": "bjetvars",
+    "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
+    "label": "correctionFix",
     #"channels": ["inclusive", "0b", "1b", "2b"],
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
@@ -49,18 +49,20 @@ parameters = {
     #
     # < plotting settings >
     #"plot_vars": ["dimuon_mass", "dimuon_mass_gen", "dimuon_mass_resUnc", "dimuon_mass_scaleUncUp", "dimuon_mass_scaleUncDown"],  # "dimuon_mass"],
-    "plot_vars": ["bmmj1_mass","dimuon_mass","njets","nbjets"],  # "dimuon_mass"],
+    #"plot_vars": ["bmmj1_mass","dimuon_mass","njets","nbjets"],  # "dimuon_mass"],
+    #"plot_vars": ["min_bl_mass"],  # "dimuon_mass"],
+    "plot_vars": ["dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
     "plot_vars_2d": [["dimuon_mass","met"]],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
-    "plots_path": "./plots/2022may17/",
+    "plots_path": "./plots/2022may27/",
     "dnn_models": {},
     "bdt_models": {},
     #
     # < templates and datacards >
     "save_templates": True,
-    "templates_vars": ["dimuon_mass", "dimuon_mass_gen"],  # "dimuon_mass"],
+    "templates_vars": ["dimuon_mass"],  # "dimuon_mass"],
 }
 
 parameters["grouping"] = {
@@ -81,11 +83,28 @@ parameters["grouping"] = {
     "dy3500to4500" : "DY",
     "dy4500to6000" : "DY",
     "dy6000toInf" : "DY",
+
+#    "dy120to200" : "DY120to200",
+#    "dy200to400" : "DY200to400",
+#    "dy400to800" : "DY400to800",
+#    "dy800to1400" : "DY800to1400",
+#    "dy1400to2300" : "DY1400to2300",
+#    "dy2300to3500" : "DY2300to3500",
+#    "dy3500to4500" : "DY3500to4500",
+#    "dy4500to6000" : "DY4500to6000",
+#    "dy6000toInf" : "DY6000toInf",
+
+
     "ttbar_lep_inclusive" : "Other",
     "ttbar_lep_M500to800" : "Other",
     "ttbar_lep_M800to1200" : "Other",
     "ttbar_lep_M1200to1800" : "Other",
     "ttbar_lep_M1800toInf" : "Other",
+    #"ttbar_lep_inclusive" : "ttbar_inclusive",
+    #"ttbar_lep_M500to800" : "ttbar_500to800",
+    #"ttbar_lep_M800to1200" : "ttbar_800to1200",
+    #"ttbar_lep_M1200to1800" : "ttbar_1200to1800",
+    #"ttbar_lep_M1800toInf" : "ttbar_1800toInf",
     "tW" : "Other",
     "Wantitop" : "Other",
     "WWinclusive" : "Other",
@@ -108,8 +127,11 @@ parameters["grouping"] = {
 
 parameters["plot_groups"] = {
     "stack": ["DY", "Other"],
+#   "stack": ["DY120to200","DY200to400","DY400to800","DY800to1400","DY1400to2300","DY2300to3500","DY3500to4500","DY4500to60000","DY6000toInf","ttbar_inclusive", "ttbar_500to800", "ttbar_800to1200", "ttbar_1200to1800", "ttbar_1800toInf"],
+    #"stack": [],
     "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
-    "errorbar": ["Data"],
+    #"step": ["DY","ttbar","Other","bbll_4TeV_posLL", "bbll_8TeV_posLL"],
+    "errorbar": [],
     #"2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
     #"2D": ["DY","Other"],
 }
