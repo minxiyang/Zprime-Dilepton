@@ -580,7 +580,7 @@ class DimuonProcessor(processor.ProcessorABC):
             (
                 (jets.pt > 20.0)
                 & (abs(jets.eta) < 2.4)
-                & (jets.jetId >= 6)
+                & (jets.jetId >= 2)
             ),
             "pre_selection",
         ] = 1
@@ -592,7 +592,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 & (abs(jets.eta) < 2.4)
                 #& (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
                 &(jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year])
-                & (jets.jetId >= 6)
+                & (jets.jetId >= 2)
             ),
             "selection",
         ] = 1

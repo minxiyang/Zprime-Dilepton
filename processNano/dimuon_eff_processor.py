@@ -203,6 +203,9 @@ class DimuonEffProcessor(processor.ProcessorABC):
                 "pdgId",
             ]
             genPart = ak.to_pandas(df.GenPart[gen_branches])
+            #print("genPart shape")
+            #print(genPart.shape)
+
             jet_branches_local = copy.copy(jet_branches)
             jet_branches_local += [
                 "partonFlavour",
@@ -211,6 +214,8 @@ class DimuonEffProcessor(processor.ProcessorABC):
             ]
             jets = ak.to_pandas(df.Jet[jet_branches_local])
             genJets = ak.to_pandas(df.GenJet[["pt", "eta", "phi", "partonFlavour"]])
+            #print("gen jet head")
+            #print(genJets.head())
             muons = ak.to_pandas(df.Muon[muon_branches_local])
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
@@ -302,7 +307,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
         jets.drop("subentry", axis=1, inplace=True)
         jets.index.names = ["entry", "subentry"]
         jets.loc[
-            jets.btagDeepB > parameters["UL_btag_medium"][self.year], "btag"
+            jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year], "btag"
         ] = True
         jets.loc[jets.jetId >= 2, "Jet_ID"] = True
         jets["Jet_match"] = True
@@ -310,11 +315,22 @@ class DimuonEffProcessor(processor.ProcessorABC):
             jets[["Jet_match", "Jet_ID", "btag"]], on=["entry", "subentry"], how="left"
         )
         genJets.fillna(False, inplace=True)
-        genJets = genJets[genJets.partonFlavour == 5]
+        genJets = genJets[abs(genJets.partonFlavour) == 5]
         genJets.rename(
             columns={"pt": "Jet_pt", "eta": "Jet_eta", "phi": "Jet_phi"}, inplace=True
         )
         nJets = genJets.reset_index().groupby("entry")["subentry"].nunique()
+        jets = nJets.to_numpy()
+        
+        #print(len(jets))
+        #print(nJets.head())
+        #print(jets)
+        #print("0 jet events")
+        #print(len(jets[jets==0]))
+        #print("1 jet events")
+        #print(len(jets[jets==1]))
+        #print("2 jet events")
+        #print(len(jets[jets>=2]))
         nJets_acc = (
             genJets[(abs(genJets.Jet_eta) < 2.4) & (genJets.Jet_pt > 30)]
             .reset_index()
@@ -379,10 +395,12 @@ class DimuonEffProcessor(processor.ProcessorABC):
         genPart.loc[genPart["pdgId"] == 13, "charge"] = 1
         sum_sign = genPart.loc[:, "charge"].groupby("entry").sum()
         nGen = genPart.reset_index().groupby("entry")["subentry"].nunique()
-
+        #print(nGen.head())
         genPart = genPart[
             (genPart["status"] == 1) & (nGen >= 2) & (abs(sum_sign) < nGen)
         ]
+        #print("check if 2 particles in genpart")
+        #print(genPart.head())
         result = genPart.groupby("entry").apply(find_dimuon, is_mc=False)
         dimuon = pd.DataFrame(result.to_list(), columns=["idx1", "idx2", "dimuon_mass"])
         mu1 = genPart.loc[dimuon.idx1.values, :]
@@ -437,12 +455,18 @@ class DimuonEffProcessor(processor.ProcessorABC):
         genPart[["Jet_pt", "Jet_eta", "Jet_phi", "pt", "eta", "phi", "mass"]] = genPart[
             ["Jet_pt", "Jet_eta", "Jet_phi", "pt", "eta", "phi", "mass"]
         ].fillna(-999.0)
-
+        #print("check genPart and genJets heads")
+        #print(genPart.head)
+        #print(nJets.head)
         genPart = (
             genPart.reset_index("subentry")
             .merge(nJets["nJets"], on=["entry"], how="left")
             .set_index("subentry", append=True)
         )
+        #print("check merge")
+        #print(genPart.nJets)
+        #print("check genPart shape")
+        #print(genPart.shape)
         genPart = (
             genPart.reset_index("subentry")
             .merge(nJets_acc["nJets_accepted"], on=["entry"], how="left")
