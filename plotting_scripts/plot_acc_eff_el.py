@@ -284,7 +284,7 @@ def plotAcc(dfs, bins, name):
             migM.append(migA)
         migM = np.array(migM)
     axes = setFrame(
-        "$\mathrm{m}(el^{+}el^{-})$ [GeV]",
+        "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
         #"acceptance",
         "fraction",
         ratio=False,
@@ -724,63 +724,63 @@ if __name__ == "__main__":
         labels_acc = ["0 b-jet within acceptance", "1 b-jet within acceptance", "$\geq$ 2 b-jet within acceptance"]
         colors_acc = ["red", "green", "blue"]
         axes1 = setFrame(
-            "$\mathrm{m}(el^{+}el^{-})$ [GeV]",
+            "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
             "efficiency",
             ratio=False,
             signal=False,
             logx=True,
             logy=False,
             xRange=[400, 3000],
-            yRange=[0.85,1.2],
+            yRange=[0,1.1],
             flavor="el",
             year="2018",
             )
         plots(axes1, mass_inclu[sample], labels1, colors1, sample.replace("400", "")+"_acceff_el_inclu")
 
         axes2 = setFrame(
-            "$\mathrm{m}(el^{+}el^{-})$ [GeV]",
+            "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
             "efficiency",
             ratio=False,
             signal=False,
             logx=True,
             logy=False,
             xRange=[400, 3000],
-            yRange=[0.85,1.2],
+            yRange=[0,1.1],
             flavor="el",
             year="2018",
             )
         plots(axes2, mass_0[sample], labels1, colors1, sample.replace("400", "")+"_acceff_el_0j")
 
         axes3 = setFrame(
-            "$\mathrm{m}(el^{+}el^{-})$ [GeV]",
+            "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
             "efficiency",
             ratio=False,
             signal=False,
             logx=True,
             logy=False,
             xRange=[400, 3000],
-            yRange=[0.85,1.2],
+            yRange=[0,1.1],
             flavor="el",
             year="2018",
             )
         plots(axes3, mass_1[sample], labels1, colors1, sample.replace("400", "")+"_acceff_el_1j")
 
         axes4 = setFrame(
-            "$\mathrm{m}(el^{+}el^{-})$ [GeV]",
+            "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
             "efficiency",
             ratio=False,
             signal=False,
             logx=True,
             logy=False,
             xRange=[400, 3000],
-            yRange=[0.85,1.2],
+            yRange=[0,1.1],
             flavor="el",
             year="2018",
             )
         plots(axes4, mass_2[sample], labels1, colors1, sample.replace("400", "")+"_acceff_el_2j")
          
         axes5 = setFrame(
-            "$\mathrm{m}(el^{+}el^{-})$ [GeV]",
+            "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
             "acceptance",
             ratio=False,
             signal=False,
@@ -794,7 +794,7 @@ if __name__ == "__main__":
         plots(axes5, mass_acc2[sample], labels_acc, colors_acc, sample.replace("400", "")+"_acc_el_2j", "acc2")
 
         axes6 = setFrame(
-            "$\mathrm{m}(el^{+}el^{-})$ [GeV]",
+            "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
             "acceptance",
             ratio=False,
             signal=False,
@@ -808,7 +808,7 @@ if __name__ == "__main__":
         plots(axes6, mass_acc1[sample], labels_acc[:-1], colors_acc[:-1], sample.replace("400", "")+"_acc_el_1j", "acc1")
         
         axes7 = setFrame(
-            "$\mathrm{m}(el^{+}el^{-})$ [GeV]",
+            "$\mathrm{m}(e^{+}e^{-})$ [GeV]",
             "efficiency",
             ratio=False,
             signal=False,
