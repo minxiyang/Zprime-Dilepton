@@ -731,7 +731,7 @@ if __name__ == "__main__":
             logx=True,
             logy=False,
             xRange=[400, 3000],
-            yRange=[0,1.1],
+            yRange=[0,1.4],
             flavor="el",
             year="2018",
             )
@@ -745,7 +745,7 @@ if __name__ == "__main__":
             logx=True,
             logy=False,
             xRange=[400, 3000],
-            yRange=[0,1.1],
+            yRange=[0,1.4],
             flavor="el",
             year="2018",
             )
@@ -759,7 +759,7 @@ if __name__ == "__main__":
             logx=True,
             logy=False,
             xRange=[400, 3000],
-            yRange=[0,1.1],
+            yRange=[0,1.4],
             flavor="el",
             year="2018",
             )
@@ -773,7 +773,7 @@ if __name__ == "__main__":
             logx=True,
             logy=False,
             xRange=[400, 3000],
-            yRange=[0,1.1],
+            yRange=[0,1.4],
             flavor="el",
             year="2018",
             )
