@@ -94,18 +94,18 @@ parameters["grouping"] = {
 #    "dy6000toInf" : "DY6000toInf",
 
 
-    "ttbar_lep_inclusive" : "top",
-    "ttbar_lep_M500to800" : "top",
-    "ttbar_lep_M800to1200" : "top",
-    "ttbar_lep_M1200to1800" : "top",
-    "ttbar_lep_M1800toInf" : "top",
+    "ttbar_lep_inclusive" : "Top",
+    "ttbar_lep_M500to800" : "Top",
+    "ttbar_lep_M800to1200" : "Top",
+    "ttbar_lep_M1200to1800" : "Top",
+    "ttbar_lep_M1800toInf" : "Top",
     #"ttbar_lep_inclusive" : "ttbar_inclusive",
     #"ttbar_lep_M500to800" : "ttbar_500to800",
     #"ttbar_lep_M800to1200" : "ttbar_800to1200",
     #"ttbar_lep_M1200to1800" : "ttbar_1200to1800",
     #"ttbar_lep_M1800toInf" : "ttbar_1800toInf",
-    "tW" : "top",
-    "Wantitop" : "top",
+    "tW" : "Top",
+    "Wantitop" : "Top",
     "WWinclusive" : "Other",
     "WW200to600" : "Other",
     "WW600to1200" : "Other",
@@ -125,7 +125,7 @@ parameters["grouping"] = {
 # parameters["grouping"] = {"vbf_powheg_dipole": "VBF",}
 
 parameters["plot_groups"] = {
-    "stack": ["DY","top", "Other"],
+    "stack": ["DY","Top", "Other"],
 #   "stack": ["DY120to200","DY200to400","DY400to800","DY800to1400","DY1400to2300","DY2300to3500","DY3500to4500","DY4500to60000","DY6000toInf","ttbar_inclusive", "ttbar_500to800", "ttbar_800to1200", "ttbar_1200to1800", "ttbar_1800toInf"],
     #"stack": [],
     "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
@@ -134,7 +134,16 @@ parameters["plot_groups"] = {
     #"2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
     #"2D": ["DY","Other"],
 }
+#ways to specificy colors for matplotlib are here: https://matplotlib.org/3.5.0/tutorials/colors/colors.html Using the xkcd color survey for now: https://xkcd.com/color/rgb/
+parameters["color_dict"] = {
 
+    "DY": 'xkcd:water blue',
+    "Top": 'xkcd:pastel orange',
+    "Other": 'xkcd:shamrock green',
+    "Data": 'xkcd:black',
+    "bbll_4TeV_posLL": 'xkcd:red',
+    "bbll_8TeV_posLL": 'xkcd:violet',
+}
 
 if __name__ == "__main__":
     if use_local_cluster:

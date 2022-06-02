@@ -182,12 +182,14 @@ def plot(args, parameters={}):
     for entry in entries.values():
         if len(entry.entry_list) == 0:
             continue
-
         plottables_df = get_plottables(hist, entry, year, var_name, slicer)
         plottables = plottables_df["hist"].values.tolist()
         sumw2 = plottables_df["sumw2"].values.tolist()
         labels = plottables_df["label"].values.tolist()
-
+        colors = []
+        for label in labels:
+            colors.append(parameters["color_dict"][label])
+        #entry.plot_opts["colors"] = colors
         total_yield += sum([p.sum() for p in plottables])
         if len(plottables) == 0:
             continue
@@ -199,6 +201,8 @@ def plot(args, parameters={}):
             ax=ax1,
             yerr=yerr,
             stack=entry.stack,
+            color = colors,
+            #sort='yield',
             histtype=entry.histtype,
             **entry.plot_opts,
         )
