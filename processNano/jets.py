@@ -358,13 +358,13 @@ def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
         "bllj1_eta",
         "bllj1_phi",
         "bllj1_mass",
-        "bl1_mass",
-        "bl2_mass",
+        "b1l1_mass",
+        "b1l2_mass",
+        "b2l1_mass",
+        "b2l2_mass",
         "min_bl_mass",
-#        "mmbj2_pt",
-#        "mmbj2_eta",
-#        "mmbj2_phi",
-#        "mmbj2_mass",
+        "min_b1l_mass",
+        "min_b2l_mass",
         "bselection",
     ]
 
@@ -455,40 +455,54 @@ def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
         ml1 = p4_sum(jet1, lepton1, is_mc=is_mc)
         ml2 = p4_sum(jet1, lepton2, is_mc=is_mc)
         try:
-            variables[f"bl1_mass"] = ml1["mass"]
+            variables[f"b1l1_mass"] = ml1["mass"]
         except Exception:
-            variables[f"bl1_mass"] = 100000
+            variables[f"b1l1_mass"] = 100000
         try:
-            variables[f"bl2_mass"] = ml2["mass"]
+            variables[f"b1l2_mass"] = ml2["mass"]
         except Exception:
-            variables[f"bl2_mass"] = 100000
+            variables[f"b1l2_mass"] = 100000
 
-        variables['min_bl_mass'] = variables[['bl1_mass','bl2_mass']].min(axis=1)
+        variables['min_b1l_mass'] = variables[['b1l1_mass','b1l2_mass']].min(axis=1)
+        variables['min_bl_mass'] = variables[['b1l1_mass','b1l2_mass']].min(axis=1)
        
 
 
     if njet > 1:
+        bjet2 = p4(jet1,is_mc=is_mc)
+        mmj2 = p4_sum(dileptons, bjet2, is_mc=is_mc)
+        for v in [
+            "pt",
+            "eta",
+            "phi",
+            "mass",
+            "mass_gen",
+            "pt_gen",
+            "eta_gen",
+            "phi_gen",
+        ]:
+            try:
+                variables[f"bmmj2_{v}"] = mmj[v]
+            except Exception:
+                variables[f"bmmj2_{v}"] = -999.0
 
-        #bjet2 = p4(jet2,is_mc=is_mc)
-        #bjet2 = bjet2.dropna()
-        #print (bjet2)
-        #print (dileptons)
-        #mmj = p4_sum(dileptons, bjet2, is_mc=is_mc)
-        #for v in [
-        #    "pt",
-        #    "eta",
-        #    "phi",
-        #    "mass",
-        #    "mass_gen",
-        #    "pt_gen",
-        #    "eta_gen",
-        #    "phi_gen",
-        #]:
-        #    try:
-        #        variables[f"bmmj2_{v}"] = mmjj[v]
-        #    except Exception:
-        #        variables[f"bmmj2_{v}"] = -999.0
+        lep1 = p4(lepton1, is_mc=is_mc)
+        lep2 = p4(lepton2, is_mc=is_mc)
+         
+        ml1 = p4_sum(jet2, lepton1, is_mc=is_mc)
+        ml2 = p4_sum(jet2, lepton2, is_mc=is_mc)
+        try:
+            variables[f"b2l1_mass"] = ml1["mass"]
+        except Exception:
+            variables[f"b2l1_mass"] = 100000
+        try:
+            variables[f"b2l2_mass"] = ml2["mass"]
+        except Exception:
+            variables[f"b2l2_mass"] = 100000
 
+        variables['min_b2l_mass'] = variables[['b2l1_mass','b2l2_mass']].min(axis=1)
+        variables['min_bl_mass'] = variables[['b1l1_mass','b1l2_mass','b2l1_mass','b2l2_mass']].min(axis=1)
+ 
         variables.bjet2_rap = rapidity(jet2)
         # Fill dijet variables
         jj = p4_sum(jet1, jet2, is_mc=is_mc)
