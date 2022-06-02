@@ -1,5 +1,6 @@
 datasets = {
     "2018": {
+        "dy50to120": "/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM",
         "dy120to200": "/ZToMuMu_NNPDF31_13TeV-powheg_M_120_200/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM",
         "dy200to400": "/ZToMuMu_NNPDF31_13TeV-powheg_M_200_400/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM",
         "dy400to800": "/ZToMuMu_NNPDF31_13TeV-powheg_M_400_800/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM",

@@ -42,7 +42,6 @@ parameters = {
     "years": args.years,
     "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
     "label": "correctionFix",
-    #"channels": ["inclusive", "0b", "1b", "2b"],
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
@@ -62,7 +61,7 @@ parameters = {
     #
     # < templates and datacards >
     "save_templates": True,
-    "templates_vars": ["dimuon_mass"],  # "dimuon_mass"],
+    "templates_vars": ["dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
 }
 
 parameters["grouping"] = {

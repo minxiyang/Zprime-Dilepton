@@ -69,7 +69,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.148.60"  # hammer-c000
+node_ip = "128.211.148.61"  # hammer-c000
 # node_ip = "128.211.149.135"
 #node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
@@ -240,6 +240,7 @@ if __name__ == "__main__":
             "tW",
         ],
         "dy": [
+            #"dy50to120",
             "dy120to200",
             "dy200to400",
             "dy400to800",
@@ -291,8 +292,8 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            #if "dy200to400" not in sample:
-            if "dy" not in sample:
+            if "dy200to400" not in sample:
+            #if "dy" not in sample:
             #if "ttbar_lep_M500to800" not in sample:
                 continue
 
