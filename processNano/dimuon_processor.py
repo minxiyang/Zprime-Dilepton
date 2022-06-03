@@ -172,12 +172,11 @@ class DimuonProcessor(processor.ProcessorABC):
                 )
                 weights.add_weight("pu_wgt", pu_wgts, how="all")
             if self.do_l1pw:
-                if self.parameters["do_l1prefiring_wgts"]:
-                    if "L1PreFiringWeight" in df.fields:
-                        l1pfw = l1pf_weights(df)
-                        weights.add_weight("l1prefiring_wgt", l1pfw, how="all")
-                    else:
-                        weights.add_weight("l1prefiring_wgt", how="dummy_vars")
+                if "L1PreFiringWeight" in df.fields:
+                    l1pfw = l1pf_weights(df)
+                    weights.add_weight("l1prefiring_wgt", l1pfw, how="all")
+                else:
+                    weights.add_weight("l1prefiring_wgt", how="dummy_vars")
 
         else:
             # For Data: apply Lumi mask

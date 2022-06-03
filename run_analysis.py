@@ -32,7 +32,7 @@ args = parser.parse_args()
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.148.61"
+node_ip = "128.211.148.60"
 
 if use_local_cluster:
     ncpus_local = 40
@@ -48,7 +48,8 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
     "years": args.years,
-    "label": "moreKiller",
+    #"label": "moreKiller",
+    "label": "MuonWeight",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal","resUnc","scaleUncUp","scaleUncDown"],
@@ -127,7 +128,15 @@ parameters["datasets"] = [
     "bbll_8TeV_M400_posLL",
     "bbll_8TeV_M400_posLR",
 ]
-
+parameters["datasets"] = [
+    "ttbar_lep_inclusive",
+    "ttbar_lep_M500to800",
+    "ttbar_lep_M800to1200",
+    "ttbar_lep_M1200to1800",
+    "ttbar_lep_M1800toInf",
+    "tW",
+    "Wantitop",
+]
 # using one small dataset for debugging
 # parameters["datasets"] = ["vbf_powheg_dipole"]
 

@@ -41,7 +41,8 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
-    "label": "moreKiller",
+    "label": "MuonWeight",
+    #"label": "noNNPDFWeight",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
@@ -55,7 +56,7 @@ parameters = {
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
-    "plots_path": "./plots/2022jun02_stacked",
+    "plots_path": "./plots/2022june3",
     "dnn_models": {},
     "bdt_models": {},
     #
@@ -125,10 +126,12 @@ parameters["grouping"] = {
 # parameters["grouping"] = {"vbf_powheg_dipole": "VBF",}
 
 parameters["plot_groups"] = {
-    "stack": ["DY","Top", "Other"],
+    #"stack": ["DY","Top", "Other"],
+    "stack": ["Top"],
 #   "stack": ["DY120to200","DY200to400","DY400to800","DY800to1400","DY1400to2300","DY2300to3500","DY3500to4500","DY4500to60000","DY6000toInf","ttbar_inclusive", "ttbar_500to800", "ttbar_800to1200", "ttbar_1200to1800", "ttbar_1800toInf"],
     #"stack": [],
-    "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
+    #"step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
+    "step": [],
     #"step": ["DY","top","Other","bbll_4TeV_posLL", "bbll_8TeV_posLL"],
     "errorbar": [],
     #"2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
