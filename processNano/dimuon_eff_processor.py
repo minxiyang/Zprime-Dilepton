@@ -213,9 +213,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
                 "genJetIdx",
             ]
             jets = ak.to_pandas(df.Jet[jet_branches_local])
-            genJets = ak.to_pandas(df.GenJet[["pt", "eta", "phi", "partonFlavour"]])
-            #print("gen jet head")
-            #print(genJets.head())
+            genJets = ak.to_pandas(df.GenJet[["pt", "eta", "phi", "partonFlavour", "hadronFlavour"]])
             muons = ak.to_pandas(df.Muon[muon_branches_local])
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
@@ -315,7 +313,6 @@ class DimuonEffProcessor(processor.ProcessorABC):
             jets[["Jet_match", "Jet_ID", "btag"]], on=["entry", "subentry"], how="left"
         )
         genJets.fillna(False, inplace=True)
-        genJets = genJets[abs(genJets.partonFlavour) == 5]
         genJets.rename(
             columns={"pt": "Jet_pt", "eta": "Jet_eta", "phi": "Jet_phi"}, inplace=True
         )
@@ -444,7 +441,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
             [
                 genPart,
                 genJets[
-                    ["Jet_match", "Jet_ID", "btag", "Jet_pt", "Jet_eta", "Jet_phi"]
+                    ["Jet_match", "Jet_ID", "btag", "Jet_pt", "Jet_eta", "Jet_phi", "partonFlavour", "hadronFlavour"]
                 ],
             ],
             levels=0,

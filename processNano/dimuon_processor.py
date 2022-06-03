@@ -14,7 +14,6 @@ from coffea.lumi_tools import LumiMask
 from coffea.btag_tools import BTagScaleFactor
 from processNano.timer import Timer
 from processNano.weights import Weights
-
 #correction helpers included from copperhead
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
 from copperhead.stage1.corrections.lepton_sf import musf_lookup, musf_evaluator
@@ -543,8 +542,27 @@ class DimuonProcessor(processor.ProcessorABC):
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
         if is_mc:
-            sf = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB)
-            jets["btag_sf_shape"] = sf
+            sf_shape = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB)
+            jets["btag_sf_shape"] = sf_shape
+            genJets = ak.to_pandas(df.GenJet[["pt", "eta", "phi", "hadronFlavour"]])
+            genJets = genJets[(abs(genJets.eta)<2.4)
+                              & (genJets.pt>=20.)
+                              & (genJets.pt<=1000.)
+                              ]
+            jets["Jet_match"] = True
+            genJets = genJets.merge(
+            jets[["Jet_match", "btagDeepFlavB"]], on=["entry", "subentry"], how="left"
+            )
+            genJets = genJets[genJets.Jet_match == True]
+
+            genJets_bc = genJets[abs(genJets.hadronFlavour) >= 4]
+            genJets_light = genJets[abs(genJets.hadronFlavour) < 4]
+
+            sf_wp_bc = btagSF("2018", genJets_bc.hadronFlavour, genJets_bc.eta, genJets_bc.pt, genJets_bc.btagDeepFlavB, parameters["UL_btag_medium"][self.year], 'deepJet_comb')
+            sf_wp_light = btagSF("2018", genJets_light.hadronFlavour, genJets_light.eta, genJets_light.pt, genJets_light.btagDeepFlavB, parameters["UL_btag_medium"][self.year], 'deepJet_incl')
+            genJets.loc[abs(genJets.hadronFlavour) < 4, "btag_sf_wp"]=sf_wp_light
+            genJets.loc[abs(genJets.hadronFlavour) >= 4, "btag_sf_wp"]=sf_wp_bc
+            jets["btag_sf_wp"]=genJets.btag_sf_wp
         jets = jets.dropna()
 
         if jets.index.nlevels == 3:
@@ -599,9 +617,11 @@ class DimuonProcessor(processor.ProcessorABC):
         if is_mc:
              variables["btag_sf_shape"] = jets.loc[jets.pre_selection == 1, "btag_sf_shape"].groupby("entry").prod()
              variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
+             variables["btag_sf_wp"] = jets.loc[:, "btag_sf_wp"].groupby("entry").prod()
+             variables["btag_sf_wp"] = variables["btag_sf_wp"].fillna(1.0)
         else:
              variables["btag_sf_shape"] = 1.0
-
+             variables["btag_sf_wp"] = 1.0
         nBjets = jets.loc[:, "selection"].groupby("entry").sum()
         variables["njets"] = nBjets
         jets = jets.sort_values(["entry", "pt"], ascending=[True, False])

@@ -3,18 +3,35 @@ import pandas as pd
 import awkward as ak
 from processNano.utils import p4_sum, delta_r, rapidity
 import correctionlib
+import pickle
+from coffea.lookup_tools.dense_lookup import dense_lookup
 
-def btagSF(year, hadronFlavour, eta, pt, mva, correction="deepJet_shape", syst="central"):
+
+def btagSF(year, hadronFlavour, eta, pt, mva, wp=0, correction="deepJet_shape", syst="central"):
     cset = correctionlib.CorrectionSet.from_file("data/b-tagging/btagging.json")
     eta = np.abs(eta.to_numpy())
     eta[eta>2.4999] = 2.4999
     pt = pt.to_numpy()
     pt[pt<20] = 20.001
-    #pt[pt>1000] = 999.99
-    flavor = hadronFlavour.to_numpy()
+    pt[pt>1000] = 999.99
+    flavor = abs(hadronFlavour.to_numpy())
     mva = mva.to_numpy()
-    #flavor[flavor==0] = 4
-    sf = cset[correction].evaluate(syst, flavor, eta, pt, mva)
+
+    if correction == "deepJet_shape":
+        sf = cset[correction].evaluate(syst, flavor, eta, pt, mva)
+    else:
+        path_eff = "data/b-tagging/UL2018_ttbar_eff.pickle"
+        with open(path_eff, "rb") as handle:
+            eff = pickle.load(handle)
+
+        fac = cset[correction].evaluate(syst, "M", flavor, eta, pt)
+        efflookup = dense_lookup(eff.values(), [ax.edges for ax in eff.axes])
+        prob = efflookup(pt, eta, flavor)
+        prob_nosf = np.copy(prob)
+        prob_sf = np.copy(prob)*fac
+        prob_sf[mva<wp] = 1. - prob_sf[mva<wp]
+        prob_nosf[mva<wp] = 1. - prob_nosf[mva<wp]
+        sf = prob_sf/prob_nosf
     return sf
 
 
