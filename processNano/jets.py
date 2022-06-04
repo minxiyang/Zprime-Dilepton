@@ -15,6 +15,9 @@ def btagSF(year, hadronFlavour, eta, pt, mva, wp=0, correction="deepJet_shape", 
     pt[pt<20] = 20.001
     pt[pt>1000] = 999.99
     flavor = abs(hadronFlavour.to_numpy())
+    idx = np.copy(flavor)
+    idx[idx==4] = 1
+    idx[idx==5] = 2
     mva = mva.to_numpy()
 
     if correction == "deepJet_shape":
@@ -26,7 +29,8 @@ def btagSF(year, hadronFlavour, eta, pt, mva, wp=0, correction="deepJet_shape", 
 
         fac = cset[correction].evaluate(syst, "M", flavor, eta, pt)
         efflookup = dense_lookup(eff.values(), [ax.edges for ax in eff.axes])
-        prob = efflookup(pt, eta, flavor)
+  
+        prob = efflookup(pt, eta, idx)
         prob_nosf = np.copy(prob)
         prob_sf = np.copy(prob)*fac
         prob_sf[mva<wp] = 1. - prob_sf[mva<wp]
