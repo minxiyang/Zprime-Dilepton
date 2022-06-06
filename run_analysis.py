@@ -128,15 +128,6 @@ parameters["datasets"] = [
     "bbll_8TeV_M400_posLL",
     "bbll_8TeV_M400_posLR",
 ]
-parameters["datasets"] = [
-    "ttbar_lep_inclusive",
-    "ttbar_lep_M500to800",
-    "ttbar_lep_M800to1200",
-    "ttbar_lep_M1200to1800",
-    "ttbar_lep_M1800toInf",
-    "tW",
-    "Wantitop",
-]
 # using one small dataset for debugging
 # parameters["datasets"] = ["vbf_powheg_dipole"]
 

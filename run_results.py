@@ -83,28 +83,11 @@ parameters["grouping"] = {
     "dy3500to4500" : "DY",
     "dy4500to6000" : "DY",
     "dy6000toInf" : "DY",
-
-#    "dy120to200" : "DY120to200",
-#    "dy200to400" : "DY200to400",
-#    "dy400to800" : "DY400to800",
-#    "dy800to1400" : "DY800to1400",
-#    "dy1400to2300" : "DY1400to2300",
-#    "dy2300to3500" : "DY2300to3500",
-#    "dy3500to4500" : "DY3500to4500",
-#    "dy4500to6000" : "DY4500to6000",
-#    "dy6000toInf" : "DY6000toInf",
-
-
     "ttbar_lep_inclusive" : "Top",
     "ttbar_lep_M500to800" : "Top",
     "ttbar_lep_M800to1200" : "Top",
     "ttbar_lep_M1200to1800" : "Top",
     "ttbar_lep_M1800toInf" : "Top",
-    #"ttbar_lep_inclusive" : "ttbar_inclusive",
-    #"ttbar_lep_M500to800" : "ttbar_500to800",
-    #"ttbar_lep_M800to1200" : "ttbar_800to1200",
-    #"ttbar_lep_M1200to1800" : "ttbar_1200to1800",
-    #"ttbar_lep_M1800toInf" : "ttbar_1800toInf",
     "tW" : "Top",
     "Wantitop" : "Top",
     "WWinclusive" : "Other",
@@ -126,14 +109,9 @@ parameters["grouping"] = {
 # parameters["grouping"] = {"vbf_powheg_dipole": "VBF",}
 
 parameters["plot_groups"] = {
-    #"stack": ["DY","Top", "Other"],
-    "stack": ["Top"],
-#   "stack": ["DY120to200","DY200to400","DY400to800","DY800to1400","DY1400to2300","DY2300to3500","DY3500to4500","DY4500to60000","DY6000toInf","ttbar_inclusive", "ttbar_500to800", "ttbar_800to1200", "ttbar_1200to1800", "ttbar_1800toInf"],
-    #"stack": [],
-    #"step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
-    "step": [],
-    #"step": ["DY","top","Other","bbll_4TeV_posLL", "bbll_8TeV_posLL"],
-    "errorbar": [],
+    "stack": ["DY","Top", "Other"],
+    "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
+    "errorbar": ["Data"],
     #"2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
     #"2D": ["DY","Other"],
 }

@@ -21,7 +21,7 @@ The analysis workflow contains three stages:
 - **Result** (WIP) contains / will contain plotting, parametric fits, preparation of datacards for statistical analysis. The plotting is done via [scikit-hep/mplhep](https://github.com/scikit-hep/mplhep).
 
 ## Job parallelization
-The analysis workflow is efficiently parallelised using [dask/distributed](https://github.com/dask/distributed) with either a local cluster (uses CPUs on the same node where the job is launched), or a distributed `Slurm` cluster initialized over multiple computing nodes. The instructions for the Dask client initialization in both modes can be found [here](copperhead/docs/dask_client.md).
+The analysis workflow is efficiently parallelised using [dask/distributed](https://github.com/dask/distributed) with either a local cluster (uses CPUs on the same node where the job is launched), or a distributed `Slurm` cluster initialized over multiple computing nodes. The instructions for the Dask client initialization in both modes can be found [here](docs/dask_client.md).
 
 It is possible to create a cluster with other batch submission systems (`HTCondor`, `PBS`, etc., see full list in [Dask-Jobqueue API](https://jobqueue.dask.org/en/latest/api.html#)) and support will be added in collaboration with users.
 
