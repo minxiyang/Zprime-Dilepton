@@ -352,20 +352,10 @@ class DimuonProcessor(processor.ProcessorABC):
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
             fill_muons(self, output, mu1, mu2, is_mc, self.year, weights)
-<<<<<<< HEAD
 
         # ------------------------------------------------------------#
         # Prepare jets
         # ------------------------------------------------------------#
-=======
-        # ------------------------------------------------------------#
-        # Prepare jets
-        # ------------------------------------------------------------#
-        #array = output.dimuon_mass_gen[output.dimuon_mass_gen<4500]
-        #array = array[array>0.]
-        #print(array)
-
->>>>>>> 9aed5db... fix k-Factors and NNPDF weights, add min(m(b,l))
         prepare_jets(df, is_mc)
 
         # ------------------------------------------------------------#
@@ -433,7 +423,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 weights.add_weight('zpt_wgt', zpt_weight)
             """
 
-            do_musf = True
+            do_musf = False
             if do_musf:
                 muID, muIso, muTrig = musf_evaluator(
                     self.musf_lookup, self.year, numevents, mu1, mu2
@@ -463,7 +453,7 @@ class DimuonProcessor(processor.ProcessorABC):
         output["year"] = int(self.year)
 
         for wgt in weights.df.columns:
-
+            print(wgt)
             if wgt != "nominal":
                 continue
             output[f"wgt_{wgt}"] = weights.get_weight(wgt)
@@ -713,8 +703,13 @@ class DimuonProcessor(processor.ProcessorABC):
         # Calculate btag SF
         # ------------------------------------------------------------#
         # --- Btag weights --- #
+<<<<<<< HEAD
         #if is_mc:
             #bjet_sel_mask = output.event_selection
+=======
+        if False:
+            bjet_sel_mask = output.event_selection
+>>>>>>> 86fec4c... small fixes to weights
 
             #btag_wgt, btag_syst = btag_weights(
             #    self, self.btag_lookup, self.btag_systs, jets, weights, bjet_sel_mask

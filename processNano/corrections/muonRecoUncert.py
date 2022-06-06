@@ -117,10 +117,13 @@ def calcMuonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year):
             return eff_syst/eff_default
 
 
-def muonRecoUncert(masses, pT1, pT2, eta1, eta2, isDimuon, year):
+def muonRecoUncert(masses, pT1, pT2, eta1, eta2, isDimuon, year, how="nom"):
 
     weights = []
     for i in range(0, masses.size):
-        weights.append(calcMuonRecoUncert(masses[i], pT1[i], pT2[i], eta1[i], eta2[i], isDimuon[i], int(year)))
+        if how == "down":
+            weights.append(calcMuonRecoUncert(masses[i], pT1[i], pT2[i], eta1[i], eta2[i], isDimuon[i], int(year)))
+        else:
+            weights.append(1.0)
 
     return np.array(weights)

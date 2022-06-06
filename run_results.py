@@ -41,7 +41,7 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
-    "label": "MuonWeight",
+    "label": "noBTagWeights2",
     #"label": "noNNPDFWeight",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
