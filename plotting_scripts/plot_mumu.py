@@ -59,6 +59,7 @@ def load2df(files):
 
 def chunk(files, size):
     size = math.ceil(len(files) / float(size))
+    if size == 0: size=1
     file_bag = [
         files[i : min(i + size, len(files))] for i in range(0, len(files), size)
     ]
@@ -179,7 +180,7 @@ def plots(axes, data, MCs, labels, colors, name):
         alpha=0.3,
     )
     axes[3].savefig(
-        f"/depot/cms/users/schul105/Zprime-Dilepton/plots/{name}.pdf"
+        f"plots/{name}.pdf"
     )
 
 
@@ -206,16 +207,16 @@ if __name__ == "__main__":
 
     bins_cs = np.linspace(-1.0, 1.0, 26)
     bins_jets = np.linspace(0, 7, 8)
-    path = "/depot/cms/users/schul105/dileptonAnalysis/output/test/stage1_output/2018/"
+    path = "output/test_march/stage1_output/2018/"
     path_dy = path + "dy*/*.parquet"
     dy_files = glob.glob(path_dy)
     path_data = path + "data*/*.parquet"
     data_files = glob.glob(path_data)
-    path_tt_inclusive = path + "ttbar_lep/*.parquet"
+    path_tt_inclusive = path + "ttbar_lep_inclusive/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
     path_tt = path + "ttbar_lep_*/*.parquet"
     tt_files = glob.glob(path_tt)
-    tt_files = [file_ for file_ in tt_files if "ext" not in file_]
+    tt_files = [file_ for file_ in tt_files if ("ext" not in file_ and "inclu" not in file_)]
     path_wz = path + "WZ*/*.parquet"
     wz_files = glob.glob(path_wz)
     path_tw1 = path + "tW/*.parquet"
