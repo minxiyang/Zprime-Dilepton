@@ -6,11 +6,9 @@ import pickle
 
 files = glob.glob("output/ttbar_eff/*/*")
 df = pd.read_parquet(files)
-df =  df[(df["accepted"]) & (df["reco"]) & (df["ID_pass"]) & (df["hlt"]>0)]
-
-binx = [ 20., 25., 30.,  35., 40., 45., 50., 60., 70., 90., 150., 250., 500., 1000.]
-biny = np.array([0., 0.2, 0.4, 0.6, 0.9, 1.2, 1.5, 1.9, 2.4])
-print(df["hadronFlavour"].to_numpy())
+df =  df[(df["accepted"]) & (df["reco"]) & (df["ID_pass"]) & (df["hlt"]>0)&(df["gpv"])&(df["Jet_ID"])]
+binx = [ 10., 20., 30., 40., 50., 100., 200., 400., 1000.]
+biny = [0., 0.4, 1.4, 2.4]
 efficiencyinfo = (
     Hist.new
     .Var(binx, name="pt")
@@ -19,9 +17,9 @@ efficiencyinfo = (
     .Bool(name="passWP")
     .Double()
     .fill(
-        pt = df.Jet_pt.to_numpy(),
-        abseta = np.abs(df.Jet_eta.to_numpy()),
-        flavor = abs(df["hadronFlavour"].to_numpy()),
+        pt = df.Jet_pt_reco.to_numpy(),
+        abseta = np.abs(df.Jet_eta_reco.to_numpy()),
+        flavor = abs(df["flavor_reco"].to_numpy()),
         passWP = df.btag.to_numpy(), 
         weight = df.wgt_nominal.to_numpy(),
     )

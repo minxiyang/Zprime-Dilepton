@@ -205,14 +205,26 @@ class DimuonEffProcessor(processor.ProcessorABC):
             genPart = ak.to_pandas(df.GenPart[gen_branches])
             #print("genPart shape")
             #print(genPart.shape)
-
+            df["Jet", "pt_reco"]=df.Jet.pt
+            df["Jet", "eta_reco"]=df.Jet.eta
+            #df["Jet", "flavor_reco"]=df.Jet.hadronFlavour
             jet_branches_local = copy.copy(jet_branches)
             jet_branches_local += [
                 "partonFlavour",
                 "hadronFlavour",
                 "genJetIdx",
+                "pt_reco",
+                "eta_reco",
             ]
             jets = ak.to_pandas(df.Jet[jet_branches_local])
+            #print(jets.hadronFlavour)
+            #jets["hadronFlavour"] = jets["hadronFlavour"].astype(int)
+            #jets = jets[(jets["hadronFlavour"]==0)|(jets["hadronFlavour"]==4)|(jets["hadronFlavour"]==5)]
+            jets["flavor_reco"] =  jets["hadronFlavour"]
+            #print(jets[].flavor_reco) 
+            #jets["pt_reco"] = jets.pt
+            #jets["eta_reco"] = jets.eta
+            #jets["flavor_reco"] = jets.hadronFlavour
             genJets = ak.to_pandas(df.GenJet[["pt", "eta", "phi", "partonFlavour", "hadronFlavour"]])
             muons = ak.to_pandas(df.Muon[muon_branches_local])
             if self.timer:
@@ -310,12 +322,13 @@ class DimuonEffProcessor(processor.ProcessorABC):
         jets.loc[jets.jetId >= 2, "Jet_ID"] = True
         jets["Jet_match"] = True
         genJets = genJets.merge(
-            jets[["Jet_match", "Jet_ID", "btag"]], on=["entry", "subentry"], how="left"
+            jets[["Jet_match", "Jet_ID", "btag","pt_reco", "eta_reco", "flavor_reco"]], on=["entry", "subentry"], how="left"
         )
         genJets.fillna(False, inplace=True)
         genJets.rename(
-            columns={"pt": "Jet_pt", "eta": "Jet_eta", "phi": "Jet_phi"}, inplace=True
+            columns={"pt": "Jet_pt", "eta": "Jet_eta", "phi": "Jet_phi", "pt_reco": "Jet_pt_reco", "eta_reco": "Jet_eta_reco"}, inplace=True
         )
+        
         nJets = genJets.reset_index().groupby("entry")["subentry"].nunique()
         jets = nJets.to_numpy()
         
@@ -441,7 +454,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
             [
                 genPart,
                 genJets[
-                    ["Jet_match", "Jet_ID", "btag", "Jet_pt", "Jet_eta", "Jet_phi", "partonFlavour", "hadronFlavour"]
+                    ["Jet_match", "Jet_ID", "btag", "Jet_pt", "Jet_eta", "Jet_phi", "partonFlavour", "hadronFlavour", "flavor_reco", "Jet_pt_reco", "Jet_eta_reco"]
                 ],
             ],
             levels=0,
@@ -535,6 +548,10 @@ class DimuonEffProcessor(processor.ProcessorABC):
         genPart.fillna(0, inplace=True)
 
         genPart["dataset"] = dataset
+        genPart["flavor_reco"] = genPart["flavor_reco"].astype(int)
+        genPart["Jet_pt_reco"] = genPart["Jet_pt_reco"].astype(float)
+        genPart["Jet_eta_reco"] = genPart["Jet_eta_reco"].astype(float)
+        #print(genPart["flavor_reco"])
         if self.apply_to_output is None:
             return genPart
         else:
