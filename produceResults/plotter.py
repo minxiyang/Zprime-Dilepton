@@ -9,7 +9,7 @@ from produceResults.io import load_stage2_output_hists_2D
 
 import matplotlib.pyplot as plt
 import mplhep as hep
-from matplotlib.colors import LogNorm, Normalize
+from matplotlib.colors import LogNorm
 
 style = hep.style.CMS
 style["mathtext.fontset"] = "cm"
@@ -26,16 +26,16 @@ stat_err_opts = {
 }
 ratio_err_opts = {"step": "post", "facecolor": (0, 0, 0, 0.3), "linewidth": 0}
 
-def normalize2D(hist,nBinsX,nBinsY):
+
+def normalize2D(hist, nBinsX, nBinsY):
     normFac = 0
-    for i in range(0,nBinsX):
-        for y in range(0,nBinsY):
+    for i in range(0, nBinsX):
+        for y in range(0, nBinsY):
             normFac += hist[i][y]
 
-    for i in range(0,nBinsX):
-        for y in range(0,nBinsY):
+    for i in range(0, nBinsX):
+        for y in range(0, nBinsY):
             hist[i][y] = hist[i][y]/normFac
-
 
     return hist
 
@@ -66,7 +66,7 @@ class Entry(object):
         elif entry_type == "2D":
             self.histtype = "2D"
             self.stack = False
-            self.plot_opts = {"cmin":0.0000001}
+            self.plot_opts = {"cmin": 0.0000001}
             self.yerr = False
         else:
             raise Exception(f"Wrong entry type: {entry_type}")
@@ -127,16 +127,15 @@ def plotter2D(client, parameters, hist_df=None, timer=None):
         "region": parameters["regions"],
         "channel": parameters["channels"],
         "var_name1": [
-            v for v in hist_df.var_name1.unique() if any(v in l for l in parameters["plot_vars_2d"])
+            v for v in hist_df.var_name1.unique() if any(v in entry for entry in parameters["plot_vars_2d"])
         ],
         "var_name2": [
-            v for v in hist_df.var_name2.unique() if any(v in l for l in parameters["plot_vars_2d"])
+            v for v in hist_df.var_name2.unique() if any(v in entry for entry in parameters["plot_vars_2d"])
         ],
         "df": [hist_df],
     }
     yields = parallelize(plot2D, arg_plot, client, parameters, seq=True)
     return yields
-
 
 
 def plot(args, parameters={}):
@@ -199,7 +198,7 @@ def plot(args, parameters={}):
             ax=ax1,
             yerr=yerr,
             stack=entry.stack,
-            color = colors,
+            color=colors,
             #sort='yield',
             histtype=entry.histtype,
             **entry.plot_opts,
@@ -262,7 +261,7 @@ def plot(args, parameters={}):
                 bins=edges,
                 ax=ax2,
                 yerr=yerr,
-                color = ['xkcd:black'],
+                color=['xkcd:black'],
                 histtype="errorbar",
                 **entries["errorbar"].plot_opts,
             )
@@ -302,14 +301,15 @@ def plot(args, parameters={}):
 
     return total_yield
 
+
 def plot2D(args, parameters={}):
     year = args["year"]
     region = args["region"]
     channel = args["channel"]
     var_name1 = args["var_name1"]
     var_name2 = args["var_name2"]
-    
-    hist = args["df"].loc[(args["df"].var_name1 == var_name1) & (args["df"].var_name2 == var_name2 ) & (args["df"].year == year)]
+
+    hist = args["df"].loc[(args["df"].var_name1 == var_name1) & (args["df"].var_name2 == var_name2) & (args["df"].year == year)]
 
     if var_name1 in parameters["variables_lookup"].keys():
         var1 = parameters["variables_lookup"][var_name1]
@@ -320,10 +320,8 @@ def plot2D(args, parameters={}):
     else:
         var2 = Variable(var_name2, var_name2, 50, 0, 5)
 
-
     if hist.shape[0] == 0:
         return
-
 
     # temporary
     variation = "nominal"
@@ -346,7 +344,7 @@ def plot2D(args, parameters={}):
         if len(plottables) == 0:
             continue
         #plot each process on a seperate plot
-        for i in range(0,len(plottables)):
+        for i in range(0, len(plottables)):
             label = labels[i]
 
             plotsize = 8
@@ -391,19 +389,14 @@ def plot2D(args, parameters={}):
         entry.plot_opts["cmax"] = 1e3
         entry.plot_opts["cmin"] = 1e-2
 
-        entry.plot_opts["norm"] = LogNorm(1e-2,1e3)
-        plot_color_gradients = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples',
-                      'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu',
-                      'GnBu', 'PuBu', 'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn']
-        for i in range(0,len(plottables)):
+        entry.plot_opts["norm"] = LogNorm(1e-2, 1e3)
+        plot_color_gradients = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples', 'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu', 'GnBu', 'PuBu', 'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn']
+        for i in range(0, len(plottables)):
 
             label = labels[i]                
             entry.plot_opts["cmap"] = plot_color_gradients[i]
             hep.hist2dplot(
                 plottables[i],
-                #normalize2D(np.nan_to_num(plottables[i].values()), var1.nbins, var2.nbins),
-                #np.nan_to_num(plottables[i].density()),
-                #np.nan_to_num(plottables[i].values())/np.nan_to_num(plottables[i]).sum(),
                 label=label,
                 ax=ax1,
                 **entry.plot_opts,
@@ -413,8 +406,6 @@ def plot2D(args, parameters={}):
         ax1.set_ylim(var2.xminPlot, var2.xmaxPlot)
         ax1.set_xlim(var1.xminPlot, var1.xmaxPlot)
         ax1.legend(prop={"size": "x-small"})
-
-    #ax1.set_xlabel(var.caption, loc="right")
 
         hep.cms.label(ax=ax1, data=True, label="Preliminary", year=year)
 
@@ -428,7 +419,6 @@ def plot2D(args, parameters={}):
             out_name = f"{path}/{var1.name}_{var2.name}_stacked_{region}_{channel}_{year}.pdf"
             fig.savefig(out_name)
             print(f"Saved: {out_name}")
-
 
     return total_yield
 
@@ -481,7 +471,7 @@ def get_plottables_2D(hist, entry, year, var_name1, var_name2, slicer):
     slicer_sumw2 = slicer.copy()
     slicer_value["val_sumw2"] = "value"
     slicer_sumw2["val_sumw2"] = "sumw2"
-  
+
     plottables_df = pd.DataFrame(columns=["label", "hist", "sumw2", "integral"])
     for group in entry.groups:
         group_entries = [e for e, g in entry.entry_dict.items() if (group == g)]

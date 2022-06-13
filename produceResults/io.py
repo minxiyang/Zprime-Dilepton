@@ -1,10 +1,6 @@
-import os
 import pandas as pd
-import dask.dataframe as dd
-from dask.distributed import get_worker
 import pickle
 import glob
-import uproot3
 
 
 def load_stage2_output_hists_2D(argset, parameters):
@@ -37,4 +33,3 @@ def load_stage2_output_hists_2D(argset, parameters):
         except Exception:
             pass
     return hist_df
-
