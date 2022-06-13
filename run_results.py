@@ -159,8 +159,8 @@ if __name__ == "__main__":
     # make 1D plots
     yields = plotter(client, parameters)
 
-    # make 1D plots
-    #yields2D = plotter2D(client, parameters)
+    # make 2D plots
+    yields2D = plotter2D(client, parameters)
 
     # save templates to ROOT files
     yield_df = to_templates(client, parameters)
