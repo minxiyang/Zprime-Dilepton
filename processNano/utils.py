@@ -9,6 +9,7 @@ def mkdir(path):
     except Exception:
         pass
 
+
 def p4(obj, is_mc=True):
     result = pd.DataFrame(
         index=obj.index,
@@ -71,7 +72,6 @@ def p4(obj, is_mc=True):
     return result
 
 
-
 def p4_sum(obj1, obj2, is_mc=True):
 
     result = pd.DataFrame(
@@ -117,9 +117,7 @@ def p4_sum(obj1, obj2, is_mc=True):
             result.pz_gen += pz_gen_
             result.e_gen += e_gen_
 
-#    print (result.py ** 2 + result.py ** 2)
-
-    result.pt  = np.sqrt(result.py ** 2 + result.py ** 2)
+    result.pt = np.sqrt(result.py ** 2 + result.py ** 2)
     result.eta = np.arcsinh(result.pz / result.pt)
     result.phi = np.arctan2(result.py, result.px)
     result.mass = np.sqrt(

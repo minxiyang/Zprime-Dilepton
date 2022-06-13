@@ -25,7 +25,7 @@ import copy
 from processNano.muons import find_dimuon
 from processNano.utils import p4_sum
 
-from config.parameters import parameters, muon_branches, jet_branches, genjet_branches
+from config.parameters import parameters, muon_branches, jet_branches
 
 
 class DimuonEffProcessor(processor.ProcessorABC):
@@ -204,8 +204,8 @@ class DimuonEffProcessor(processor.ProcessorABC):
             genPart = ak.to_pandas(df.GenPart[gen_branches])
             #print("genPart shape")
             #print(genPart.shape)
-            df["Jet", "pt_reco"]=df.Jet.pt
-            df["Jet", "eta_reco"]=df.Jet.eta
+            df["Jet", "pt_reco"] = df.Jet.pt
+            df["Jet", "eta_reco"] = df.Jet.eta
             #df["Jet", "flavor_reco"]=df.Jet.hadronFlavour
             jet_branches_local = copy.copy(jet_branches)
             jet_branches_local += [
@@ -219,8 +219,8 @@ class DimuonEffProcessor(processor.ProcessorABC):
             #print(jets.hadronFlavour)
             #jets["hadronFlavour"] = jets["hadronFlavour"].astype(int)
             #jets = jets[(jets["hadronFlavour"]==0)|(jets["hadronFlavour"]==4)|(jets["hadronFlavour"]==5)]
-            jets["flavor_reco"] =  jets["hadronFlavour"]
-            #print(jets[].flavor_reco) 
+            jets["flavor_reco"] = jets["hadronFlavour"]
+            #print(jets[].flavor_reco)
             #jets["pt_reco"] = jets.pt
             #jets["eta_reco"] = jets.eta
             #jets["flavor_reco"] = jets.hadronFlavour
@@ -321,16 +321,16 @@ class DimuonEffProcessor(processor.ProcessorABC):
         jets.loc[jets.jetId >= 2, "Jet_ID"] = True
         jets["Jet_match"] = True
         genJets = genJets.merge(
-            jets[["Jet_match", "Jet_ID", "btag","pt_reco", "eta_reco", "flavor_reco"]], on=["entry", "subentry"], how="left"
+            jets[["Jet_match", "Jet_ID", "btag", "pt_reco", "eta_reco", "flavor_reco"]], on=["entry", "subentry"], how="left"
         )
         genJets.fillna(False, inplace=True)
         genJets.rename(
             columns={"pt": "Jet_pt", "eta": "Jet_eta", "phi": "Jet_phi", "pt_reco": "Jet_pt_reco", "eta_reco": "Jet_eta_reco"}, inplace=True
         )
-        
+
         nJets = genJets.reset_index().groupby("entry")["subentry"].nunique()
         jets = nJets.to_numpy()
-        
+
         #print(len(jets))
         #print(nJets.head())
         #print(jets)
@@ -353,13 +353,13 @@ class DimuonEffProcessor(processor.ProcessorABC):
             .nunique()
         )
         nJets_match = (
-            genJets[(genJets.Jet_match)&(genJets.Jet_pt > 30)]
+            genJets[(genJets.Jet_match) & (genJets.Jet_pt > 30)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()
         )
         nJets_ID = (
-            genJets[(genJets.Jet_ID) & (genJets.Jet_match)&(genJets.Jet_pt > 30) ]
+            genJets[(genJets.Jet_ID) & (genJets.Jet_match) & (genJets.Jet_pt > 30)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()
@@ -427,7 +427,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
         )
         pt_pass = pt_pass.to_frame("pt_pass")
         acc = (
-            genPart[(abs(genPart["eta"]) < 2.4)&(genPart["pt"] > 53)]
+            genPart[(abs(genPart["eta"]) < 2.4) & (genPart["pt"] > 53)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()

@@ -140,7 +140,7 @@ class SamplesInfo(object):
         all_files = []
         metadata = {}
         data_entries = 0
-        
+ 
         if self.xrootd:
             all_files = read_via_xrootd(self.server, self.paths[sample], from_das)
             # all_files = [self.server + _file for _file in self.paths[sample]]
@@ -154,8 +154,8 @@ class SamplesInfo(object):
             ]
 
         if self.debug:
-            all_files = [all_files[0]]
-        
+            all_files = [all_files[0]        
+
         sumGenWgts = 0
         nGenEvts = 0
         if use_dask:

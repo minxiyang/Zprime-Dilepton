@@ -17,7 +17,6 @@ from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
 #from copperhead.stage1.corrections.lhe_weights import lhe_weights
 #from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
-from copperhead.stage1.corrections.btag_weights import btag_weights
 
 #high mass dilepton specific corrections
 from processNano.corrections.kFac import kFac
@@ -30,7 +29,7 @@ import copy
 from processNano.muons import find_dimuon, fill_muons
 from processNano.utils import bbangle
 
-from config.parameters import parameters, muon_branches, jet_branches, genpart_branches
+from config.parameters import parameters, muon_branches, jet_branches
 
 from copperhead.config.jec_parameters import jec_parameters
 
@@ -124,26 +123,25 @@ class DimuonProcessor(processor.ProcessorABC):
         # and their systematic variations
         weights = Weights(output)
 
-
         #calculate generated mass from generated particles using the coffea genParticles
         if is_mc:
-            genPart = df.GenPart 
-            genPart = genPart[ ((abs(genPart.pdgId) == 11) | abs(genPart.pdgId) == 13 |  (abs(genPart.pdgId) == 15)) & genPart.hasFlags(['isHardProcess','fromHardProcess','isPrompt'])]
+            genPart = df.GenPart
+            genPart = genPart[((abs(genPart.pdgId) == 11) | abs(genPart.pdgId) == 13 | (abs(genPart.pdgId) == 15)) & genPart.hasFlags(['isHardProcess', 'fromHardProcess', 'isPrompt'])]
 
             cut = (ak.num(genPart) == 2)
-            output["dimuon_mass_gen"]  = cut
-            output["dimuon_pt_gen"]  = cut
-            output["dimuon_eta_gen"]  = cut
-            output["dimuon_phi_gen"]  = cut
+            output["dimuon_mass_gen"] = cut
+            output["dimuon_pt_gen"] = cut
+            output["dimuon_eta_gen"] = cut
+            output["dimuon_phi_gen"] = cut
             genMother = genPart[cut][:, 0] + genPart[cut][:, 1]
-            output.loc[output["dimuon_mass_gen"] == True, ["dimuon_mass_gen"]]  = genMother.mass
-            output.loc[output["dimuon_pt_gen"] == True, ["dimuon_pt_gen"]]  = genMother.pt
-            output.loc[output["dimuon_eta_gen"] == True, ["dimuon_eta_gen"]]  = genMother.eta
-            output.loc[output["dimuon_phi_gen"] == True, ["dimuon_phi_gen"]]  = genMother.phi
-            output.loc[output["dimuon_mass_gen"] == False, ["dimuon_mass_gen"]]  = -999.
-            output.loc[output["dimuon_pt_gen"] == False, ["dimuon_pt_gen"]]  = -999.
-            output.loc[output["dimuon_eta_gen"] == False, ["dimuon_eta_gen"]]  = -999.
-            output.loc[output["dimuon_phi_gen"] == False, ["dimuon_phi_gen"]]  = -999.
+            output.loc[output["dimuon_mass_gen"] == True, ["dimuon_mass_gen"]] = genMother.mass
+            output.loc[output["dimuon_pt_gen"] == True, ["dimuon_pt_gen"]] = genMother.pt
+            output.loc[output["dimuon_eta_gen"] == True, ["dimuon_eta_gen"]] = genMother.eta
+            output.loc[output["dimuon_phi_gen"] == True, ["dimuon_phi_gen"]] = genMother.phi
+            output.loc[output["dimuon_mass_gen"] == False, ["dimuon_mass_gen"]] = -999.
+            output.loc[output["dimuon_pt_gen"] == False, ["dimuon_pt_gen"]] = -999.
+            output.loc[output["dimuon_eta_gen"] == False, ["dimuon_eta_gen"]] = -999.
+            output.loc[output["dimuon_phi_gen"] == False, ["dimuon_phi_gen"]] = -999.
 
         else:
             output["dimuon_mass_gen"] = -999.
@@ -154,7 +152,7 @@ class DimuonProcessor(processor.ProcessorABC):
         output["dimuon_mass_gen"] = output["dimuon_mass_gen"].astype(float)
         output["dimuon_pt_gen"] = output["dimuon_pt_gen"].astype(float)
         output["dimuon_eta_gen"] = output["dimuon_eta_gen"].astype(float)
-        output["dimuon_phi_gen"] =output["dimuon_phi_gen"].astype(float)
+        output["dimuon_phi_gen"] = output["dimuon_phi_gen"].astype(float)
 
         if is_mc:
             # For MC: Apply gen.weights, pileup weights, lumi weights,
@@ -312,8 +310,7 @@ class DimuonProcessor(processor.ProcessorABC):
                     return self.accumulator.identity()
 
             result = muons.groupby("entry").apply(find_dimuon, is_mc=is_mc)
-            #result = muons.swifter.groupby("entry").apply(find_dimuon, is_mc=is_mc)
-            
+
             if is_mc:
                 dimuon = pd.DataFrame(
                     result.to_list(), columns=["idx1", "idx2", "mass"]
@@ -606,11 +603,11 @@ class DimuonProcessor(processor.ProcessorABC):
             jets = jets[unc_name]["down"][jet_branches_local]
         else:
             jets = jets[jet_branches_local]
-        
+ 
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
         if is_mc:
-            
+
             btagSF(jets, self.year, correction="shape", syst="central", is_UL=True)
             btagSF(jets, self.year, correction="wp", syst="central", is_UL=False)
 
@@ -652,19 +649,18 @@ class DimuonProcessor(processor.ProcessorABC):
             (
                 (jets.pt > 30.0)
                 & (abs(jets.eta) < 2.4)
-                &(jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year])
                 & (jets.jetId >= 2)
             ),
             "selection",
         ] = 1
         if is_mc:
-             variables["btag_sf_shape"] = jets.loc[jets.pre_selection == 1, "btag_sf_shape"].groupby("entry").prod()
-             variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
-             variables["btag_sf_wp"] = jets.loc[jets.pre_selection == 1, "btag_sf_wp"].groupby("entry").prod()
-             variables["btag_sf_wp"] = variables["btag_sf_wp"].fillna(1.0)
+            variables["btag_sf_shape"] = jets.loc[jets.pre_selection == 1, "btag_sf_shape"].groupby("entry").prod()
+            variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
+            variables["btag_sf_wp"] = jets.loc[jets.pre_selection == 1, "btag_sf_wp"].groupby("entry").prod()
+            variables["btag_sf_wp"] = variables["btag_sf_wp"].fillna(1.0)
         else:
-             variables["btag_sf_shape"] = 1.0
-             variables["btag_sf_wp"] = 1.0
+            variables["btag_sf_shape"] = 1.0
+            variables["btag_sf_wp"] = 1.0
 
         njets = jets.loc[:, "selection"].groupby("entry").sum()
         variables["njets"] = njets
@@ -688,7 +684,7 @@ class DimuonProcessor(processor.ProcessorABC):
         bjet1 = bjets.groupby("entry").nth(0)
         bjet2 = bjets.groupby("entry").nth(1)
         bJets = [bjet1, bjet2]
-        muons = [mu1,mu2]
+        muons = [mu1, mu2]
         fill_bjets(output, variables, bJets, muons, is_mc=is_mc)
 
         jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
@@ -740,11 +736,7 @@ class DimuonProcessor(processor.ProcessorABC):
         del mu2
         return output
 
-     
-    def calcGenMass(df, output, genparts):
-
-        return output
-
+ 
     def prepare_lookups(self):
         self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors
@@ -760,7 +752,7 @@ class DimuonProcessor(processor.ProcessorABC):
         #    BTagScaleFactor.RESHAPE,
         #    "iterativefit,iterativefit,iterativefit",
         #)
-        #self.btag_lookup = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB) 
+        #self.btag_lookup = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB)
 
         # --- Evaluator
         #self.extractor = extractor()
