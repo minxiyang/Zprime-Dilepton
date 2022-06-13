@@ -12,9 +12,12 @@ from processNano.preprocessor import load_samples
 from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
+import os
 
-dask.config.set({"temporary-directory": "/depot/cms/users/schul105/dask-temp/"})
-
+user_name=os.getcwd().split("/")[5]
+print(user_name)
+dask.config.set({"temporary-directory": f"/depot/cms/users/{user_name}/dask-temp/"})
+global_path = os.getcwd()+"/output/"
 parser = argparse.ArgumentParser()
 # Slurm cluster IP to use. If not specified, will create a local cluster
 parser.add_argument(
@@ -100,7 +103,7 @@ local_time = (
 parameters = {
     "year": args.year,
     "label": args.label,
-    "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
+    "global_path": global_path,
     "out_path": f"{args.year}_{args.label}_{local_time}",
     #"server": "root://xrootd.rcac.purdue.edu/",
     # "server": "root://cmsxrootd.fnal.gov//",
@@ -301,8 +304,8 @@ if __name__ == "__main__":
 
             #if group != "CI":
             #    continue
-            #if sample not in ["WWinclusive"]:
-            #    continue
+            if sample not in ["dy400to800"]:
+                continue
             #if group != "data":
             #    continue
             if group == "data":
