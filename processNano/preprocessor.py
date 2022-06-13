@@ -140,7 +140,7 @@ class SamplesInfo(object):
         all_files = []
         metadata = {}
         data_entries = 0
- 
+
         if self.xrootd:
             all_files = read_via_xrootd(self.server, self.paths[sample], from_das)
             # all_files = [self.server + _file for _file in self.paths[sample]]

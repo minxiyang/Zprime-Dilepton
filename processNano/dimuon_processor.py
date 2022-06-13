@@ -736,7 +736,6 @@ class DimuonProcessor(processor.ProcessorABC):
         del mu2
         return output
 
-
     def prepare_lookups(self):
         self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors
