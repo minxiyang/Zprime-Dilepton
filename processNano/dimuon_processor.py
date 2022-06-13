@@ -129,6 +129,7 @@ class DimuonProcessor(processor.ProcessorABC):
         if is_mc:
             genPart = df.GenPart 
             genPart = genPart[ ((abs(genPart.pdgId) == 11) | abs(genPart.pdgId) == 13 |  (abs(genPart.pdgId) == 15)) & genPart.hasFlags(['isHardProcess','fromHardProcess','isPrompt'])]
+
             cut = (ak.num(genPart) == 2)
             output["dimuon_mass_gen"]  = cut
             output["dimuon_pt_gen"]  = cut
@@ -453,7 +454,6 @@ class DimuonProcessor(processor.ProcessorABC):
         output["year"] = int(self.year)
 
         for wgt in weights.df.columns:
-            print(wgt)
             if wgt != "nominal":
                 continue
             output[f"wgt_{wgt}"] = weights.get_weight(wgt)

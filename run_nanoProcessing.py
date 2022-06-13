@@ -292,9 +292,10 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
+            #if "WWinclusive" not in sample:
             #if "dy200to400" not in sample:
             #if "dy" not in sample:
-            #if "ttbar_lep_M1200to1800" not in sample:
+            #if "ttbar_lep_M500to800" not in sample:
             #if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
             #    continue
 

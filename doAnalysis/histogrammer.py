@@ -95,6 +95,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
            (df.dataset == dataset)
            & (df.r == region)
            & (df.year == year)
+           & (df.dimuon_mass > 120)
            & ((df["channel"] == channel) | (channel == "inclusive"))
            & (~((df.dataset == "ttbar_lep_inclusive") & (df.dimuon_mass_gen > 500)))
            & (~((df.dataset == "WWinclusive") & (df.dimuon_mass_gen > 200)))

@@ -61,7 +61,7 @@ class Entry(object):
         elif entry_type == "errorbar":
             self.histtype = "errorbar"
             self.stack = False
-            self.plot_opts = {"color": "k", "marker": ".", "markersize": 10}
+            self.plot_opts = {"marker": ".", "markersize": 10}
             self.yerr = True
         elif entry_type == "2D":
             self.histtype = "2D"
@@ -189,11 +189,9 @@ def plot(args, parameters={}):
         colors = []
         for label in labels:
             colors.append(parameters["color_dict"][label])
-        #entry.plot_opts["colors"] = colors
         total_yield += sum([p.sum() for p in plottables])
         if len(plottables) == 0:
             continue
-
         yerr = np.sqrt(sum(plottables).values()) if entry.yerr else None
         hep.histplot(
             plottables,
@@ -264,6 +262,7 @@ def plot(args, parameters={}):
                 bins=edges,
                 ax=ax2,
                 yerr=yerr,
+                color = ['xkcd:black'],
                 histtype="errorbar",
                 **entries["errorbar"].plot_opts,
             )

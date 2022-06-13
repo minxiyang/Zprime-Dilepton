@@ -41,28 +41,24 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
-    "label": "noBTagWeights2",
-    #"label": "noNNPDFWeight",
+    "label": "normFixesWCut",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal"],
     #
     # < plotting settings >
-    #"plot_vars": ["dimuon_mass", "dimuon_mass_gen", "dimuon_mass_resUnc", "dimuon_mass_scaleUncUp", "dimuon_mass_scaleUncDown"],  # "dimuon_mass"],
-    #"plot_vars": ["bmmj1_mass","dimuon_mass","njets","nbjets"],  # "dimuon_mass"],
-    #"plot_vars": ["min_bl_mass"],  # "dimuon_mass"],
     "plot_vars": ["min_bl_mass","min_b1l_mass","min_b2l_mass","dimuon_mass", "dimuon_mass_gen",'njets','nbjets'],  # "dimuon_mass"],
     "plot_vars_2d": [["dimuon_mass","met"]],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
-    "plots_path": "./plots/2022june3",
+    "plots_path": "./plots/2022june8",
     "dnn_models": {},
     "bdt_models": {},
     #
     # < templates and datacards >
     "save_templates": True,
-    "templates_vars": ["dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
+    "templates_vars": ["min_bl_mass","min_b1l_mass","min_b2l_mass","dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
 }
 
 parameters["grouping"] = {
@@ -121,6 +117,8 @@ parameters["color_dict"] = {
     "DY": 'xkcd:water blue',
     "Top": 'xkcd:pastel orange',
     "Other": 'xkcd:shamrock green',
+    "WW": 'xkcd:red',
+    "DYTauTau": 'xkcd:blue',
     "Data": 'xkcd:black',
     "bbll_4TeV_posLL": 'xkcd:red',
     "bbll_8TeV_posLL": 'xkcd:violet',

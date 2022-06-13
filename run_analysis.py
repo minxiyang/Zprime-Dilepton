@@ -49,7 +49,7 @@ parameters = {
     "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
     "years": args.years,
     #"label": "moreKiller",
-    "label": "noBTagWeights2",
+    "label": "noGenWeight",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
     "syst_variations": ["nominal","resUnc","scaleUncUp","scaleUncDown"],
