@@ -155,7 +155,7 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
     ]
     dimuon_variable_names = [
         "dimuon_mass",
-        #"dimuon_mass_gen",
+        # "dimuon_mass_gen",
         "dimuon_mass_res",
         "dimuon_mass_res_rel",
         "dimuon_ebe_mass_res",
@@ -164,9 +164,9 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
         "dimuon_pt_log",
         "dimuon_eta",
         "dimuon_phi",
-        #"dimuon_pt_gen",
-       # "dimuon_eta_gen",
-       # "dimuon_phi_gen",
+        # "dimuon_pt_gen",
+        # "dimuon_eta_gen",
+        # "dimuon_phi_gen",
         "dimuon_dEta",
         "dimuon_dPhi",
         "dimuon_dR",
@@ -196,8 +196,7 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
         "dxy",
         "dz",
         "genPartFlav",
-        "ip3d"
-        "sip3d",
+        "ip3d" "sip3d",
         "tkRelIso",
     ]:
 
@@ -222,30 +221,100 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
         except Exception:
             output[name] = -999.0
 
-    #create numpy arrays for reco and gen mass needed for mass variations
-    recoMassBB = output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass"].to_numpy()
-    recoMassBE = output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass"].to_numpy()
-    genMassBB = output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_gen"].to_numpy()
-    genMassBE = output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_gen"].to_numpy()
+    # create numpy arrays for reco and gen mass needed for mass variations
+    recoMassBB = output.loc[
+        ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass"
+    ].to_numpy()
+    recoMassBE = output.loc[
+        ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass"
+    ].to_numpy()
+    genMassBB = output.loc[
+        ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_gen"
+    ].to_numpy()
+    genMassBE = output.loc[
+        ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_gen"
+    ].to_numpy()
 
-    #apply additional mass smearing for MC events in the BE category
+    # apply additional mass smearing for MC events in the BE category
     if is_mc:
-        output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass"] = (output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass"] * smearMass(genMassBE, year, bb=False, forUnc=False)).values
+        output.loc[
+            ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass"
+        ] = (
+            output.loc[
+                ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+                "dimuon_mass",
+            ]
+            * smearMass(genMassBE, year, bb=False, forUnc=False)
+        ).values
 
-    #calculate mass values smeared by mass resolution uncertainty
+    # calculate mass values smeared by mass resolution uncertainty
     output["dimuon_mass_resUnc"] = output.dimuon_mass.values
-    output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_resUnc"] = (output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_resUnc"] * smearMass(genMassBB, year, bb=True)).values
-    output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_resUnc"] = (output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_resUnc"] * smearMass(genMassBE, year, bb=False)).values
+    output.loc[
+        ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+        "dimuon_mass_resUnc",
+    ] = (
+        output.loc[
+            ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+            "dimuon_mass_resUnc",
+        ]
+        * smearMass(genMassBB, year, bb=True)
+    ).values
+    output.loc[
+        ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+        "dimuon_mass_resUnc",
+    ] = (
+        output.loc[
+            ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+            "dimuon_mass_resUnc",
+        ]
+        * smearMass(genMassBE, year, bb=False)
+    ).values
 
-    #calculate mass values shifted by mass scale uncertainty
+    # calculate mass values shifted by mass scale uncertainty
     output["dimuon_mass_scaleUncUp"] = output.dimuon_mass.values
     output["dimuon_mass_scaleUncDown"] = output.dimuon_mass.values
-    output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_scaleUncUp"] = (output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_scaleUncUp"] * muonScaleUncert(recoMassBB, True, year)).values
-    output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_scaleUncUp"] = (output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_scaleUncUp"] * muonScaleUncert(recoMassBE, False, year)).values
-    output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_scaleUncDown"] = (output.loc[((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))), "dimuon_mass_scaleUncDown"] * muonScaleUncert(recoMassBB, True, year, up=False)).values
-    output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_scaleUncDown"] = (output.loc[((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "dimuon_mass_scaleUncDown"] * muonScaleUncert(recoMassBE, False, year, up=False)).values
+    output.loc[
+        ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+        "dimuon_mass_scaleUncUp",
+    ] = (
+        output.loc[
+            ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+            "dimuon_mass_scaleUncUp",
+        ]
+        * muonScaleUncert(recoMassBB, True, year)
+    ).values
+    output.loc[
+        ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+        "dimuon_mass_scaleUncUp",
+    ] = (
+        output.loc[
+            ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+            "dimuon_mass_scaleUncUp",
+        ]
+        * muonScaleUncert(recoMassBE, False, year)
+    ).values
+    output.loc[
+        ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+        "dimuon_mass_scaleUncDown",
+    ] = (
+        output.loc[
+            ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+            "dimuon_mass_scaleUncDown",
+        ]
+        * muonScaleUncert(recoMassBB, True, year, up=False)
+    ).values
+    output.loc[
+        ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+        "dimuon_mass_scaleUncDown",
+    ] = (
+        output.loc[
+            ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+            "dimuon_mass_scaleUncDown",
+        ]
+        * muonScaleUncert(recoMassBE, False, year, up=False)
+    ).values
 
-    #calculate event weights for muon reconstruction efficiency uncertainty
+    # calculate event weights for muon reconstruction efficiency uncertainty
     eta1 = output["mu1_eta"].to_numpy()
     eta2 = output["mu2_eta"].to_numpy()
     pT1 = output["mu1_pt"].to_numpy()
@@ -254,9 +323,15 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
     isDimuon = output["two_muons"].to_numpy()
 
     recowgts = {}
-    recowgts["nom"] = muonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year, how="nom")
-    recowgts["up"] = muonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year, how="up")
-    recowgts["down"] = muonRecoUncert(mass, pT1, pT2, eta1, eta2, isDimuon, year, how="down")
+    recowgts["nom"] = muonRecoUncert(
+        mass, pT1, pT2, eta1, eta2, isDimuon, year, how="nom"
+    )
+    recowgts["up"] = muonRecoUncert(
+        mass, pT1, pT2, eta1, eta2, isDimuon, year, how="up"
+    )
+    recowgts["down"] = muonRecoUncert(
+        mass, pT1, pT2, eta1, eta2, isDimuon, year, how="down"
+    )
     weights.add_weight("recowgt", recowgts, how="all")
 
     output["mu1_pt_over_mass"] = output.mu1_pt.values / output.dimuon_mass.values
@@ -272,10 +347,10 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
     output["dimuon_dPhi"] = mm_dphi
     output["dimuon_dR"] = mm_dr
 
-    #output["dimuon_ebe_mass_res"] = mass_resolution(
+    # output["dimuon_ebe_mass_res"] = mass_resolution(
     #    is_mc, processor.evaluator, output, processor.year
-    #)
-    #output["dimuon_ebe_mass_res_rel"] = output.dimuon_ebe_mass_res / output.dimuon_mass
+    # )
+    # output["dimuon_ebe_mass_res_rel"] = output.dimuon_ebe_mass_res / output.dimuon_mass
     output["dimuon_cos_theta_cs"], output["dimuon_phi_cs"] = cs_variables(mu1, mu2)
 
 

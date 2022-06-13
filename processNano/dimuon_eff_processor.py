@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("copperhead/")
 
 import awkward as ak
@@ -202,11 +203,11 @@ class DimuonEffProcessor(processor.ProcessorABC):
                 "pdgId",
             ]
             genPart = ak.to_pandas(df.GenPart[gen_branches])
-            #print("genPart shape")
-            #print(genPart.shape)
+            # print("genPart shape")
+            # print(genPart.shape)
             df["Jet", "pt_reco"] = df.Jet.pt
             df["Jet", "eta_reco"] = df.Jet.eta
-            #df["Jet", "flavor_reco"]=df.Jet.hadronFlavour
+            # df["Jet", "flavor_reco"]=df.Jet.hadronFlavour
             jet_branches_local = copy.copy(jet_branches)
             jet_branches_local += [
                 "partonFlavour",
@@ -216,15 +217,17 @@ class DimuonEffProcessor(processor.ProcessorABC):
                 "eta_reco",
             ]
             jets = ak.to_pandas(df.Jet[jet_branches_local])
-            #print(jets.hadronFlavour)
-            #jets["hadronFlavour"] = jets["hadronFlavour"].astype(int)
-            #jets = jets[(jets["hadronFlavour"]==0)|(jets["hadronFlavour"]==4)|(jets["hadronFlavour"]==5)]
+            # print(jets.hadronFlavour)
+            # jets["hadronFlavour"] = jets["hadronFlavour"].astype(int)
+            # jets = jets[(jets["hadronFlavour"]==0)|(jets["hadronFlavour"]==4)|(jets["hadronFlavour"]==5)]
             jets["flavor_reco"] = jets["hadronFlavour"]
-            #print(jets[].flavor_reco)
-            #jets["pt_reco"] = jets.pt
-            #jets["eta_reco"] = jets.eta
-            #jets["flavor_reco"] = jets.hadronFlavour
-            genJets = ak.to_pandas(df.GenJet[["pt", "eta", "phi", "partonFlavour", "hadronFlavour"]])
+            # print(jets[].flavor_reco)
+            # jets["pt_reco"] = jets.pt
+            # jets["eta_reco"] = jets.eta
+            # jets["flavor_reco"] = jets.hadronFlavour
+            genJets = ak.to_pandas(
+                df.GenJet[["pt", "eta", "phi", "partonFlavour", "hadronFlavour"]]
+            )
             muons = ak.to_pandas(df.Muon[muon_branches_local])
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
@@ -321,25 +324,34 @@ class DimuonEffProcessor(processor.ProcessorABC):
         jets.loc[jets.jetId >= 2, "Jet_ID"] = True
         jets["Jet_match"] = True
         genJets = genJets.merge(
-            jets[["Jet_match", "Jet_ID", "btag", "pt_reco", "eta_reco", "flavor_reco"]], on=["entry", "subentry"], how="left"
+            jets[["Jet_match", "Jet_ID", "btag", "pt_reco", "eta_reco", "flavor_reco"]],
+            on=["entry", "subentry"],
+            how="left",
         )
         genJets.fillna(False, inplace=True)
         genJets.rename(
-            columns={"pt": "Jet_pt", "eta": "Jet_eta", "phi": "Jet_phi", "pt_reco": "Jet_pt_reco", "eta_reco": "Jet_eta_reco"}, inplace=True
+            columns={
+                "pt": "Jet_pt",
+                "eta": "Jet_eta",
+                "phi": "Jet_phi",
+                "pt_reco": "Jet_pt_reco",
+                "eta_reco": "Jet_eta_reco",
+            },
+            inplace=True,
         )
 
         nJets = genJets.reset_index().groupby("entry")["subentry"].nunique()
         jets = nJets.to_numpy()
 
-        #print(len(jets))
-        #print(nJets.head())
-        #print(jets)
-        #print("0 jet events")
-        #print(len(jets[jets==0]))
-        #print("1 jet events")
-        #print(len(jets[jets==1]))
-        #print("2 jet events")
-        #print(len(jets[jets>=2]))
+        # print(len(jets))
+        # print(nJets.head())
+        # print(jets)
+        # print("0 jet events")
+        # print(len(jets[jets==0]))
+        # print("1 jet events")
+        # print(len(jets[jets==1]))
+        # print("2 jet events")
+        # print(len(jets[jets>=2]))
         nJets_acc = (
             genJets[(abs(genJets.Jet_eta) < 2.4) & (genJets.Jet_pt > 30)]
             .reset_index()
@@ -404,12 +416,12 @@ class DimuonEffProcessor(processor.ProcessorABC):
         genPart.loc[genPart["pdgId"] == 13, "charge"] = 1
         sum_sign = genPart.loc[:, "charge"].groupby("entry").sum()
         nGen = genPart.reset_index().groupby("entry")["subentry"].nunique()
-        #print(nGen.head())
+        # print(nGen.head())
         genPart = genPart[
             (genPart["status"] == 1) & (nGen >= 2) & (abs(sum_sign) < nGen)
         ]
-        #print("check if 2 particles in genpart")
-        #print(genPart.head())
+        # print("check if 2 particles in genpart")
+        # print(genPart.head())
         result = genPart.groupby("entry").apply(find_dimuon, is_mc=False)
         dimuon = pd.DataFrame(result.to_list(), columns=["idx1", "idx2", "dimuon_mass"])
         mu1 = genPart.loc[dimuon.idx1.values, :]
@@ -453,7 +465,19 @@ class DimuonEffProcessor(processor.ProcessorABC):
             [
                 genPart,
                 genJets[
-                    ["Jet_match", "Jet_ID", "btag", "Jet_pt", "Jet_eta", "Jet_phi", "partonFlavour", "hadronFlavour", "flavor_reco", "Jet_pt_reco", "Jet_eta_reco"]
+                    [
+                        "Jet_match",
+                        "Jet_ID",
+                        "btag",
+                        "Jet_pt",
+                        "Jet_eta",
+                        "Jet_phi",
+                        "partonFlavour",
+                        "hadronFlavour",
+                        "flavor_reco",
+                        "Jet_pt_reco",
+                        "Jet_eta_reco",
+                    ]
                 ],
             ],
             levels=0,
@@ -464,18 +488,18 @@ class DimuonEffProcessor(processor.ProcessorABC):
         genPart[["Jet_pt", "Jet_eta", "Jet_phi", "pt", "eta", "phi", "mass"]] = genPart[
             ["Jet_pt", "Jet_eta", "Jet_phi", "pt", "eta", "phi", "mass"]
         ].fillna(-999.0)
-        #print("check genPart and genJets heads")
-        #print(genPart.head)
-        #print(nJets.head)
+        # print("check genPart and genJets heads")
+        # print(genPart.head)
+        # print(nJets.head)
         genPart = (
             genPart.reset_index("subentry")
             .merge(nJets["nJets"], on=["entry"], how="left")
             .set_index("subentry", append=True)
         )
-        #print("check merge")
-        #print(genPart.nJets)
-        #print("check genPart shape")
-        #print(genPart.shape)
+        # print("check merge")
+        # print(genPart.nJets)
+        # print("check genPart shape")
+        # print(genPart.shape)
         genPart = (
             genPart.reset_index("subentry")
             .merge(nJets_acc["nJets_accepted"], on=["entry"], how="left")
@@ -550,7 +574,7 @@ class DimuonEffProcessor(processor.ProcessorABC):
         genPart["flavor_reco"] = genPart["flavor_reco"].astype(int)
         genPart["Jet_pt_reco"] = genPart["Jet_pt_reco"].astype(float)
         genPart["Jet_eta_reco"] = genPart["Jet_eta_reco"].astype(float)
-        #print(genPart["flavor_reco"])
+        # print(genPart["flavor_reco"])
         if self.apply_to_output is None:
             return genPart
         else:
@@ -842,10 +866,10 @@ class DimuonEffProcessor(processor.ProcessorABC):
 
     def prepare_lookups(self):
         # Rochester correction
-        #rochester_data = txt_converters.convert_rochester_file(
+        # rochester_data = txt_converters.convert_rochester_file(
         #    self.parameters["roccor_file"], loaduncs=True
-        #)
-        #self.roccor_lookup = rochester_lookup.rochester_lookup(rochester_data)
+        # )
+        # self.roccor_lookup = rochester_lookup.rochester_lookup(rochester_data)
         self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors
         self.musf_lookup = musf_lookup(self.parameters)

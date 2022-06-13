@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("copperhead/")
 
 import awkward as ak
@@ -180,14 +181,14 @@ class DielectronEffProcessor(processor.ProcessorABC):
                 df["Electron", "pt"] = df.Muon.pt_fsr
                 df["Electron", "eta"] = df.Muon.eta_fsr
                 df["Electron", "phi"] = df.Muon.phi_fsr
-                #df["Electron", "pfRelIso04_all"] = df.Muon.iso_fsr
+                # df["Electron", "pfRelIso04_all"] = df.Muon.iso_fsr
 
                 if self.timer:
                     self.timer.add_checkpoint("FSR recovery")
 
             # if FSR was applied, 'pt_fsr' will be corrected pt
             # if FSR wasn't applied, just copy 'pt' to 'pt_fsr'
-            #df["Muon", "pt_fsr"] = df.Muon.pt
+            # df["Muon", "pt_fsr"] = df.Muon.pt
 
             # --- conversion from awkward to pandas --- #
             ele_branches_local = copy.copy(ele_branches)
@@ -202,8 +203,8 @@ class DielectronEffProcessor(processor.ProcessorABC):
                 "pdgId",
             ]
             genPart = ak.to_pandas(df.GenPart[gen_branches])
-            #print("genPart shape")
-            #print(genPart.shape)
+            # print("genPart shape")
+            # print(genPart.shape)
 
             jet_branches_local = copy.copy(jet_branches)
             jet_branches_local += [
@@ -213,8 +214,8 @@ class DielectronEffProcessor(processor.ProcessorABC):
             ]
             jets = ak.to_pandas(df.Jet[jet_branches_local])
             genJets = ak.to_pandas(df.GenJet[["pt", "eta", "phi", "partonFlavour"]])
-            #print("gen jet head")
-            #print(genJets.head())
+            # print("gen jet head")
+            # print(genJets.head())
             electrons = ak.to_pandas(df.Electron[ele_branches_local])
             if self.timer:
                 self.timer.add_checkpoint("load muon data")
@@ -231,24 +232,24 @@ class DielectronEffProcessor(processor.ProcessorABC):
             flags = ak.to_pandas(df.Flag)
             flags = flags[self.parameters["event_flags"]].product(axis=1)
             electrons["pass_flags"] = True
-            #if self.parameters["electron_flags"]:
+            # if self.parameters["electron_flags"]:
             #    electrons["pass_flags"] = electrons[self.parameters["electron_flags"]].product(
             #        axis=1
             #    )
 
             # Define baseline muon selection (applied to pandas DF!)
             electrons["ID"] = (
-                #(muons.tkRelIso < self.parameters["muon_iso_cut"])
-                (electrons[self.parameters["electron_id"]] > 0)
-                #& (muons.dxy < self.parameters["muon_dxy"])
-                #& (
+                electrons[self.parameters["electron_id"]]
+                > 0
+                # & (muons.dxy < self.parameters["muon_dxy"])
+                # & (
                 #    (muons.ptErr.values / muons.pt.values)
                 #    < self.parameters["muon_ptErr/pt"]
-                #)
+                # )
             )
 
             # Find events with at least one good primary vertex
-            #good_pv = ak.to_pandas(df.PV).npvsGood > 0
+            # good_pv = ak.to_pandas(df.PV).npvsGood > 0
 
             # Define baseline event selection
 
@@ -321,15 +322,15 @@ class DielectronEffProcessor(processor.ProcessorABC):
         nJets = genJets.reset_index().groupby("entry")["subentry"].nunique()
         jets = nJets.to_numpy()
 
-        #print(len(jets))
-        #print(nJets.head())
-        #print(jets)
-        #print("0 jet events")
-        #print(len(jets[jets==0]))
-        #print("1 jet events")
-        #print(len(jets[jets==1]))
-        #print("2 jet events")
-        #print(len(jets[jets>=2]))
+        # print(len(jets))
+        # print(nJets.head())
+        # print(jets)
+        # print("0 jet events")
+        # print(len(jets[jets==0]))
+        # print("1 jet events")
+        # print(len(jets[jets==1]))
+        # print("2 jet events")
+        # print(len(jets[jets>=2]))
         nJets_acc = (
             genJets[(abs(genJets.Jet_eta) < 2.4) & (genJets.Jet_pt > 30)]
             .reset_index()
@@ -379,7 +380,7 @@ class DielectronEffProcessor(processor.ProcessorABC):
         electrons["match"] = True
         hlt = hlt.to_frame("hlt")
 
-        #good_pv = good_pv.to_frame("gpv")
+        # good_pv = good_pv.to_frame("gpv")
         genPart = genPart.merge(
             electrons[["match", "pt_raw", "ID"]], on=["entry", "subentry"], how="left"
         )
@@ -394,14 +395,16 @@ class DielectronEffProcessor(processor.ProcessorABC):
         genPart.loc[genPart["pdgId"] == 11, "charge"] = 1
         sum_sign = genPart.loc[:, "charge"].groupby("entry").sum()
         nGen = genPart.reset_index().groupby("entry")["subentry"].nunique()
-        #print(nGen.head())
+        # print(nGen.head())
         genPart = genPart[
             (genPart["status"] == 1) & (nGen >= 2) & (abs(sum_sign) < nGen)
         ]
-        #print("check if 2 particles in genpart")
-        #print(genPart.head())
+        # print("check if 2 particles in genpart")
+        # print(genPart.head())
         result = genPart.groupby("entry").apply(find_dielectron, is_mc=False)
-        dielectron = pd.DataFrame(result.to_list(), columns=["idx1", "idx2", "dielectron_mass"])
+        dielectron = pd.DataFrame(
+            result.to_list(), columns=["idx1", "idx2", "dielectron_mass"]
+        )
         e1 = genPart.loc[dielectron.idx1.values, :]
         e2 = genPart.loc[dielectron.idx2.values, :]
         e1.index = e1.index.droplevel("subentry")
@@ -454,18 +457,18 @@ class DielectronEffProcessor(processor.ProcessorABC):
         genPart[["Jet_pt", "Jet_eta", "Jet_phi", "pt", "eta", "phi", "mass"]] = genPart[
             ["Jet_pt", "Jet_eta", "Jet_phi", "pt", "eta", "phi", "mass"]
         ].fillna(-999.0)
-        #print("check genPart and genJets heads")
-        #print(genPart.head)
-        #print(nJets.head)
+        # print("check genPart and genJets heads")
+        # print(genPart.head)
+        # print(nJets.head)
         genPart = (
             genPart.reset_index("subentry")
             .merge(nJets["nJets"], on=["entry"], how="left")
             .set_index("subentry", append=True)
         )
-        #print("check merge")
-        #print(genPart.nJets)
-        #print("check genPart shape")
-        #print(genPart.shape)
+        # print("check merge")
+        # print(genPart.nJets)
+        # print("check genPart shape")
+        # print(genPart.shape)
         genPart = (
             genPart.reset_index("subentry")
             .merge(nJets_acc["nJets_accepted"], on=["entry"], how="left")
@@ -518,11 +521,11 @@ class DielectronEffProcessor(processor.ProcessorABC):
             .merge(ID["ID_pass"], on=["entry"], how="left")
             .set_index("subentry", append=True)
         )
-        #genPart = (
+        # genPart = (
         #    genPart.reset_index("subentry")
         #    .merge(good_pv["gpv"], on=["entry"], how="left")
         #    .set_index("subentry", append=True)
-        #)
+        # )
         genPart.fillna(False, inplace=True)
         genPart = (
             genPart.reset_index("subentry")
@@ -828,10 +831,10 @@ class DielectronEffProcessor(processor.ProcessorABC):
 
     def prepare_lookups(self):
         # Rochester correction
-        #rochester_data = txt_converters.convert_rochester_file(
+        # rochester_data = txt_converters.convert_rochester_file(
         #    self.parameters["roccor_file"], loaduncs=True
-        #)
-        #self.roccor_lookup = rochester_lookup.rochester_lookup(rochester_data)
+        # )
+        # self.roccor_lookup = rochester_lookup.rochester_lookup(rochester_data)
         self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors
         self.musf_lookup = musf_lookup(self.parameters)

@@ -18,15 +18,12 @@ def btagSF(df, year, correction="shape", syst="central", is_UL=True):
 
     df["pre_selection"] = False
     df.loc[
-            (df.pt > 20.0)
-          & (abs(df.eta) < 2.4)
-          & (df.jetId >= 2)
-          , "pre_selection"
-          ] = True
+        (df.pt > 20.0) & (abs(df.eta) < 2.4) & (df.jetId >= 2), "pre_selection"
+    ] = True
     mask = df["pre_selection"]
     if correction == "shape":
 
-        df["btag_sf_shape"] = 1.
+        df["btag_sf_shape"] = 1.0
         flavor = df[mask].hadronFlavour.to_numpy()
         eta = np.abs(df[mask].eta.to_numpy())
         pt = df[mask].pt.to_numpy()
@@ -39,7 +36,7 @@ def btagSF(df, year, correction="shape", syst="central", is_UL=True):
 
     elif correction == "wp":
 
-        df["btag_sf_wp"] = 1.
+        df["btag_sf_wp"] = 1.0
         is_bc = df["hadronFlavour"] >= 4
         is_light = df["hadronFlavour"] < 4
         path_eff = parameters["btag_sf_eff"][year]
@@ -64,14 +61,14 @@ def btagSF(df, year, correction="shape", syst="central", is_UL=True):
                     correction = "deepJet_comb"
                 fac = cset[correction].evaluate(syst, "M", flavor, eta, pt)
             else:
-                fac = cset.eval(syst, flavor, eta, pt, wp)         
+                fac = cset.eval(syst, flavor, eta, pt, wp)
 
             prob = efflookup(pt, eta, key)
             prob_nosf = np.copy(prob)
-            prob_sf = np.copy(prob)*fac
-            prob_sf[mva < wp] = 1. - prob_sf[mva < wp]
-            prob_nosf[mva < wp] = 1. - prob_nosf[mva < wp]
-            sf = prob_sf/prob_nosf
+            prob_sf = np.copy(prob) * fac
+            prob_sf[mva < wp] = 1.0 - prob_sf[mva < wp]
+            prob_nosf[mva < wp] = 1.0 - prob_nosf[mva < wp]
+            sf = prob_sf / prob_nosf
             df.loc[mask & mask_flavor, "btag_sf_wp"] = sf
 
 
@@ -403,10 +400,10 @@ def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
             "dimuon_pt",
             "dimuon_eta",
             "dimuon_phi",
-             "dimuon_mass_gen",
+            "dimuon_mass_gen",
             "dimuon_pt_gen",
             "dimuon_eta_gen",
-             "dimuon_phi_gen",
+            "dimuon_phi_gen",
         ]
     else:
         mm_columns = [
@@ -464,8 +461,8 @@ def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
         except Exception:
             variables["b1l2_mass"] = 100000
 
-        variables['min_b1l_mass'] = variables[['b1l1_mass', 'b1l2_mass']].min(axis=1)
-        variables['min_bl_mass'] = variables[['b1l1_mass', 'b1l2_mass']].min(axis=1)
+        variables["min_b1l_mass"] = variables[["b1l1_mass", "b1l2_mass"]].min(axis=1)
+        variables["min_bl_mass"] = variables[["b1l1_mass", "b1l2_mass"]].min(axis=1)
 
     if njet > 1:
         bjet2 = p4(jet1, is_mc=is_mc)
@@ -499,8 +496,10 @@ def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
         except Exception:
             variables["b2l2_mass"] = 100000
 
-        variables['min_b2l_mass'] = variables[['b2l1_mass', 'b2l2_mass']].min(axis=1)
-        variables['min_bl_mass'] = variables[['b1l1_mass', 'b1l2_mass', 'b2l1_mass', 'b2l2_mass']].min(axis=1)
+        variables["min_b2l_mass"] = variables[["b2l1_mass", "b2l2_mass"]].min(axis=1)
+        variables["min_bl_mass"] = variables[
+            ["b1l1_mass", "b1l2_mass", "b2l1_mass", "b2l2_mass"]
+        ].min(axis=1)
 
         variables.bjet2_rap = rapidity(jet2)
         # Fill dijet variables
