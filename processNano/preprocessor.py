@@ -154,7 +154,7 @@ class SamplesInfo(object):
             ]
 
         if self.debug:
-            all_files = [all_files[0]        
+            all_files = [all_files[0]]
 
         sumGenWgts = 0
         nGenEvts = 0

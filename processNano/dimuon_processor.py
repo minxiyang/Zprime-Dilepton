@@ -603,7 +603,7 @@ class DimuonProcessor(processor.ProcessorABC):
             jets = jets[unc_name]["down"][jet_branches_local]
         else:
             jets = jets[jet_branches_local]
- 
+
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
         if is_mc:
@@ -736,7 +736,7 @@ class DimuonProcessor(processor.ProcessorABC):
         del mu2
         return output
 
- 
+
     def prepare_lookups(self):
         self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors

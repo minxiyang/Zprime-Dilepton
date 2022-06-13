@@ -320,7 +320,7 @@ class DielectronEffProcessor(processor.ProcessorABC):
         )
         nJets = genJets.reset_index().groupby("entry")["subentry"].nunique()
         jets = nJets.to_numpy()
- 
+
         #print(len(jets))
         #print(nJets.head())
         #print(jets)
