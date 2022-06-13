@@ -52,13 +52,13 @@ parameters = {
     "label": "noGenWeight",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
-    "syst_variations": ["nominal","resUnc","scaleUncUp","scaleUncDown"],
+    "syst_variations": ["nominal", "resUnc", "scaleUncUp", "scaleUncDown"],
     # "custom_npartitions": {
     #     "vbf_powheg_dipole": 1,
     # },
     #
     # < settings for histograms >
-    "hist_vars": ["min_bl_mass","min_b1l_mass","min_b2l_mass","dimuon_mass", "dimuon_mass_gen",'njets','nbjets'],
+    "hist_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen", 'njets', 'nbjets'],
     "hist_vars_2d": [["dimuon_mass", "met"]],
     "variables_lookup": variables_lookup,
     "save_hists": True,

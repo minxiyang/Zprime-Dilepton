@@ -47,8 +47,8 @@ parameters = {
     "syst_variations": ["nominal"],
     #
     # < plotting settings >
-    "plot_vars": ["min_bl_mass","min_b1l_mass","min_b2l_mass","dimuon_mass", "dimuon_mass_gen",'njets','nbjets'],  # "dimuon_mass"],
-    "plot_vars_2d": [["dimuon_mass","met"]],  # "dimuon_mass"],
+    "plot_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen", 'njets', 'nbjets'],  # "dimuon_mass"],
+    "plot_vars_2d": [["dimuon_mass", "met"]],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
@@ -58,7 +58,7 @@ parameters = {
     #
     # < templates and datacards >
     "save_templates": True,
-    "templates_vars": ["min_bl_mass","min_b1l_mass","min_b2l_mass","dimuon_mass","dimuon_mass_gen"],  # "dimuon_mass"],
+    "templates_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen"],  # "dimuon_mass"],
 }
 
 parameters["grouping"] = {
@@ -105,7 +105,7 @@ parameters["grouping"] = {
 # parameters["grouping"] = {"vbf_powheg_dipole": "VBF",}
 
 parameters["plot_groups"] = {
-    "stack": ["DY","Top", "Other"],
+    "stack": ["DY", "Top", "Other"],
     "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
     "errorbar": ["Data"],
     #"2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
