@@ -102,7 +102,6 @@ parameters["grouping"] = {
     "bbll_8TeV_M1000_posLL" : "bbll_8TeV_posLL",
 
 }
-# parameters["grouping"] = {"vbf_powheg_dipole": "VBF",}
 
 parameters["plot_groups"] = {
     "stack": ["DY", "Top", "Other"],
