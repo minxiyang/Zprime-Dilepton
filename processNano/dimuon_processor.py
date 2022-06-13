@@ -7,11 +7,11 @@ import numpy as np
 import correctionlib
 # np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
+import swifter
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
 from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
-from coffea.btag_tools import BTagScaleFactor
 from processNano.timer import Timer
 from processNano.weights import Weights
 #correction helpers included from copperhead
@@ -23,7 +23,7 @@ from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
 from copperhead.stage1.corrections.stxs_uncert import add_stxs_variations, stxs_lookups
 from copperhead.stage1.corrections.lhe_weights import lhe_weights
 from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
-from copperhead.stage1.corrections.btag_weights import btag_weights
+#from copperhead.stage1.corrections.btag_weights import btag_weights
 
 #high mass dilepton specific corrections
 from processNano.corrections.kFac import kFac
@@ -41,7 +41,7 @@ from copperhead.config.jec_parameters import jec_parameters
 class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
         self.samp_info = kwargs.pop("samp_info", None)
-        do_timer = kwargs.pop("do_timer", False)
+        do_timer = kwargs.pop("do_timer", True)
         self.pt_variations = kwargs.get("pt_variations", ["nominal"])
         self.apply_to_output = kwargs.pop("apply_to_output", None)
 
@@ -73,7 +73,8 @@ class DimuonProcessor(processor.ProcessorABC):
 
 
         #self.timer = Timer("global") if do_timer else None
-        self.timer = None
+        self.timer = Timer("global")
+        #self.timer = None
         self._columns = self.parameters["proc_columns"]
 
         self.regions = ["bb", "be"]
@@ -284,6 +285,8 @@ class DimuonProcessor(processor.ProcessorABC):
                     return self.accumulator.identity()
 
             result = muons.groupby("entry").apply(find_dimuon, is_mc=is_mc)
+            #result = muons.swifter.groupby("entry").apply(find_dimuon, is_mc=is_mc)
+            
             if is_mc:
                 dimuon = pd.DataFrame(
                     result.to_list(), columns=["idx1", "idx2", "mass", "mass_gen"]
@@ -327,9 +330,6 @@ class DimuonProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
         # Prepare jets
         # ------------------------------------------------------------#
-        #array = output.dimuon_mass_gen[output.dimuon_mass_gen<4500]
-        #array = array[array>0.]
-        #print(array)
         prepare_jets(df, is_mc)
 
         # ------------------------------------------------------------#
@@ -542,27 +542,12 @@ class DimuonProcessor(processor.ProcessorABC):
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
         if is_mc:
-            sf_shape = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB)
-            jets["btag_sf_shape"] = sf_shape
-            genJets = ak.to_pandas(df.GenJet[["pt", "eta", "phi", "hadronFlavour"]])
-            genJets = genJets[(abs(genJets.eta)<2.4)
-                              & (genJets.pt>=20.)
-                              & (genJets.pt<=1000.)
-                              ]
-            jets["Jet_match"] = True
-            genJets = genJets.merge(
-            jets[["Jet_match", "btagDeepFlavB"]], on=["entry", "subentry"], how="left"
-            )
-            genJets = genJets[genJets.Jet_match == True]
+            
+            btagSF(jets, self.year, correction="shape", syst="central", is_UL=True)
+            btagSF(jets, self.year, correction="wp", syst="central", is_UL=False)
 
-            genJets_bc = genJets[abs(genJets.hadronFlavour) >= 4]
-            genJets_light = genJets[abs(genJets.hadronFlavour) < 4]
-
-            sf_wp_bc = btagSF("2018", genJets_bc.hadronFlavour, genJets_bc.eta, genJets_bc.pt, genJets_bc.btagDeepFlavB, parameters["UL_btag_medium"][self.year], 'deepJet_comb')
-            sf_wp_light = btagSF("2018", genJets_light.hadronFlavour, genJets_light.eta, genJets_light.pt, genJets_light.btagDeepFlavB, parameters["UL_btag_medium"][self.year], 'deepJet_incl')
-            genJets.loc[abs(genJets.hadronFlavour) < 4, "btag_sf_wp"]=sf_wp_light
-            genJets.loc[abs(genJets.hadronFlavour) >= 4, "btag_sf_wp"]=sf_wp_bc
-            jets["btag_sf_wp"]=genJets.btag_sf_wp
+            if self.timer:
+                self.timer.add_checkpoint("Applied btaging")
         jets = jets.dropna()
 
         if jets.index.nlevels == 3:
@@ -593,22 +578,12 @@ class DimuonProcessor(processor.ProcessorABC):
             names=["entry", "subentry"],
         )
         # Select two jets with highest pT
-        jets["pre_selection"] = 0
-        jets.loc[
-            (
-                (jets.pt > 20.0)
-                & (abs(jets.eta) < 2.4)
-                & (jets.jetId >= 2)
-            ),
-            "pre_selection",
-        ] = 1
 
         jets["selection"] = 0
         jets.loc[
             (
                 (jets.pt > 30.0)
                 & (abs(jets.eta) < 2.4)
-                #& (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
                 &(jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year])
                 & (jets.jetId >= 2)
             ),
@@ -617,7 +592,7 @@ class DimuonProcessor(processor.ProcessorABC):
         if is_mc:
              variables["btag_sf_shape"] = jets.loc[jets.pre_selection == 1, "btag_sf_shape"].groupby("entry").prod()
              variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
-             variables["btag_sf_wp"] = jets.loc[:, "btag_sf_wp"].groupby("entry").prod()
+             variables["btag_sf_wp"] = jets.loc[jets.pre_selection == 1, "btag_sf_wp"].groupby("entry").prod()
              variables["btag_sf_wp"] = variables["btag_sf_wp"].fillna(1.0)
         else:
              variables["btag_sf_shape"] = 1.0
@@ -637,22 +612,22 @@ class DimuonProcessor(processor.ProcessorABC):
         # Calculate btag SF
         # ------------------------------------------------------------#
         # --- Btag weights --- #
-        if is_mc:
-            bjet_sel_mask = output.event_selection
+        #if is_mc:
+            #bjet_sel_mask = output.event_selection
 
-            btag_wgt, btag_syst = btag_weights(
-                self, self.btag_lookup, self.btag_systs, jets, weights, bjet_sel_mask
-            )
-            weights.add_weight("btag_wgt", btag_wgt)
+            #btag_wgt, btag_syst = btag_weights(
+            #    self, self.btag_lookup, self.btag_systs, jets, weights, bjet_sel_mask
+            #)
+            #weights.add_weight("btag_wgt", btag_wgt)
 
             # --- Btag weights variations --- #
-            for name, bs in btag_syst.items():
-                weights.add_weight(f"btag_wgt_{name}", bs, how="only_vars")
+            #for name, bs in btag_syst.items():
+            #    weights.add_weight(f"btag_wgt_{name}", bs, how="only_vars")
 
-            if self.timer:
-                self.timer.add_checkpoint(
-                    "Applied B-tag weights"
-                )
+            #if self.timer:
+            #    self.timer.add_checkpoint(
+            #        "Applied B-tag weights"
+            #    )
 
         # --------------------------------------------------------------#
         # Fill outputs
@@ -680,11 +655,14 @@ class DimuonProcessor(processor.ProcessorABC):
         # Pile-up reweighting
         self.pu_lookups = pu_lookups(self.parameters)
         # Btag weights
-        self.btag_lookup = BTagScaleFactor(
-            self.parameters["btag_sf_csv"],
-            BTagScaleFactor.RESHAPE,
-            "iterativefit,iterativefit,iterativefit",
-        )
+        #self.btag_lookup = BTagScaleFactor(
+        #        "data/b-tagging/DeepCSV_102XSF_WP_V1.csv", "medium"
+        #    )
+        #self.btag_lookup = BTagScaleFactor(
+        #    self.parameters["btag_sf_csv"],
+        #    BTagScaleFactor.RESHAPE,
+        #    "iterativefit,iterativefit,iterativefit",
+        #)
         #self.btag_lookup = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB) 
 
         # --- Evaluator

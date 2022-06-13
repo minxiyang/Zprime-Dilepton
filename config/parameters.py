@@ -36,13 +36,20 @@ parameters["el_hlt"] = {
 }
 
 
-parameters["btag_sf_csv"] = {
+parameters["btag_sf_pre_UL"] = {
     "2016": "data/b-tagging/DeepCSV_2016LegacySF_V1.csv",
     "2017": "data/b-tagging/DeepCSV_94XSF_V5_B_F.csv",
     #"2018": "data/b-tagging/DeepCSV_102XSF_WP_V1.csv",
-    "2018": "data/b-tagging/DeepCSV_102XSF_V1.csv",
+    "2018": "data/b-tagging/DeepJet_102XSF_WP_V1.csv",
 }
 
+parameters["btag_sf_UL"] = {
+    "2018": "data/b-tagging/btagSF_2018UL.json",
+}
+
+parameters["btag_sf_eff"] = {
+    "2018": "data/b-tagging/UL2018_ttbar_eff.pickle",
+}
 
 parameters["pu_file_data"] = {
     "2016": "data/pileup/PileupData_GoldenJSON_Full2016.root",

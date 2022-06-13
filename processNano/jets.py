@@ -5,38 +5,74 @@ from processNano.utils import p4_sum, delta_r, rapidity
 import correctionlib
 import pickle
 from coffea.lookup_tools.dense_lookup import dense_lookup
+from coffea.btag_tools import BTagScaleFactor
+from config.parameters import parameters
 
 
-def btagSF(year, hadronFlavour, eta, pt, mva, wp=0, correction="deepJet_shape", syst="central"):
-    cset = correctionlib.CorrectionSet.from_file("data/b-tagging/btagging.json")
-    eta = np.abs(eta.to_numpy())
-    eta[eta>2.4999] = 2.4999
-    pt = pt.to_numpy()
-    pt[pt<20] = 20.001
-    pt[pt>1000] = 999.99
-    flavor = abs(hadronFlavour.to_numpy())
-    idx = np.copy(flavor)
-    idx[idx==4] = 1
-    idx[idx==5] = 2
-    mva = mva.to_numpy()
-
-    if correction == "deepJet_shape":
-        sf = cset[correction].evaluate(syst, flavor, eta, pt, mva)
+def btagSF(df, year, correction="shape", syst="central", is_UL=True):
+    
+    if is_UL:
+        cset = correctionlib.CorrectionSet.from_file(parameters["btag_sf_UL"][year])
     else:
-        path_eff = "data/b-tagging/UL2018_ttbar_eff.pickle"
+        cset = BTagScaleFactor(parameters["btag_sf_pre_UL"][year], "medium")
+
+    df["pre_selection"] = False
+    df.loc[
+            (df.pt > 20.0) 
+          & (abs(df.eta) < 2.4)
+          & (df.jetId >= 2)
+          ,"pre_selection"
+          ] = True
+    mask = df["pre_selection"]
+    if correction == "shape":
+        
+        df["btag_sf_shape"] = 1.
+        flavor = df[mask].hadronFlavour.to_numpy()
+        eta = np.abs(df[mask].eta.to_numpy())
+        pt = df[mask].pt.to_numpy()
+        mva = df[mask].btagDeepFlavB.to_numpy()
+
+        if is_UL:
+            sf = cset["deepJet_shape"].evaluate(syst, flavor, eta, pt, mva)
+
+        df.loc[mask, "btag_sf_shape"] = sf 
+
+    elif correction == "wp":
+    
+        df["btag_sf_wp"] = 1.
+        is_bc =  df["hadronFlavour"]>=4
+        is_light = df["hadronFlavour"]<4
+        path_eff = parameters["btag_sf_eff"][year]
+        wp = parameters["UL_btag_medium"][year]
         with open(path_eff, "rb") as handle:
             eff = pickle.load(handle)
 
-        fac = cset[correction].evaluate(syst, "M", flavor, eta, pt)
         efflookup = dense_lookup(eff.values(), [ax.edges for ax in eff.axes])
-  
-        prob = efflookup(pt, eta, idx)
-        prob_nosf = np.copy(prob)
-        prob_sf = np.copy(prob)*fac
-        prob_sf[mva<wp] = 1. - prob_sf[mva<wp]
-        prob_nosf[mva<wp] = 1. - prob_nosf[mva<wp]
-        sf = prob_sf/prob_nosf
-    return sf
+        mask_dict = {0:is_light, 4:is_bc, 5:is_bc}
+        for key in mask_dict.keys():
+            
+            mask_flavor = mask_dict[key]
+            flavor = df[mask & mask_flavor].hadronFlavour.to_numpy()
+            eta = np.abs(df[mask & mask_flavor].eta.to_numpy())
+            pt = df[mask & mask_flavor].pt.to_numpy()
+            mva = df[mask & mask_flavor].btagDeepFlavB.to_numpy()
+
+            if is_UL:
+                if key < 4:
+                    correction = "deepJet_incl"
+                else:
+                    correction = "deepJet_comb"
+                fac = cset[correction].evaluate(syst, "M", flavor, eta, pt)
+            else:
+                fac = cset.eval(flavor=flavor, eta=eta, pt=pt, discr=wp, systematic=syst)         
+
+            prob = efflookup(pt, eta, key)
+            prob_nosf = np.copy(prob)
+            prob_sf = np.copy(prob)*fac
+            prob_sf[mva<wp] = 1. - prob_sf[mva<wp]
+            prob_nosf[mva<wp] = 1. - prob_nosf[mva<wp]
+            sf = prob_sf/prob_nosf
+            df.loc[mask & mask_flavor, "btag_sf_wp"] = sf
 
 
 def prepare_jets(df, is_mc):
