@@ -64,7 +64,7 @@ def btagSF(df, year, correction="shape", syst="central", is_UL=True):
                     correction = "deepJet_comb"
                 fac = cset[correction].evaluate(syst, "M", flavor, eta, pt)
             else:
-                fac = cset.eval(flavor=flavor, eta=eta, pt=pt, discr=wp, systematic=syst)         
+                fac = cset.eval(syst, flavor, eta, pt, wp)         
 
             prob = efflookup(pt, eta, key)
             prob_nosf = np.copy(prob)
