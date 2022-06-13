@@ -703,13 +703,8 @@ class DimuonProcessor(processor.ProcessorABC):
         # Calculate btag SF
         # ------------------------------------------------------------#
         # --- Btag weights --- #
-<<<<<<< HEAD
         #if is_mc:
             #bjet_sel_mask = output.event_selection
-=======
-        if False:
-            bjet_sel_mask = output.event_selection
->>>>>>> 86fec4c... small fixes to weights
 
             #btag_wgt, btag_syst = btag_weights(
             #    self, self.btag_lookup, self.btag_systs, jets, weights, bjet_sel_mask
