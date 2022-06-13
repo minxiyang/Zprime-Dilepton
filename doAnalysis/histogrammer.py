@@ -100,7 +100,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
            & (~((df.dataset == "ttbar_lep_inclusive") & (df.dimuon_mass_gen > 500)))
            & (~((df.dataset == "WWinclusive") & (df.dimuon_mass_gen > 200)))
         )
-        
+
         data = df.loc[slicer, var_name]
         weight = df.loc[slicer, w]
 
@@ -185,13 +185,12 @@ def make_histograms2D(df, var_name1, var_name2, year, dataset, regions, channels
     if len(var1.binning) > 0:
         hist = hist.Var(var1.binning, name=var1.name, label=var1.caption)
     else:
-        hist = hist.Reg(var1.nbins, var.xmin, var.xmax, name=var1.name, label=var1.caption)
+        hist = hist.Reg(var1.nbins, var1.xmin, var1.xmax, name=var1.name, label=var1.caption)
 
     if len(var2.binning) > 0:
         hist = hist.Var(var2.binning, name=var2.name, label=var2.caption)
     else:
         hist = hist.Reg(var2.nbins, var2.xmin, var2.xmax, name=var2.name, label=var2.caption)
-
 
     # add axis for systematic variation
     #hist = hist.StrCat(variations, name="variation")
@@ -202,8 +201,6 @@ def make_histograms2D(df, var_name1, var_name2, year, dataset, regions, channels
     # loop over configurations and fill the histogram
     loop_args = {
         "region": regions,
-#        "w": wgt_variations,
-#        "v": syst_variations,
         "channel": channels,
     }
     loop_args = [

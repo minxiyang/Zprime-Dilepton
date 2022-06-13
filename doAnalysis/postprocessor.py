@@ -93,11 +93,11 @@ def on_partition(args, parameters):
         if hist_info_row is not None:
             hist_info_rows.append(hist_info_row)
 
-    try: 
+    try:
         hist_info_df = pd.concat(hist_info_rows).reset_index(drop=True)
     except Exception:
         hist_info_df = []
-    
+
     hist_info_rows_2d = []
     for vars_2d in parameters["hist_vars_2d"]:
         hist_info_row_2d = make_histograms2D(

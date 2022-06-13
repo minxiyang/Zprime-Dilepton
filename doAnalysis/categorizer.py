@@ -26,7 +26,6 @@ def split_into_channels(df, v=""):
         ] = "2b"
 
 
-
 def categorize_by_score(df, scores, mode="uniform", **kwargs):
     nbins = kwargs.pop("nbins", 4)
     for channel, score_name in scores.items():
