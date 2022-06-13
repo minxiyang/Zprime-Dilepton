@@ -393,7 +393,7 @@ def plot2D(args, parameters={}):
         plot_color_gradients = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples', 'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu', 'GnBu', 'PuBu', 'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn']
         for i in range(0, len(plottables)):
 
-            label = labels[i]                
+            label = labels[i] 
             entry.plot_opts["cmap"] = plot_color_gradients[i]
             hep.hist2dplot(
                 plottables[i],
