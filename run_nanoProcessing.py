@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("copperhead/")
 import time
 import argparse
@@ -7,17 +8,17 @@ import datetime
 from functools import partial
 from coffea.processor import DaskExecutor, Runner
 from coffea.nanoevents import NanoAODSchema
-#from copperhead.stage1.preprocessor import load_samples
+
+# from copperhead.stage1.preprocessor import load_samples
 from processNano.preprocessor import load_samples
 from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
 import os
 
-user_name=os.getcwd().split("/")[5]
-print(user_name)
+user_name = os.getcwd().split("/")[5]
 dask.config.set({"temporary-directory": f"/depot/cms/users/{user_name}/dask-temp/"})
-global_path = os.getcwd()+"/output/"
+global_path = os.getcwd() + "/output/"
 parser = argparse.ArgumentParser()
 # Slurm cluster IP to use. If not specified, will create a local cluster
 parser.add_argument(
@@ -74,7 +75,7 @@ args = parser.parse_args()
 
 node_ip = "128.211.148.60"  # hammer-c000
 # node_ip = "128.211.149.135"
-#node_ip = "128.211.149.140"
+# node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
 
 
@@ -105,7 +106,7 @@ parameters = {
     "label": args.label,
     "global_path": global_path,
     "out_path": f"{args.year}_{args.label}_{local_time}",
-    #"server": "root://xrootd.rcac.purdue.edu/",
+    # "server": "root://xrootd.rcac.purdue.edu/",
     # "server": "root://cmsxrootd.fnal.gov//",
     "xrootd": False,
     "server": "/mnt/hadoop/",
@@ -122,7 +123,6 @@ parameters = {
     "do_timer": True,
     "do_btag_syst": False,
     "save_output": True,
-
 }
 
 parameters["out_dir"] = f"{parameters['global_path']}/" f"{parameters['out_path']}"
@@ -139,7 +139,7 @@ def saving_func(output, out_dir):
         return
     for ds in output.s.unique():
         df = output[output.s == ds]
-        #df = df.drop_duplicates(subset=["run", "event", "luminosityBlock"])
+        # df = df.drop_duplicates(subset=["run", "event", "luminosityBlock"])
         if df.shape[0] == 0:
             continue
         mkdir(f"{out_dir}/{ds}")
@@ -152,7 +152,7 @@ def saving_func(output, out_dir):
 def submit_job(parameters):
     # mkdir(parameters["out_path"])
     if parameters["channel"] == "eff_mu":
-        out_dir = parameters["global_path"]+parameters["out_path"]
+        out_dir = parameters["global_path"] + parameters["out_path"]
     else:
         out_dir = parameters["global_path"]
     print(out_dir)
@@ -168,17 +168,21 @@ def submit_job(parameters):
         "samp_info": parameters["samp_infos"],
         "do_timer": parameters["do_timer"],
         "do_btag_syst": parameters["do_btag_syst"],
-        #"regions": parameters["regions"],
-        #"pt_variations": parameters["pt_variations"],
+        # "regions": parameters["regions"],
+        # "pt_variations": parameters["pt_variations"],
         "apply_to_output": partial(save_stage1_output_to_parquet, out_dir=out_dir),
     }
 
     if parameters["channel"] == "mu":
         from processNano.dimuon_processor import DimuonProcessor as event_processor
     elif parameters["channel"] == "el":
-        from processNano.dielectron_processor import DielectronProcessor as event_processor
+        from processNano.dielectron_processor import (
+            DielectronProcessor as event_processor,
+        )
     elif parameters["channel"] == "eff_mu":
-        from processNano.dimuon_eff_processor import DimuonEffProcessor as event_processor
+        from processNano.dimuon_eff_processor import (
+            DimuonEffProcessor as event_processor,
+        )
     else:
         print("wrong channel input")
 
@@ -243,7 +247,7 @@ if __name__ == "__main__":
             "tW",
         ],
         "dy": [
-            #"dy50to120",
+            # "dy50to120",
             "dy120to200",
             "dy200to400",
             "dy400to800",
@@ -279,7 +283,7 @@ if __name__ == "__main__":
         parameters["client"] = Client(
             processes=True,
             n_workers=40,
-            #dashboard_address=dash_local,
+            # dashboard_address=dash_local,
             threads_per_worker=1,
             memory_limit="3.6GB",
         )
@@ -295,18 +299,18 @@ if __name__ == "__main__":
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            #if "WWinclusive" not in sample:
-            #if "dy200to400" not in sample:
-            #if "dy" not in sample:
-            #if "ttbar_lep_M500to800" not in sample:
-            #if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
+            # if "WWinclusive" not in sample:
+            # if "dy200to400" not in sample:
+            # if "dy" not in sample:
+            # if "ttbar_lep_M500to800" not in sample:
+            # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
             #    continue
 
-            #if group != "CI":
+            # if group != "CI":
             #    continue
             if sample not in ["dy400to800"]:
                 continue
-            #if group != "data":
+            # if group != "data":
             #    continue
             if group == "data":
                 datasets_data.append(sample)
