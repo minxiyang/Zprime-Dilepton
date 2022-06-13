@@ -4,10 +4,8 @@ sys.path.append("copperhead/")
 import awkward
 import awkward as ak
 import numpy as np
-import correctionlib
 # np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
-import swifter
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
 from coffea.lookup_tools import txt_converters, rochester_lookup
