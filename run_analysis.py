@@ -32,7 +32,7 @@ args = parser.parse_args()
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.148.61"
+node_ip = "128.211.148.60"
 
 if use_local_cluster:
     ncpus_local = 40
@@ -46,18 +46,20 @@ else:
 parameters = {
     # < general settings >
     "slurm_cluster_ip": slurm_cluster_ip,
-    "global_path": "/home/schul105/depot/dileptonAnalysis/output/",
+    "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
     "years": args.years,
-    "label": "genCut",
-    "channels": ["0b", "1b", "2b"],
+    #"label": "moreKiller",
+    "label": "noGenWeight",
+    "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["bb", "be"],
-    "syst_variations": ["nominal"],
+    "syst_variations": ["nominal", "resUnc", "scaleUncUp", "scaleUncDown"],
     # "custom_npartitions": {
     #     "vbf_powheg_dipole": 1,
     # },
     #
     # < settings for histograms >
-    "hist_vars": ["dimuon_mass", "dimuon_mass_gen", "dimuon_mass_resUnc", "dimuon_mass_scaleUncUp", "dimuon_mass_scaleUncDown"],
+    "hist_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen", 'njets', 'nbjets'],
+    "hist_vars_2d": [["dimuon_mass", "met"]],
     "variables_lookup": variables_lookup,
     "save_hists": True,
     #
@@ -109,8 +111,23 @@ parameters["datasets"] = [
     "WZ3LNu",
     "ZZ2L2Nu",
     "ZZ4L",
+    "bbll_4TeV_M1000_negLL",
+    "bbll_4TeV_M1000_negLR",
+    "bbll_4TeV_M1000_posLL",
+    "bbll_4TeV_M1000_posLR",
+    "bbll_4TeV_M400_negLL",
+    "bbll_4TeV_M400_negLR",
+    "bbll_4TeV_M400_posLL",
+    "bbll_4TeV_M400_posLR",
+    "bbll_8TeV_M1000_negLL",
+    "bbll_8TeV_M1000_negLR",
+    "bbll_8TeV_M1000_posLL",
+    "bbll_8TeV_M1000_posLR",
+    "bbll_8TeV_M400_negLL",
+    "bbll_8TeV_M400_negLR",
+    "bbll_8TeV_M400_posLL",
+    "bbll_8TeV_M400_posLR",
 ]
-
 # using one small dataset for debugging
 # parameters["datasets"] = ["vbf_powheg_dipole"]
 

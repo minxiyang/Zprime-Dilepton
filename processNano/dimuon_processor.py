@@ -7,8 +7,6 @@ import numpy as np
 # np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
 import coffea.processor as processor
-from coffea.lookup_tools import extractor
-from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
 from processNano.timer import Timer
 from processNano.weights import Weights
@@ -16,17 +14,16 @@ from processNano.weights import Weights
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
 from copperhead.stage1.corrections.lepton_sf import musf_lookup, musf_evaluator
 from copperhead.stage1.corrections.jec import jec_factories, apply_jec
-from copperhead.stage1.corrections.geofit import apply_geofit
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
-from copperhead.stage1.corrections.stxs_uncert import add_stxs_variations, stxs_lookups
-from copperhead.stage1.corrections.lhe_weights import lhe_weights
-from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
-#from copperhead.stage1.corrections.btag_weights import btag_weights
+#from copperhead.stage1.corrections.lhe_weights import lhe_weights
+#from copperhead.stage1.corrections.pdf_variations import add_pdf_variations
 
 #high mass dilepton specific corrections
 from processNano.corrections.kFac import kFac
+from processNano.corrections.nnpdfWeight import NNPDFWeight
 
-from processNano.jets import prepare_jets, fill_jets, btagSF 
+from processNano.jets import prepare_jets, fill_jets, fill_bjets, btagSF
+
 import copy
 
 from processNano.muons import find_dimuon, fill_muons
@@ -35,6 +32,7 @@ from processNano.utils import bbangle
 from config.parameters import parameters, muon_branches, jet_branches
 
 from copperhead.config.jec_parameters import jec_parameters
+
 
 class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
@@ -55,7 +53,8 @@ class DimuonProcessor(processor.ProcessorABC):
         if self.samp_info is None:
             print("Samples info missing!")
             return
-
+        self.applykFac = True
+        self.applyNNPDFWeight = True
         self.do_pu = True
         self.auto_pu = False
         self.year = self.samp_info.year
@@ -69,10 +68,8 @@ class DimuonProcessor(processor.ProcessorABC):
             if ptvar in jec_pars["jer_variations"]:
                 self.do_jerunc = True
 
+        self.timer = Timer("global") if do_timer else None
 
-        #self.timer = Timer("global") if do_timer else None
-        self.timer = Timer("global")
-        #self.timer = None
         self._columns = self.parameters["proc_columns"]
 
         self.regions = ["bb", "be"]
@@ -126,6 +123,37 @@ class DimuonProcessor(processor.ProcessorABC):
         # and their systematic variations
         weights = Weights(output)
 
+        #calculate generated mass from generated particles using the coffea genParticles
+        if is_mc:
+            genPart = df.GenPart
+            genPart = genPart[((abs(genPart.pdgId) == 11) | abs(genPart.pdgId) == 13 | (abs(genPart.pdgId) == 15)) & genPart.hasFlags(['isHardProcess', 'fromHardProcess', 'isPrompt'])]
+
+            cut = (ak.num(genPart) == 2)
+            output["dimuon_mass_gen"] = cut
+            output["dimuon_pt_gen"] = cut
+            output["dimuon_eta_gen"] = cut
+            output["dimuon_phi_gen"] = cut
+            genMother = genPart[cut][:, 0] + genPart[cut][:, 1]
+            output.loc[output["dimuon_mass_gen"] == True, ["dimuon_mass_gen"]] = genMother.mass
+            output.loc[output["dimuon_pt_gen"] == True, ["dimuon_pt_gen"]] = genMother.pt
+            output.loc[output["dimuon_eta_gen"] == True, ["dimuon_eta_gen"]] = genMother.eta
+            output.loc[output["dimuon_phi_gen"] == True, ["dimuon_phi_gen"]] = genMother.phi
+            output.loc[output["dimuon_mass_gen"] == False, ["dimuon_mass_gen"]] = -999.
+            output.loc[output["dimuon_pt_gen"] == False, ["dimuon_pt_gen"]] = -999.
+            output.loc[output["dimuon_eta_gen"] == False, ["dimuon_eta_gen"]] = -999.
+            output.loc[output["dimuon_phi_gen"] == False, ["dimuon_phi_gen"]] = -999.
+
+        else:
+            output["dimuon_mass_gen"] = -999.
+            output["dimuon_pt_gen"] = -999.
+            output["dimuon_eta_gen"] = -999.
+            output["dimuon_phi_gen"] = -999.
+
+        output["dimuon_mass_gen"] = output["dimuon_mass_gen"].astype(float)
+        output["dimuon_pt_gen"] = output["dimuon_pt_gen"].astype(float)
+        output["dimuon_eta_gen"] = output["dimuon_eta_gen"].astype(float)
+        output["dimuon_phi_gen"] = output["dimuon_phi_gen"].astype(float)
+
         if is_mc:
             # For MC: Apply gen.weights, pileup weights, lumi weights,
             # L1 prefiring weights
@@ -143,12 +171,11 @@ class DimuonProcessor(processor.ProcessorABC):
                 )
                 weights.add_weight("pu_wgt", pu_wgts, how="all")
             if self.do_l1pw:
-                if self.parameters["do_l1prefiring_wgts"]:
-                    if "L1PreFiringWeight" in df.fields:
-                        l1pfw = l1pf_weights(df)
-                        weights.add_weight("l1prefiring_wgt", l1pfw, how="all")
-                    else:
-                        weights.add_weight("l1prefiring_wgt", how="dummy_vars")
+                if "L1PreFiringWeight" in df.fields:
+                    l1pfw = l1pf_weights(df)
+                    weights.add_weight("l1prefiring_wgt", l1pfw, how="all")
+                else:
+                    weights.add_weight("l1prefiring_wgt", how="dummy_vars")
 
         else:
             # For Data: apply Lumi mask
@@ -283,11 +310,10 @@ class DimuonProcessor(processor.ProcessorABC):
                     return self.accumulator.identity()
 
             result = muons.groupby("entry").apply(find_dimuon, is_mc=is_mc)
-            #result = muons.swifter.groupby("entry").apply(find_dimuon, is_mc=is_mc)
-            
+
             if is_mc:
                 dimuon = pd.DataFrame(
-                    result.to_list(), columns=["idx1", "idx2", "mass", "mass_gen"]
+                    result.to_list(), columns=["idx1", "idx2", "mass"]
                 )
             else:
                 dimuon = pd.DataFrame(
@@ -297,7 +323,6 @@ class DimuonProcessor(processor.ProcessorABC):
             mu2 = muons.loc[dimuon.idx2.values, :]
             mu1.index = mu1.index.droplevel("subentry")
             mu2.index = mu2.index.droplevel("subentry")
-
             if self.timer:
                 self.timer.add_checkpoint("dimuon pair selection")
 
@@ -324,7 +349,8 @@ class DimuonProcessor(processor.ProcessorABC):
             # --------------------------------------------------------#
             # Fill dimuon and muon variables
             # --------------------------------------------------------#
-            fill_muons(self, output, mu1, mu2, is_mc,self.year,weights)
+            fill_muons(self, output, mu1, mu2, is_mc, self.year, weights)
+
         # ------------------------------------------------------------#
         # Prepare jets
         # ------------------------------------------------------------#
@@ -395,7 +421,7 @@ class DimuonProcessor(processor.ProcessorABC):
                 weights.add_weight('zpt_wgt', zpt_weight)
             """
 
-            do_musf = True
+            do_musf = False
             if do_musf:
                 muID, muIso, muTrig = musf_evaluator(
                     self.musf_lookup, self.year, numevents, mu1, mu2
@@ -425,12 +451,11 @@ class DimuonProcessor(processor.ProcessorABC):
         output["year"] = int(self.year)
 
         for wgt in weights.df.columns:
-
             if wgt != "nominal":
                 continue
             output[f"wgt_{wgt}"] = weights.get_weight(wgt)
 
-        if is_mc and "dy" in output.dataset:
+        if is_mc and "dy" in dataset and self.applykFac:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
             output.loc[
@@ -442,13 +467,58 @@ class DimuonProcessor(processor.ProcessorABC):
                 * kFac(mass_bb, "bb", "mu")
             ).values
             output.loc[
-                ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "wgt_nominal"
+                ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "wgt_nominal"
             ] = (
                 output.loc[
-                    ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))), "wgt_nominal"
+                    ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "wgt_nominal"
                 ]
                 * kFac(mass_be, "be", "mu")
             ).values
+
+        if is_mc and "dy" in dataset and self.applyNNPDFWeight:
+            mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
+            mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
+            leadingPt_bb = output[output["r"] == "bb"].mu1_pt_gen.to_numpy()
+            leadingPt_be = output[output["r"] == "be"].mu1_pt_gen.to_numpy()
+            output.loc[
+                ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)), "wgt_nominal"
+            ] = (
+                output.loc[
+                    ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)), "wgt_nominal"
+                ]
+                * NNPDFWeight(mass_bb, leadingPt_bb, "bb", "mu", float(self.year), DY=True)
+            ).values
+            output.loc[
+                ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "wgt_nominal"
+            ] = (
+                output.loc[
+                    ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "wgt_nominal"
+                ]
+                * NNPDFWeight(mass_be, leadingPt_be, "be", "mu", float(self.year), DY=True)
+            ).values
+        if is_mc and "ttbar" in dataset and self.applyNNPDFWeight:
+            mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
+            mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
+            leadingPt_bb = output[output["r"] == "bb"].mu1_pt_gen.to_numpy()
+            leadingPt_be = output[output["r"] == "be"].mu1_pt_gen.to_numpy()
+
+            output.loc[
+                ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)), "wgt_nominal"
+            ] = (
+                output.loc[
+                    ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)), "wgt_nominal"
+                ]
+                * NNPDFWeight(mass_bb, leadingPt_bb, "bb", "mu", float(self.year), DY=False)
+            ).values
+            output.loc[
+                ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "wgt_nominal"
+            ] = (
+                output.loc[
+                    ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)), "wgt_nominal"
+                ]
+                * NNPDFWeight(mass_be, leadingPt_be, "be", "mu", float(self.year), DY=False)
+            ).values
+
         output = output.loc[output.event_selection, :]
         output = output.reindex(sorted(output.columns), axis=1)
         output = output[output.r.isin(self.regions)]
@@ -499,9 +569,6 @@ class DimuonProcessor(processor.ProcessorABC):
                 "phi_gen",
             ]
 
-
-
-
         if variation == "nominal":
             if self.do_jec:
                 jet_branches_local += ["pt_jec", "mass_jec"]
@@ -521,7 +588,7 @@ class DimuonProcessor(processor.ProcessorABC):
                   .groupby(level=[0, 1]).sum().astype(bool))
 
         if self.timer:
-             self.timer.add_checkpoint("Clean jets from matched muons")
+            self.timer.add_checkpoint("Clean jets from matched muons")
 
         # Select particular JEC variation
         if "_up" in variation:
@@ -536,11 +603,11 @@ class DimuonProcessor(processor.ProcessorABC):
             jets = jets[unc_name]["down"][jet_branches_local]
         else:
             jets = jets[jet_branches_local]
-        
+
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
         if is_mc:
-            
+
             btagSF(jets, self.year, correction="shape", syst="central", is_UL=True)
             btagSF(jets, self.year, correction="wp", syst="central", is_UL=False)
 
@@ -582,21 +649,44 @@ class DimuonProcessor(processor.ProcessorABC):
             (
                 (jets.pt > 30.0)
                 & (abs(jets.eta) < 2.4)
-                &(jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year])
                 & (jets.jetId >= 2)
             ),
             "selection",
         ] = 1
         if is_mc:
-             variables["btag_sf_shape"] = jets.loc[jets.pre_selection == 1, "btag_sf_shape"].groupby("entry").prod()
-             variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
-             variables["btag_sf_wp"] = jets.loc[jets.pre_selection == 1, "btag_sf_wp"].groupby("entry").prod()
-             variables["btag_sf_wp"] = variables["btag_sf_wp"].fillna(1.0)
+            variables["btag_sf_shape"] = jets.loc[jets.pre_selection == 1, "btag_sf_shape"].groupby("entry").prod()
+            variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
+            variables["btag_sf_wp"] = jets.loc[jets.pre_selection == 1, "btag_sf_wp"].groupby("entry").prod()
+            variables["btag_sf_wp"] = variables["btag_sf_wp"].fillna(1.0)
         else:
-             variables["btag_sf_shape"] = 1.0
-             variables["btag_sf_wp"] = 1.0
-        nBjets = jets.loc[:, "selection"].groupby("entry").sum()
-        variables["njets"] = nBjets
+            variables["btag_sf_shape"] = 1.0
+            variables["btag_sf_wp"] = 1.0
+
+        njets = jets.loc[:, "selection"].groupby("entry").sum()
+        variables["njets"] = njets
+
+        jets["bselection"] = 0
+        jets.loc[
+            (
+                (jets.pt > 30.0)
+                & (abs(jets.eta) < 2.4)
+                & (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
+                & (jets.jetId >= 2)
+            ),
+            "bselection",
+        ] = 1
+
+        nbjets = jets.loc[:, "bselection"].groupby("entry").sum()
+        variables["nbjets"] = nbjets
+
+        bjets = jets.query('bselection==1')
+        bjets = bjets.sort_values(["entry", "pt"], ascending=[True, False])
+        bjet1 = bjets.groupby("entry").nth(0)
+        bjet2 = bjets.groupby("entry").nth(1)
+        bJets = [bjet1, bjet2]
+        muons = [mu1, mu2]
+        fill_bjets(output, variables, bJets, muons, is_mc=is_mc)
+
         jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
         jet1 = jets.groupby("entry").nth(0)
         jet2 = jets.groupby("entry").nth(1)
@@ -604,7 +694,6 @@ class DimuonProcessor(processor.ProcessorABC):
         fill_jets(output, variables, Jets, is_mc=is_mc)
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
-        
 
         # ------------------------------------------------------------#
         # Calculate btag SF
@@ -642,6 +731,7 @@ class DimuonProcessor(processor.ProcessorABC):
         del df
         del muons
         del jets
+        del bjets
         del mu1
         del mu2
         return output
@@ -661,7 +751,7 @@ class DimuonProcessor(processor.ProcessorABC):
         #    BTagScaleFactor.RESHAPE,
         #    "iterativefit,iterativefit,iterativefit",
         #)
-        #self.btag_lookup = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB) 
+        #self.btag_lookup = btagSF("2018", jets.hadronFlavour, jets.eta, jets.pt, jets.btagDeepFlavB)
 
         # --- Evaluator
         #self.extractor = extractor()
@@ -672,15 +762,19 @@ class DimuonProcessor(processor.ProcessorABC):
         #self.extractor.finalize()
         #self.evaluator = self.extractor.make_evaluator()
 
-
         return
+
     @property
     def accumulator(self):
         return processor.defaultdict_accumulator(int)
 
     @property
-    def columns(self):
-        return branches
+    def muoncolumns(self):
+        return muon_branches
+
+    @property
+    def jetcolumns(self):
+        return jet_branches
 
     def postprocess(self, accumulator):
         return accumulator

@@ -21,6 +21,7 @@ class Weights(object):
             up = wgt["up"]
             down = wgt["down"]
             self.add_weight_with_variations(name, nom, up, down)
+
         elif how == "only_vars":
             # add only variations
             up = wgt["up"]
