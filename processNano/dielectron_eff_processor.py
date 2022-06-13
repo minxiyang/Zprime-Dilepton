@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
-from coffea.lookup_tools import txt_converters, rochester_lookup
 from coffea.lumi_tools import LumiMask
 
 from processNano.timer import Timer
@@ -321,7 +320,7 @@ class DielectronEffProcessor(processor.ProcessorABC):
         )
         nJets = genJets.reset_index().groupby("entry")["subentry"].nunique()
         jets = nJets.to_numpy()
-        
+
         #print(len(jets))
         #print(nJets.head())
         #print(jets)
@@ -344,13 +343,13 @@ class DielectronEffProcessor(processor.ProcessorABC):
             .nunique()
         )
         nJets_match = (
-            genJets[(genJets.Jet_match)&(genJets.Jet_pt > 30)]
+            genJets[(genJets.Jet_match) & (genJets.Jet_pt > 30)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()
         )
         nJets_ID = (
-            genJets[(genJets.Jet_ID) & (genJets.Jet_match)&(genJets.Jet_pt > 30) ]
+            genJets[(genJets.Jet_ID) & (genJets.Jet_match) & (genJets.Jet_pt > 30)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()
@@ -418,7 +417,7 @@ class DielectronEffProcessor(processor.ProcessorABC):
         )
         pt_pass = pt_pass.to_frame("pt_pass")
         acc = (
-            genPart[(abs(genPart["eta"]) < 2.5)&(genPart["pt"] > 35)]
+            genPart[(abs(genPart["eta"]) < 2.5) & (genPart["pt"] > 35)]
             .reset_index()
             .groupby("entry")["subentry"]
             .nunique()

@@ -13,7 +13,7 @@ from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
 
-dask.config.set({"temporary-directory": "/depot/cms/users/minxi/dask-temp/"})
+dask.config.set({"temporary-directory": "/depot/cms/users/schul105/dask-temp/"})
 
 parser = argparse.ArgumentParser()
 # Slurm cluster IP to use. If not specified, will create a local cluster
@@ -69,7 +69,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.148.61"  # hammer-c000
+node_ip = "128.211.148.60"  # hammer-c000
 # node_ip = "128.211.149.135"
 #node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
@@ -100,7 +100,7 @@ local_time = (
 parameters = {
     "year": args.year,
     "label": args.label,
-    "global_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
+    "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
     "out_path": f"{args.year}_{args.label}_{local_time}",
     #"server": "root://xrootd.rcac.purdue.edu/",
     # "server": "root://cmsxrootd.fnal.gov//",
@@ -240,6 +240,7 @@ if __name__ == "__main__":
             "tW",
         ],
         "dy": [
+            #"dy50to120",
             "dy120to200",
             "dy200to400",
             "dy400to800",
@@ -286,19 +287,23 @@ if __name__ == "__main__":
 
     datasets_mc = []
     datasets_data = []
-   
+
     for group, samples in smp.items():
         for sample in samples:
             # if sample not in blackList:
             #    continue
-            #if "dy4500to6000" not in sample:
+            #if "WWinclusive" not in sample:
+            #if "dy200to400" not in sample:
+            #if "dy" not in sample:
+            #if "ttbar_lep_M500to800" not in sample:
+            #if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
             #    continue
 
-            if group != "CI":
-                continue
+            #if group != "CI":
+            #    continue
             #if sample not in ["WWinclusive"]:
             #    continue
-            # if group != "data":
+            #if group != "data":
             #    continue
             if group == "data":
                 datasets_data.append(sample)

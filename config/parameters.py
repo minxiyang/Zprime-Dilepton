@@ -293,7 +293,8 @@ jet_branches = [
     "btagDeepB",
     "btagDeepFlavB",
 ]
-genjet_branches = ["nGenJet", "GenJet_pt", "GenJet_eta", "GenJet_phi", "GenJet_mass"]
+genjet_branches = ["nGenJet", "GenJet_pt", "GenJet_eta", "GenJet_phi", "GenJet_mass", "GenJet_partonFlavour"]
+genpart_branches = ["GenPart_eta", "GenPart_genPartIdxMother", "GenPart_mass", "GenPart_pdgId", "GenPart_phi", "GenPart_pt", "GenPart_status", "GenPart_statusFlags", "nGenPart"]
 sajet_branches = [
     "nSoftActivityJet",
     "SoftActivityJet_pt",
@@ -388,6 +389,7 @@ proc_columns = (
     + fsr_branches
     + jet_branches
     + genjet_branches
+    + genpart_branches
     + sajet_branches
     + vtx_branches
     + genpart_branches

@@ -13,16 +13,16 @@ def split_into_channels(df, v=""):
         for cname, cut in cuts.items():
             df.loc[cut, "channel"] = cname
     else:
-        df[f"njets"].fillna(0, inplace=True)
-        df.loc[:, f"channel"] = "none"
+        df["nbjets"].fillna(0, inplace=True)
+        df.loc[:, "channel"] = "none"
         df.loc[
-            (df[f"njets"] == 0) , f"channel"
+            (df["nbjets"] == 0) , "channel"
         ] = "0b"
         df.loc[
-            (df[f"njets"] == 1) , f"channel"
+            ((df["nbjets"] == 1) & (df["min_bl_mass"] > 175)) , "channel"
         ] = "1b"
         df.loc[
-            (df[f"njets"] >= 2) , f"channel"
+            ((df["nbjets"] >= 2) & (df["min_bl_mass"] > 175)) , "channel"
         ] = "2b"
 
 

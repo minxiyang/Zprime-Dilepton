@@ -8,8 +8,8 @@ from copperhead.python.io import (
     save_stage2_output_parquet,
 )
 from doAnalysis.categorizer import split_into_channels
-from doAnalysis.mva_evaluators import evaluate_pytorch_dnn, evaluate_bdt
-from doAnalysis.histogrammer import make_histograms
+#from doAnalysis.mva_evaluators import evaluate_pytorch_dnn, evaluate_bdt
+from doAnalysis.histogrammer import make_histograms, make_histograms2D
 
 import warnings
 
@@ -81,7 +81,8 @@ def on_partition(args, parameters):
     channels = [
         c for c in parameters["channels"] if c in df["channel"].unique()
     ]
-
+    if "inclusive" in parameters["channels"]:
+        channels.append("inclusive")
     # < convert desired columns to histograms >
     # not parallelizing for now - nested parallelism leads to a lock
     hist_info_rows = []
@@ -91,10 +92,22 @@ def on_partition(args, parameters):
         )
         if hist_info_row is not None:
             hist_info_rows.append(hist_info_row)
+
+    try:
+        hist_info_df = pd.concat(hist_info_rows).reset_index(drop=True)
+    except Exception:
+        hist_info_df = []
+
+    hist_info_rows_2d = []
+    for vars_2d in parameters["hist_vars_2d"]:
+        hist_info_row_2d = make_histograms2D(
+            df, vars_2d[0], vars_2d[1], year, dataset, regions, channels, npart, parameters
+        )
+        if hist_info_row_2d is not None:
+            hist_info_rows_2d.append(hist_info_row_2d)
+
     if len(hist_info_rows) == 0:
         return pd.DataFrame()
-
-    hist_info_df = pd.concat(hist_info_rows).reset_index(drop=True)
 
     # < save desired columns as unbinned data (e.g. dimuon_mass for fits) >
     do_save_unbinned = parameters.get("save_unbinned", False)

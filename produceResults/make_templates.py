@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 
 from copperhead.python.workflow import parallelize
-from copperhead.python.variable import Variable
 from copperhead.python.io import load_stage2_output_hists, save_template, mkdir
+from config.variables import Variable
 
 import warnings
 
@@ -61,7 +61,7 @@ def make_templates(args, parameters={}):
     templates = []
 
     groups = list(set(parameters["grouping"].values()))
-
+    #print(hist_df.dataset)
     for group in groups:
         datasets = []
         for d in hist_df.dataset.unique():
@@ -107,14 +107,17 @@ def make_templates(args, parameters={}):
                 "val_sumw2": "sumw2",
             }
             for dataset in datasets:
-                try:
-                    hist = hist_df.loc[hist_df.dataset == dataset, "hist"].values.sum()
-                except Exception:
-                    # print(f"Could not merge histograms for {dataset}")
-                    continue
 
-                the_hist = hist[slicer_value].project(var.name).values()
-                the_sumw2 = hist[slicer_sumw2].project(var.name).values()
+                hist_values_dataset = []
+                hist_sumw2_dataset = []
+
+                for h in hist_df.loc[hist_df.dataset == dataset, "hist"].values:
+                    if not pd.isna(h[slicer_value].project(var_name).sum()):
+                        hist_values_dataset.append(h[slicer_value].project(var.name))
+                        hist_sumw2_dataset.append(h[slicer_sumw2].project(var.name))
+
+                the_hist = sum(hist_values_dataset).values()
+                the_sumw2 = sum(hist_sumw2_dataset).values()
 
                 if (the_hist.sum() < 0) or (the_sumw2.sum() < 0):
                     continue
@@ -126,7 +129,7 @@ def make_templates(args, parameters={}):
                     group_hist += the_hist
                     group_sumw2 += the_sumw2
 
-                edges = hist[slicer_value].project(var.name).axes[0].edges
+                edges = hist_values_dataset[0].axes[0].edges
                 edges = np.array(edges)
                 centers = (edges[:-1] + edges[1:]) / 2.0
 
