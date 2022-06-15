@@ -9,11 +9,56 @@ from coffea.btag_tools import BTagScaleFactor
 from config.parameters import parameters
 
 
-def btagSF(df, year, correction="shape", syst="central", is_UL=True):
+def btagSF(df, year, correction="shape", is_UL=True):
 
     if is_UL:
+        if correction == "wp":
+            systs = [
+                "central",
+                "up",
+                "down",
+                "up_correlated",
+                "up_uncorrelated",
+                "down_correlated",
+                "down_uncorrelated",
+                "up_isr",
+                "down_isr",
+                "up_fsr",
+                "down_fsr",
+                "up_hdamp",
+                "down_hdamp",
+                "up_jes",
+                "down_jes",
+                "up_jer",
+                "down_jer",
+                "up_pileup",
+                "down_pileup",
+                "up_qcdscale",
+                "down_qcdscale",
+                "up_statistic",
+                "down_statistic",
+                "up_topmass",
+                "down_topmass",
+                "up_type3",
+                "down_type3",
+            ]
+        else:
+            systs = ["central"]
         cset = correctionlib.CorrectionSet.from_file(parameters["btag_sf_UL"][year])
     else:
+        if correction == "wp":
+            systs = [
+                "central",
+                "up",
+                "down",
+                "up_correlated",
+                "up_uncorrelated",
+                "down_correlated",
+                "down_uncorrelated",
+            ]
+        else:
+            systs = ["central"]
+
         cset = BTagScaleFactor(parameters["btag_sf_pre_UL"][year], "medium")
 
     df["pre_selection"] = False
@@ -21,55 +66,72 @@ def btagSF(df, year, correction="shape", syst="central", is_UL=True):
         (df.pt > 20.0) & (abs(df.eta) < 2.4) & (df.jetId >= 2), "pre_selection"
     ] = True
     mask = df["pre_selection"]
-    if correction == "shape":
+    for syst in systs:
+        if correction == "shape":
 
-        df["btag_sf_shape"] = 1.0
-        flavor = df[mask].hadronFlavour.to_numpy()
-        eta = np.abs(df[mask].eta.to_numpy())
-        pt = df[mask].pt.to_numpy()
-        mva = df[mask].btagDeepFlavB.to_numpy()
-
-        if is_UL:
-            sf = cset["deepJet_shape"].evaluate(syst, flavor, eta, pt, mva)
-
-        df.loc[mask, "btag_sf_shape"] = sf
-
-    elif correction == "wp":
-
-        df["btag_sf_wp"] = 1.0
-        is_bc = df["hadronFlavour"] >= 4
-        is_light = df["hadronFlavour"] < 4
-        path_eff = parameters["btag_sf_eff"][year]
-        wp = parameters["UL_btag_medium"][year]
-        with open(path_eff, "rb") as handle:
-            eff = pickle.load(handle)
-
-        efflookup = dense_lookup(eff.values(), [ax.edges for ax in eff.axes])
-        mask_dict = {0: is_light, 4: is_bc, 5: is_bc}
-        for key in mask_dict.keys():
-
-            mask_flavor = mask_dict[key]
-            flavor = df[mask & mask_flavor].hadronFlavour.to_numpy()
-            eta = np.abs(df[mask & mask_flavor].eta.to_numpy())
-            pt = df[mask & mask_flavor].pt.to_numpy()
-            mva = df[mask & mask_flavor].btagDeepFlavB.to_numpy()
+            df["btag_sf_shape"] = 1.0
+            flavor = df[mask].hadronFlavour.to_numpy()
+            eta = np.abs(df[mask].eta.to_numpy())
+            pt = df[mask].pt.to_numpy()
+            mva = df[mask].btagDeepFlavB.to_numpy()
 
             if is_UL:
-                if key < 4:
-                    correction = "deepJet_incl"
-                else:
-                    correction = "deepJet_comb"
-                fac = cset[correction].evaluate(syst, "M", flavor, eta, pt)
+                sf = cset["deepJet_shape"].evaluate(syst, flavor, eta, pt, mva)
+            if syst == "central":
+                df.loc[mask, "btag_sf_shape"] = sf
             else:
-                fac = cset.eval(syst, flavor, eta, pt, wp)
+                df.loc[mask, f"btag_sf_shape_{syst}"] = sf
 
-            prob = efflookup(pt, eta, key)
-            prob_nosf = np.copy(prob)
-            prob_sf = np.copy(prob) * fac
-            prob_sf[mva < wp] = 1.0 - prob_sf[mva < wp]
-            prob_nosf[mva < wp] = 1.0 - prob_nosf[mva < wp]
-            sf = prob_sf / prob_nosf
-            df.loc[mask & mask_flavor, "btag_sf_wp"] = sf
+        elif correction == "wp":
+
+            is_bc = df["hadronFlavour"] >= 4
+            is_light = df["hadronFlavour"] < 4
+            path_eff = parameters["btag_sf_eff"][year]
+            wp = parameters["UL_btag_medium"][year]
+            with open(path_eff, "rb") as handle:
+                eff = pickle.load(handle)
+
+            efflookup = dense_lookup(eff.values(), [ax.edges for ax in eff.axes])
+            mask_dict = {0: is_light, 4: is_bc, 5: is_bc}
+            for key in mask_dict.keys():
+
+                mask_flavor = mask_dict[key]
+                flavor = df[mask & mask_flavor].hadronFlavour.to_numpy()
+                eta = np.abs(df[mask & mask_flavor].eta.to_numpy())
+                pt = df[mask & mask_flavor].pt.to_numpy()
+                mva = df[mask & mask_flavor].btagDeepFlavB.to_numpy()
+
+                if is_UL:
+                    if key < 4:
+                        corr = "deepJet_incl"
+                    else:
+                        corr = "deepJet_comb"
+                    try:
+                        fac = cset[corr].evaluate(syst, "M", flavor, eta, pt)
+                    except Exception:
+                        fac = cset[corr].evaluate("central", "M", flavor, eta, pt)
+                else:
+                    try:
+
+                        fac = cset.eval(syst, flavor, eta, pt, wp)
+                        print("uncertainty is " + syst)
+                    except Exception:
+                        fac = cset.eval("central", flavor, eta, pt, wp)
+
+                prob = efflookup(pt, eta, key)
+                prob_nosf = np.copy(prob)
+                prob_sf = np.copy(prob) * fac
+                prob_sf[mva < wp] = 1.0 - prob_sf[mva < wp]
+                prob_nosf[mva < wp] = 1.0 - prob_nosf[mva < wp]
+                sf = prob_sf / prob_nosf
+                if syst == "central":
+                    df.loc[mask & mask_flavor, "btag_sf_wp"] = sf
+                else:
+                    df.loc[mask & mask_flavor, f"btag_sf_wp_{syst}"] = sf
+            if syst == "central":
+                df["btag_sf_wp"].fillna(1.0)
+            else:
+                df[f"btag_sf_wp_{syst}"].fillna(1.0)
 
 
 def prepare_jets(df, is_mc):

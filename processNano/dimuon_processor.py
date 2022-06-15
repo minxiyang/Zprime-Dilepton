@@ -652,8 +652,8 @@ class DimuonProcessor(processor.ProcessorABC):
         jets = ak.to_pandas(jets)
         if is_mc:
 
-            btagSF(jets, self.year, correction="shape", syst="central", is_UL=True)
-            btagSF(jets, self.year, correction="wp", syst="central", is_UL=False)
+            btagSF(jets, self.year, correction="shape", is_UL=True)
+            btagSF(jets, self.year, correction="wp", is_UL=True)
 
             if self.timer:
                 self.timer.add_checkpoint("Applied btaging")
@@ -700,13 +700,15 @@ class DimuonProcessor(processor.ProcessorABC):
                 .prod()
             )
             variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
-            variables["btag_sf_wp"] = (
-                jets.loc[jets.pre_selection == 1, "btag_sf_wp"].groupby("entry").prod()
-            )
-            variables["btag_sf_wp"] = variables["btag_sf_wp"].fillna(1.0)
-        else:
-            variables["btag_sf_shape"] = 1.0
-            variables["btag_sf_wp"] = 1.0
+            for key in jets.columns:
+                if "btag_sf_wp" not in key:
+                    continue
+                else:
+
+                    variables[key] = (
+                        jets.loc[jets.pre_selection == 1, key].groupby("entry").prod()
+                    )
+                    variables[key] = variables[key].fillna(1.0)
 
         njets = jets.loc[:, "selection"].groupby("entry").sum()
         variables["njets"] = njets
