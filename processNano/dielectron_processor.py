@@ -11,17 +11,16 @@ import pandas as pd
 import coffea.processor as processor
 from coffea.lookup_tools import extractor
 from coffea.lumi_tools import LumiMask
-from copperhead.python.timer import Timer
-from copperhead.stage1.weights import Weights
+from processNano.timer import Timer
+from processNano.weights import Weights
+
 from config.parameters import parameters, ele_branches, jet_branches
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
 from processNano.electrons import find_dielectron, fill_electrons
-from processNano.jets import prepare_jets, fill_jets
-import copy
-from coffea.btag_tools import BTagScaleFactor
+from processNano.jets import prepare_jets, fill_jets, fill_bjets, btagSF
 
-# from python.jets import jet_id, jet_puid, gen_jet_pair_mass
+import copy
 from processNano.corrections.kFac import kFac
 from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 
@@ -433,16 +432,6 @@ class DielectronProcessor(processor.ProcessorABC):
 
         variables = pd.DataFrame(index=output.index)
 
-        jet_branches = [
-            "pt",
-            "eta",
-            "phi",
-            "jetId",
-            "qgl",
-            "puId",
-            "mass",
-            "btagDeepB",
-        ]
         jet_branches_local = copy.copy(jet_branches)
         if is_mc:
             jet_branches_local += [
@@ -451,16 +440,10 @@ class DielectronProcessor(processor.ProcessorABC):
                 "pt_gen",
                 "eta_gen",
                 "phi_gen",
-                "sf",
             ]
             jets["pt_gen"] = jets.matched_gen.pt
             jets["eta_gen"] = jets.matched_gen.eta
             jets["phi_gen"] = jets.matched_gen.phi
-            btag_sf = BTagScaleFactor(
-                "data/b-tagging/DeepCSV_102XSF_WP_V1.csv", "tight"
-            )
-            sf = btag_sf("central", jets.hadronFlavour, np.abs(jets.eta), jets.pt)
-            jets["sf"] = sf
         # if variation == "nominal":
         #    if self.do_jec:
         #        jet_branches += ["pt_jec", "mass_jec"]
@@ -498,6 +481,11 @@ class DielectronProcessor(processor.ProcessorABC):
         jets = jets[jet_branches_local]
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
+        if is_mc:
+
+            btagSF(jets, self.year, correction="shape", is_UL=True)
+            btagSF(jets, self.year, correction="wp", is_UL=True)
+
         if jets.index.nlevels == 3:
             # sometimes there are duplicates?
             jets = jets.loc[pd.IndexSlice[:, :, 0], :]
@@ -557,18 +545,52 @@ class DielectronProcessor(processor.ProcessorABC):
             [jets.index.get_level_values(0), jets.groupby(level=0).cumcount()],
             names=["entry", "subentry"],
         )
+        if is_mc:
+            variables["btag_sf_shape"] = (
+                jets.loc[jets.pre_selection == 1, "btag_sf_shape"]
+                .groupby("entry")
+                .prod()
+            )
+            variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
+            for key in jets.columns:
+                if "btag_sf_wp" not in key:
+                    continue
+                else:
+
+                    variables[key] = (
+                        jets.loc[jets.pre_selection == 1, key].groupby("entry").prod()
+                    )
+                    variables[key] = variables[key].fillna(1.0)
+
         jets["selection"] = 0
+        jets.loc[
+            ((jets.pt > 30.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)),
+            "selection",
+        ] = 1
+        njets = jets.loc[:, "selection"].groupby("entry").sum()
+        variables["njets"] = njets
+
+        jets["bselection"] = 0
         jets.loc[
             (
                 (jets.pt > 30.0)
                 & (abs(jets.eta) < 2.4)
-                & (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
+                & (jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year])
                 & (jets.jetId >= 2)
             ),
-            "selection",
+            "bselection",
         ] = 1
-        nBjets = jets.loc[:, "selection"].groupby("entry").sum()
-        variables["njets"] = nBjets
+
+        nbjets = jets.loc[:, "bselection"].groupby("entry").sum()
+        variables["nbjets"] = nbjets
+        bjets = jets.query("bselection==1")
+        bjets = bjets.sort_values(["entry", "pt"], ascending=[True, False])
+        bjet1 = bjets.groupby("entry").nth(0)
+        bjet2 = bjets.groupby("entry").nth(1)
+        bJets = [bjet1, bjet2]
+        electrons = [e1, e2]
+        fill_bjets(output, variables, bJets, electrons, flavor="el", is_mc=is_mc)
+
         jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
         jet1 = jets.groupby("entry").nth(0)
         jet2 = jets.groupby("entry").nth(1)

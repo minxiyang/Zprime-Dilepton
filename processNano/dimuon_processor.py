@@ -688,11 +688,6 @@ class DimuonProcessor(processor.ProcessorABC):
         )
         # Select two jets with highest pT
 
-        jets["selection"] = 0
-        jets.loc[
-            ((jets.pt > 30.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)),
-            "selection",
-        ] = 1
         if is_mc:
             variables["btag_sf_shape"] = (
                 jets.loc[jets.pre_selection == 1, "btag_sf_shape"]
@@ -710,6 +705,12 @@ class DimuonProcessor(processor.ProcessorABC):
                     )
                     variables[key] = variables[key].fillna(1.0)
 
+        jets["selection"] = 0
+        jets.loc[
+            ((jets.pt > 30.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)),
+            "selection",
+        ] = 1
+
         njets = jets.loc[:, "selection"].groupby("entry").sum()
         variables["njets"] = njets
 
@@ -718,7 +719,7 @@ class DimuonProcessor(processor.ProcessorABC):
             (
                 (jets.pt > 30.0)
                 & (abs(jets.eta) < 2.4)
-                & (jets.btagDeepB > parameters["UL_btag_medium"][self.year])
+                & (jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year])
                 & (jets.jetId >= 2)
             ),
             "bselection",
