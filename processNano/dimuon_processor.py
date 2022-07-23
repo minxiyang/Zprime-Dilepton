@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import coffea.processor as processor
 from coffea.lumi_tools import LumiMask
-from processNano.timer import Timer
 from processNano.weights import Weights
 
 # correction helpers included from copperhead
@@ -41,7 +40,7 @@ from copperhead.config.jec_parameters import jec_parameters
 class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
         self.samp_info = kwargs.pop("samp_info", None)
-        do_timer = kwargs.pop("do_timer", True)
+        do_timer = kwargs.pop("do_timer", False)
         self.pt_variations = kwargs.get("pt_variations", ["nominal"])
         self.apply_to_output = kwargs.pop("apply_to_output", None)
 
@@ -72,8 +71,8 @@ class DimuonProcessor(processor.ProcessorABC):
             if ptvar in jec_pars["jer_variations"]:
                 self.do_jerunc = True
 
-        self.timer = Timer("global") if do_timer else None
-
+        # self.timer = Timer("global") if do_timer else None
+        self.timer = None
         self._columns = self.parameters["proc_columns"]
 
         self.regions = ["bb", "be"]
@@ -687,7 +686,6 @@ class DimuonProcessor(processor.ProcessorABC):
             names=["entry", "subentry"],
         )
         # Select two jets with highest pT
-
         if is_mc:
             variables["btag_sf_shape"] = (
                 jets.loc[jets.pre_selection == 1, "btag_sf_shape"]
@@ -700,10 +698,13 @@ class DimuonProcessor(processor.ProcessorABC):
                     continue
                 else:
 
-                    variables[key] = (
+                    variables["wgt_" + key] = (
                         jets.loc[jets.pre_selection == 1, key].groupby("entry").prod()
                     )
-                    variables[key] = variables[key].fillna(1.0)
+                    variables["wgt_" + key] = variables["wgt_" + key].fillna(1.0)
+                    variables["wgt_" + key] = variables[
+                        "wgt_" + key
+                    ] * weights.get_weight("nominal")
 
         jets["selection"] = 0
         jets.loc[
@@ -768,9 +769,7 @@ class DimuonProcessor(processor.ProcessorABC):
         # --------------------------------------------------------------#
         # Fill outputs
         # --------------------------------------------------------------#
-
-        variables.update({"wgt_nominal": weights.get_weight("nominal")})
-
+        # variables.update({"wgt_nominal": weights.get_weight("nominal")})
         # All variables are affected by jet pT because of jet selections:
         # a jet may or may not be selected depending on pT variation.
 

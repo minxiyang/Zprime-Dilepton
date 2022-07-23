@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import copy
 import random as rand
 
+
 def load2df(files):
 
     df = dd.read_parquet(files)
@@ -35,13 +36,14 @@ def chunk(files, size):
     ]
     return file_bag
 
+
 def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=True):
     cut = 120
-    if var=="met":
+    if var == "met":
         cut = 400
 
     if njets == -1:
-        
+
         var_array = df.loc[df["dimuon_mass"] > cut, var].compute()
         if iswgt:
 
@@ -142,9 +144,9 @@ def plot_sen(axes, MC_sig, MC_bkg, colors, name):
     MC_bkg_vals = np.cumsum(MC_bkg[0][::-1])[::-1]
     MC_sig_vals = MC_sig_vals[0] - MC_sig_vals
     MC_bkg_vals = MC_bkg_vals[0] - MC_bkg_vals
-    sen = MC_sig_vals/(MC_sig_vals + MC_bkg_vals)
-    MC_sig_vals = MC_sig_vals/MC_sig_vals[-1]
-    MC_bkg_vals = MC_bkg_vals/MC_bkg_vals[-1]
+    sen = MC_sig_vals / (MC_sig_vals + MC_bkg_vals)
+    MC_sig_vals = MC_sig_vals / MC_sig_vals[-1]
+    MC_bkg_vals = MC_bkg_vals / MC_bkg_vals[-1]
     hep.histplot(
         [MC_sig_vals, MC_bkg_vals, sen],
         bins,
@@ -178,7 +180,7 @@ if __name__ == "__main__":
     )
     bins_met = [j for j in range(0, 820, 10)]
     path = "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/"
-    
+
     path_tt_inclusive = path + "ttbar/ttbar_lep/*.parquet"
     tt_inclusive_files = glob.glob(path_tt_inclusive)
     path_tt = path + "ttbar/ttbar_lep_*/*.parquet"
@@ -219,7 +221,7 @@ if __name__ == "__main__":
     met_0j = {}
     met_1j = {}
     met_2j = {}
-    df_dict={}
+    df_dict = {}
     for key in path_CI.keys():
 
         if key == "tt_inclu":
@@ -431,7 +433,7 @@ if __name__ == "__main__":
         mass_2j["bbll_4TeV_M400_negLL"],
         mass_2j["bbll_4TeV_M400_negLR"],
     ]
-    
+
     axes_mass8 = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
@@ -440,8 +442,8 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[400, 3970],
-        #yRange=[1e-5, 1e6],
-        yRange=[0,40],
+        # yRange=[1e-5, 1e6],
+        yRange=[0, 40],
         flavor="mu",
         year="2018",
     )
@@ -456,8 +458,8 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[400, 3970],
-        #yRange=[1e-5, 1e6],
-        yRange=[0,40],
+        # yRange=[1e-5, 1e6],
+        yRange=[0, 40],
         flavor="mu",
         year="2018",
     )
@@ -472,8 +474,8 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[400, 3970],
-        #yRange=[1e-6, 1e4],
-        yRange=[0,20],
+        # yRange=[1e-6, 1e4],
+        yRange=[0, 20],
         flavor="mu",
         year="2018",
     )
@@ -488,8 +490,8 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[400, 3970],
-        #yRange=[1e-6, 1e4],
-        yRange=[0,20],
+        # yRange=[1e-6, 1e4],
+        yRange=[0, 20],
         flavor="mu",
         year="2018",
     )
@@ -504,8 +506,8 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[400, 3970],
-        #yRange=[1e-6, 1e3],
-        yRange=[0,10],
+        # yRange=[1e-6, 1e3],
+        yRange=[0, 10],
         flavor="mu",
         year="2018",
     )
@@ -520,8 +522,8 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[400, 3970],
-        #yRange=[1e-6, 1e3],
-        yRange=[0,10],
+        # yRange=[1e-6, 1e3],
+        yRange=[0, 10],
         flavor="mu",
         year="2018",
     )
@@ -576,14 +578,13 @@ if __name__ == "__main__":
 
         if "1000" in sample:
             continue
-        #if "4TeV" in sample:
+        # if "4TeV" in sample:
         #    MCs1j = MCs_met4_1j
         #    MCs2j = MCs_met4_2j
-        #else:
+        # else:
         #    MCs1j = MCs_met8_1j
         #    MCs2j = MCs_met8_2j
 
-
         axes = setFrame(
             "MET [GeV]",
             "percentage",
@@ -592,12 +593,18 @@ if __name__ == "__main__":
             logx=True,
             logy=False,
             xRange=[10, 800],
-            yRange=[0,1.7],
+            yRange=[0, 1.7],
             flavor="mu",
             year="2018",
-            )
+        )
 
-        plot_sen(axes, met_1j[sample], met_1j["tt"], ["red", "green", "blue"], "signi_1j_"+sample.replace("400", ""))
+        plot_sen(
+            axes,
+            met_1j[sample],
+            met_1j["tt"],
+            ["red", "green", "blue"],
+            "signi_1j_" + sample.replace("400", ""),
+        )
         axes = setFrame(
             "MET [GeV]",
             "percentage",
@@ -606,16 +613,19 @@ if __name__ == "__main__":
             logx=True,
             logy=False,
             xRange=[10, 800],
-            yRange=[0,1.7],
+            yRange=[0, 1.7],
             flavor="mu",
             year="2018",
-            )
+        )
 
-        plot_sen(axes, met_2j[sample], met_2j["tt"], ["red", "green", "blue"], "signi_2j_"+sample.replace("400", ""))
+        plot_sen(
+            axes,
+            met_2j[sample],
+            met_2j["tt"],
+            ["red", "green", "blue"],
+            "signi_2j_" + sample.replace("400", ""),
+        )
 
-
-
-   
     axes_met8 = setFrame(
         "MET [GeV]",
         "Events/GeV",
@@ -624,8 +634,8 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[20, 820],
-        #yRange=[1e-4, 1e7],
-        yRange=[0,50],
+        # yRange=[1e-4, 1e7],
+        yRange=[0, 50],
         flavor="mu",
         year="2018",
     )
@@ -640,8 +650,8 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[20, 820],
-        #yRange=[1e-4, 1e7],
-        yRange=[0,50],
+        # yRange=[1e-4, 1e7],
+        yRange=[0, 50],
         flavor="mu",
         year="2018",
     )
@@ -656,13 +666,15 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[20, 820],
-        #yRange=[1e-4, 1e7],
-        yRange=[0,20],
+        # yRange=[1e-4, 1e7],
+        yRange=[0, 20],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met8_1j, MCs_met8_1j, labels_8TeV, colors, "bbll_muon_met_CI8TeV_1j_nolog")
+    plots(
+        axes_met8_1j, MCs_met8_1j, labels_8TeV, colors, "bbll_muon_met_CI8TeV_1j_nolog"
+    )
 
     axes_met4_1j = setFrame(
         "MET [GeV]",
@@ -672,13 +684,15 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[20, 820],
-        #yRange=[1e-4, 1e7],
-        yRange=[0,20],
+        # yRange=[1e-4, 1e7],
+        yRange=[0, 20],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met4_1j, MCs_met4_1j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_1j_nolog")
+    plots(
+        axes_met4_1j, MCs_met4_1j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_1j_nolog"
+    )
 
     axes_met8_2j = setFrame(
         "MET [GeV]",
@@ -688,13 +702,15 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[20, 820],
-        #yRange=[1e-4, 1e7],
-        yRange=[0,10],
+        # yRange=[1e-4, 1e7],
+        yRange=[0, 10],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met8_2j, MCs_met8_2j, labels_8TeV, colors, "bbll_muon_met_CI8TeV_2j_nolog")
+    plots(
+        axes_met8_2j, MCs_met8_2j, labels_8TeV, colors, "bbll_muon_met_CI8TeV_2j_nolog"
+    )
 
     axes_met4_2j = setFrame(
         "MET [GeV]",
@@ -704,14 +720,15 @@ if __name__ == "__main__":
         logx=False,
         logy=False,
         xRange=[20, 820],
-        #yRange=[1e-4, 1e7],
-        yRange=[0,10],
+        # yRange=[1e-4, 1e7],
+        yRange=[0, 10],
         flavor="mu",
         year="2018",
     )
 
-    plots(axes_met4_2j, MCs_met4_2j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_2j_nolog")
-
+    plots(
+        axes_met4_2j, MCs_met4_2j, labels_4TeV, colors, "bbll_muon_met_CI4TeV_2j_nolog"
+    )
 
     for sample in CI_list:
 
@@ -724,8 +741,8 @@ if __name__ == "__main__":
                 CI_label += " pos"
             elif "neg" in sample:
                 CI_label += " neg"
-            CI_label += " $\Lambda$"  
-            if "4TeV" in sample: 
+            CI_label += " $\Lambda$"
+            if "4TeV" in sample:
                 CI_label += " 4 TeV"
             elif "8TeV" in sample:
                 CI_label += " 8 TeV"
@@ -737,53 +754,126 @@ if __name__ == "__main__":
             plt.xlabel("mll")
             plt.ylabel("MET")
             plt.xlim([0, 3000])
-            plt.ylim([0, 700]) 
-            plt.scatter(df_tt["dimuon_mass"].compute(), df_tt["met"].compute(), 100.*df_tt["wgt_nominal"].compute(), c="r", alpha=0.5)
-            plt.scatter(df_inclu["dimuon_mass"].compute(), df_inclu["met"].compute(), 100.*df_inclu["wgt_nominal"].compute(), c="r", label="$t\\bar{t}$", alpha=0.5)
-            plt.scatter(CI400["dimuon_mass"].compute(), CI400["met"].compute(), 100.*CI400["wgt_nominal"].compute(), c="b", alpha=0.5)
-            plt.scatter(CI1000["dimuon_mass"].compute(), CI1000["met"].compute(), 100.*CI1000["wgt_nominal"].compute(), c="b", label = CI_label, alpha=0.5)
+            plt.ylim([0, 700])
+            plt.scatter(
+                df_tt["dimuon_mass"].compute(),
+                df_tt["met"].compute(),
+                100.0 * df_tt["wgt_nominal"].compute(),
+                c="r",
+                alpha=0.5,
+            )
+            plt.scatter(
+                df_inclu["dimuon_mass"].compute(),
+                df_inclu["met"].compute(),
+                100.0 * df_inclu["wgt_nominal"].compute(),
+                c="r",
+                label="$t\\bar{t}$",
+                alpha=0.5,
+            )
+            plt.scatter(
+                CI400["dimuon_mass"].compute(),
+                CI400["met"].compute(),
+                100.0 * CI400["wgt_nominal"].compute(),
+                c="b",
+                alpha=0.5,
+            )
+            plt.scatter(
+                CI1000["dimuon_mass"].compute(),
+                CI1000["met"].compute(),
+                100.0 * CI1000["wgt_nominal"].compute(),
+                c="b",
+                label=CI_label,
+                alpha=0.5,
+            )
             leg = plt.legend(loc="upper right")
             leg.legendHandles[0]._sizes = [30]
             leg.legendHandles[1]._sizes = [30]
-            plt_name = sample.replace("1000", "")+"_MllVsMet_inclu.pdf"
-            plt.savefig("plots/"+plt_name)
+            plt_name = sample.replace("1000", "") + "_MllVsMet_inclu.pdf"
+            plt.savefig("plots/" + plt_name)
             plt.clf()
             plt.xlabel("mll")
             plt.ylabel("MET")
             plt.xlim([0, 3000])
             plt.ylim([0, 700])
 
-            plt.scatter(df_tt.loc[df_tt["njets"]==1 ,"dimuon_mass"].compute(), df_tt.loc[df_tt["njets"]==1 ,"met"].compute(), 100.*df_tt.loc[df_tt["njets"]==1,"wgt_nominal"].compute(), c="r", alpha=0.5)
-            plt.scatter(df_inclu.loc[df_inclu["njets"]==1, "dimuon_mass"].compute(), df_inclu.loc[df_inclu["njets"]==1, "met"].compute(), 100.*df_inclu.loc[df_inclu["njets"]==1, "wgt_nominal"].compute(), c="r", label="$t\\bar{t}$", alpha=0.5)
-            plt.scatter(CI400.loc[CI400["njets"]==1, "dimuon_mass"].compute(), CI400.loc[CI400["njets"]==1, "met"].compute(), 100.*CI400.loc[CI400["njets"]==1, "wgt_nominal"].compute(), c="b", alpha=0.5)
-            plt.scatter(CI1000.loc[CI1000["njets"]==1 ,"dimuon_mass"].compute(), CI1000.loc[CI1000["njets"]==1, "met"].compute(), 100.*CI1000.loc[CI1000["njets"]==1 ,"wgt_nominal"].compute(), c="b", label = CI_label, alpha=0.5)
+            plt.scatter(
+                df_tt.loc[df_tt["njets"] == 1, "dimuon_mass"].compute(),
+                df_tt.loc[df_tt["njets"] == 1, "met"].compute(),
+                100.0 * df_tt.loc[df_tt["njets"] == 1, "wgt_nominal"].compute(),
+                c="r",
+                alpha=0.5,
+            )
+            plt.scatter(
+                df_inclu.loc[df_inclu["njets"] == 1, "dimuon_mass"].compute(),
+                df_inclu.loc[df_inclu["njets"] == 1, "met"].compute(),
+                100.0 * df_inclu.loc[df_inclu["njets"] == 1, "wgt_nominal"].compute(),
+                c="r",
+                label="$t\\bar{t}$",
+                alpha=0.5,
+            )
+            plt.scatter(
+                CI400.loc[CI400["njets"] == 1, "dimuon_mass"].compute(),
+                CI400.loc[CI400["njets"] == 1, "met"].compute(),
+                100.0 * CI400.loc[CI400["njets"] == 1, "wgt_nominal"].compute(),
+                c="b",
+                alpha=0.5,
+            )
+            plt.scatter(
+                CI1000.loc[CI1000["njets"] == 1, "dimuon_mass"].compute(),
+                CI1000.loc[CI1000["njets"] == 1, "met"].compute(),
+                100.0 * CI1000.loc[CI1000["njets"] == 1, "wgt_nominal"].compute(),
+                c="b",
+                label=CI_label,
+                alpha=0.5,
+            )
 
             leg = plt.legend(loc="upper right")
             leg.legendHandles[0]._sizes = [30]
             leg.legendHandles[1]._sizes = [30]
 
-            plt_name = sample.replace("1000", "")+"_MllVsMet_1j.pdf"
-            plt.savefig("plots/"+plt_name)
+            plt_name = sample.replace("1000", "") + "_MllVsMet_1j.pdf"
+            plt.savefig("plots/" + plt_name)
             plt.clf()
             plt.xlabel("mll")
             plt.ylabel("MET")
             plt.xlim([0, 3000])
             plt.ylim([0, 700])
 
-            plt.scatter(df_tt.loc[df_tt["njets"]>1 ,"dimuon_mass"].compute(), df_tt.loc[df_tt["njets"]>1 ,"met"].compute(), 300.*df_tt.loc[df_tt["njets"]>1,"wgt_nominal"].compute(), c="r", alpha=0.5)
-            plt.scatter(df_inclu.loc[df_inclu["njets"]>1, "dimuon_mass"].compute(), df_inclu.loc[df_inclu["njets"]>1, "met"].compute(), 300.*df_inclu.loc[df_inclu["njets"]>1, "wgt_nominal"].compute(), c="r", label="$t\\bar{t}$", alpha=0.5)
-            plt.scatter(CI400.loc[CI400["njets"]>1, "dimuon_mass"].compute(), CI400.loc[CI400["njets"]>1, "met"].compute(), 300.*CI400.loc[CI400["njets"]>1, "wgt_nominal"].compute(), c="b", alpha=0.5)
-            plt.scatter(CI1000.loc[CI1000["njets"]>1 ,"dimuon_mass"].compute(), CI1000.loc[CI1000["njets"]>1, "met"].compute(), 300.**CI1000.loc[CI1000["njets"]>1 ,"wgt_nominal"].compute(), c="b", label = CI_label, alpha=0.5)
-           
+            plt.scatter(
+                df_tt.loc[df_tt["njets"] > 1, "dimuon_mass"].compute(),
+                df_tt.loc[df_tt["njets"] > 1, "met"].compute(),
+                300.0 * df_tt.loc[df_tt["njets"] > 1, "wgt_nominal"].compute(),
+                c="r",
+                alpha=0.5,
+            )
+            plt.scatter(
+                df_inclu.loc[df_inclu["njets"] > 1, "dimuon_mass"].compute(),
+                df_inclu.loc[df_inclu["njets"] > 1, "met"].compute(),
+                300.0 * df_inclu.loc[df_inclu["njets"] > 1, "wgt_nominal"].compute(),
+                c="r",
+                label="$t\\bar{t}$",
+                alpha=0.5,
+            )
+            plt.scatter(
+                CI400.loc[CI400["njets"] > 1, "dimuon_mass"].compute(),
+                CI400.loc[CI400["njets"] > 1, "met"].compute(),
+                300.0 * CI400.loc[CI400["njets"] > 1, "wgt_nominal"].compute(),
+                c="b",
+                alpha=0.5,
+            )
+            plt.scatter(
+                CI1000.loc[CI1000["njets"] > 1, "dimuon_mass"].compute(),
+                CI1000.loc[CI1000["njets"] > 1, "met"].compute(),
+                300.0 ** CI1000.loc[CI1000["njets"] > 1, "wgt_nominal"].compute(),
+                c="b",
+                label=CI_label,
+                alpha=0.5,
+            )
+
             leg = plt.legend(loc="upper right")
             leg.legendHandles[0]._sizes = [30]
             leg.legendHandles[1]._sizes = [30]
 
-            plt_name = sample.replace("1000", "")+"_MllVsMet_2j.pdf"
-            plt.savefig("plots/"+plt_name)
+            plt_name = sample.replace("1000", "") + "_MllVsMet_2j.pdf"
+            plt.savefig("plots/" + plt_name)
             plt.clf()
-
-
-
-           
-

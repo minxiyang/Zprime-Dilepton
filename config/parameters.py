@@ -39,16 +39,18 @@ parameters["el_hlt"] = {
 parameters["btag_sf_pre_UL"] = {
     "2016": "data/b-tagging/DeepCSV_2016LegacySF_V1.csv",
     "2017": "data/b-tagging/DeepCSV_94XSF_V5_B_F.csv",
-    #"2018": "data/b-tagging/DeepCSV_102XSF_WP_V1.csv",
+    # "2018": "data/b-tagging/DeepCSV_102XSF_WP_V1.csv",
     "2018": "data/b-tagging/DeepJet_102XSF_WP_V1.csv",
 }
 
 parameters["btag_sf_UL"] = {
     "2018": "data/b-tagging/btagSF_2018UL.json",
+    "2017": "data/b-tagging/btagSF_2018UL.json",
 }
 
 parameters["btag_sf_eff"] = {
     "2018": "data/b-tagging/UL2018_ttbar_eff.pickle",
+    "2017": "data/b-tagging/UL2018_ttbar_eff.pickle",
 }
 
 parameters["pu_file_data"] = {
@@ -64,7 +66,7 @@ parameters["pu_file_mc"] = {
 }
 
 parameters["muSFFileList"] = {
-   "2016": [
+    "2016": [
         {
             "id": (
                 "data/muon_sf/year2016/RunBCDEF_SF_ID.root",
@@ -190,9 +192,9 @@ parameters.update(
         "electron_pt_cut": for_all_years(35.0),
         "electron_eta_cut": for_all_years(2.5),
         "electron_id": for_all_years("cutBased_HEEP"),
-        #"UL_btag_loose": {"2016": 0.1918, "2017": 0.1355, "2018": 0.1208},
-        #"UL_btag_medium": {"2016": 0.5848, "2017": 0.4506, "2018": 0.4168},
-        #"UL_btag_tight": {"2016": 0.8767, "2017": 0.7738, "2018": 0.7665},
+        # "UL_btag_loose": {"2016": 0.1918, "2017": 0.1355, "2018": 0.1208},
+        # "UL_btag_medium": {"2016": 0.5848, "2017": 0.4506, "2018": 0.4168},
+        # "UL_btag_tight": {"2016": 0.8767, "2017": 0.7738, "2018": 0.7665},
         "UL_btag_loose": {"2016": 0.1918, "2017": 0.1355, "2018": 0.0490},
         "UL_btag_medium": {"2016": 0.5848, "2017": 0.4506, "2018": 0.2783},
         "UL_btag_tight": {"2016": 0.8767, "2017": 0.7738, "2018": 0.7100},
@@ -293,8 +295,25 @@ jet_branches = [
     "btagDeepB",
     "btagDeepFlavB",
 ]
-genjet_branches = ["nGenJet", "GenJet_pt", "GenJet_eta", "GenJet_phi", "GenJet_mass", "GenJet_partonFlavour"]
-genpart_branches = ["GenPart_eta", "GenPart_genPartIdxMother", "GenPart_mass", "GenPart_pdgId", "GenPart_phi", "GenPart_pt", "GenPart_status", "GenPart_statusFlags", "nGenPart"]
+genjet_branches = [
+    "nGenJet",
+    "GenJet_pt",
+    "GenJet_eta",
+    "GenJet_phi",
+    "GenJet_mass",
+    "GenJet_partonFlavour",
+]
+genpart_branches = [
+    "GenPart_eta",
+    "GenPart_genPartIdxMother",
+    "GenPart_mass",
+    "GenPart_pdgId",
+    "GenPart_phi",
+    "GenPart_pt",
+    "GenPart_status",
+    "GenPart_statusFlags",
+    "nGenPart",
+]
 sajet_branches = [
     "nSoftActivityJet",
     "SoftActivityJet_pt",

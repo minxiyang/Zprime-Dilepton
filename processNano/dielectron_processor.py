@@ -190,6 +190,7 @@ class DielectronProcessor(processor.ProcessorABC):
                 & (abs(electrons.eta) < self.parameters["electron_eta_cut"])
                 & (electrons[self.parameters["electron_id"]] > 0)
             )
+            print(len(electrons.pt))
 
             if dataset == "dyInclusive50":
                 electrons = electrons[electrons.genPartFlav == 15]
@@ -215,7 +216,7 @@ class DielectronProcessor(processor.ProcessorABC):
                 self.timer.add_checkpoint("electron object selection")
 
             output["r"] = None
-            output["s"] = dataset
+            output["dataset"] = dataset
             output["year"] = int(self.year)
 
             if electrons.shape[0] == 0:

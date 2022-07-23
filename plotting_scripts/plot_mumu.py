@@ -24,8 +24,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 # global parameters
-parameters = {
-}
+parameters = {}
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
@@ -38,8 +37,7 @@ if use_local_cluster:
 else:
     slurm_cluster_ip = f"{node_ip}:{args.slurm_port}"
     dashboard_address = f"{node_ip}:8787"
-    parameters['slurm_cluster_ip'] = slurm_cluster_ip
-
+    parameters["slurm_cluster_ip"] = slurm_cluster_ip
 
 
 def load2df(files):
@@ -48,7 +46,7 @@ def load2df(files):
     field = [
         "dimuon_mass",
         "dimuon_cos_theta_cs",
-        "njets",
+        "nbjets",
         "dimuon_mass_gen",
         "wgt_nominal",
     ]
@@ -59,7 +57,8 @@ def load2df(files):
 
 def chunk(files, size):
     size = math.ceil(len(files) / float(size))
-    if size == 0: size=1
+    if size == 0:
+        size = 1
     file_bag = [
         files[i : min(i + size, len(files))] for i in range(0, len(files), size)
     ]
@@ -67,7 +66,11 @@ def chunk(files, size):
 
 
 def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=True):
+    if type(df) == int:
 
+        vals = np.zeros(len(bins) - 1)
+        errs = vals
+        return [vals, errs, bins]
     if njets == -1:
 
         var_array = df.loc[df["dimuon_mass"] > 120, var].compute()
@@ -76,7 +79,11 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
 
             wgt = df.loc[(df["dimuon_mass"] > 120), "wgt_nominal"].compute()
             wgt[wgt < 0] = 0
+            # if masscut > 10.:
+            #    print("rescale")
+            #    wgt = wgt*(64310000./145914000.)
             if iscut:
+                #    print(masscut)
                 # print(wgt[genmass > masscut])
                 genmass = df.loc[(df["dimuon_mass"] > 120), "dimuon_mass_gen"].compute()
                 # print(genmass)
@@ -95,17 +102,19 @@ def df2hist(var, df, bins, masscut, njets=-1, iscut=False, iswgt=True, scale=Tru
     else:
 
         var_array = df.loc[
-            (df["njets"] == njets) & (df["dimuon_mass"] > 120), var
+            (df["nbjets"] == njets) & (df["dimuon_mass"] > 120), var
         ].compute()
 
         if iswgt:
             wgt = df.loc[
-                (df["njets"] == njets) & (df["dimuon_mass"] > 120), "wgt_nominal"
+                (df["nbjets"] == njets) & (df["dimuon_mass"] > 120), "wgt_nominal"
             ].compute()
             wgt[wgt < 0] = 0
+            # if masscut > 10.:
+            #    wgt = wgt * (64310000./145914000.)
             if iscut:
                 genmass = df.loc[
-                    (df["dimuon_mass"] > 120) & (df["njets"] == njets),
+                    (df["dimuon_mass"] > 120) & (df["nbjets"] == njets),
                     "dimuon_mass_gen",
                 ].compute()
                 wgt[genmass > masscut] = 0
@@ -179,9 +188,7 @@ def plots(axes, data, MCs, labels, colors, name):
         color="skyblue",
         alpha=0.3,
     )
-    axes[3].savefig(
-        f"plots/{name}.pdf"
-    )
+    axes[3].savefig(f"plots/{name}.pdf")
 
 
 if __name__ == "__main__":
@@ -207,8 +214,8 @@ if __name__ == "__main__":
 
     bins_cs = np.linspace(-1.0, 1.0, 26)
     bins_jets = np.linspace(0, 7, 8)
-    path = "output/test_march/stage1_output/2018/"
-    path_dy = path + "dy*/*.parquet"
+    path = "output/2018_data/stage1_output/2018/"
+    path_dy = path + "dy*to*/*.parquet"
     dy_files = glob.glob(path_dy)
     path_data = path + "data*/*.parquet"
     data_files = glob.glob(path_data)
@@ -216,12 +223,16 @@ if __name__ == "__main__":
     tt_inclusive_files = glob.glob(path_tt_inclusive)
     path_tt = path + "ttbar_lep_*/*.parquet"
     tt_files = glob.glob(path_tt)
-    tt_files = [file_ for file_ in tt_files if ("ext" not in file_ and "inclu" not in file_)]
+    tt_files = [
+        file_ for file_ in tt_files if ("ext" not in file_ and "inclu" not in file_)
+    ]
     path_wz = path + "WZ*/*.parquet"
     wz_files = glob.glob(path_wz)
-    path_tw1 = path + "tW/*.parquet"
-    path_tw2 = path + "Wantitop/*.parquet"
+    path_tw1 = path + "tW*/*.parquet"
+    path_tw2 = path + "Wantitop*/*.parquet"
+
     tw_files = glob.glob(path_tw1) + glob.glob(path_tw2)
+    print(tw_files)
     path_zz = path + "ZZ*/*.parquet"
     zz_files = glob.glob(path_zz)
     zz_files = [file_ for file_ in zz_files if "ext" not in file_]
@@ -245,7 +256,6 @@ if __name__ == "__main__":
         "ww_inclu": ww_inclusive_files,
     }
 
-    print (file_dict)
     # prepare Dask client
     if use_local_cluster:
         print(
@@ -254,7 +264,7 @@ if __name__ == "__main__":
         )
         client = Client(
             processes=True,
-            #dashboard_address=dashboard_address,
+            # dashboard_address=dashboard_address,
             n_workers=ncpus_local,
             threads_per_worker=1,
             memory_limit="4GB",
@@ -268,9 +278,7 @@ if __name__ == "__main__":
     parameters["ncpus"] = len(client.scheduler_info()["workers"])
     print(f"Connected to cluster! #CPUs = {parameters['ncpus']}")
 
-
-
-    #client = Client(LocalCluster(**client_args))
+    # client = Client(LocalCluster(**client_args))
     mass_inclu = {}
     mass_0j = {}
     mass_1j = {}
@@ -284,17 +292,21 @@ if __name__ == "__main__":
         print(key)
         file_bag = chunk(file_dict[key], parameters["ncpus"])
         if len(file_bag) == 1:
-            df = load2df_mc(file_dict[key])
+            df = load2df(file_dict[key])
         else:
             results = client.map(load2df, file_bag)
 
             dfs = client.gather(results)
-            df = dd.concat(dfs)
+            if len(dfs) == 0:
+                df = 0
+            else:
+                df = dd.concat(dfs)
+
         if key == "tt_inclu":
             masscut = 500.0
-            iscut = True
+            iscut = False
         elif key == "ww_inclu":
-            masscut = 200.0
+            masscut = 600.0
             iscut = True
         else:
             masscut = 0
@@ -384,7 +396,7 @@ if __name__ == "__main__":
         )
 
         nbjets[key] = df2hist(
-            "njets",
+            "nbjets",
             df,
             bins_jets,
             masscut=masscut,
@@ -442,7 +454,7 @@ if __name__ == "__main__":
         mass_2j["tt"],
         mass_2j["dy"],
     ]
-    name = "dimuon_mass_2nbjets"
+    name = "dimuon_mass_2nbjets_2018"
     axes_mass2j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
@@ -466,7 +478,7 @@ if __name__ == "__main__":
         mass_1j["tt"],
         mass_1j["dy"],
     ]
-    name = "dimuon_mass_1nbjets"
+    name = "dimuon_mass_1nbjets_2018"
     axes_mass1j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
@@ -490,7 +502,7 @@ if __name__ == "__main__":
         mass_0j["tt"],
         mass_0j["dy"],
     ]
-    name = "dimuon_mass_0nbjets"
+    name = "dimuon_mass_0nbjets_2018"
     axes_mass0j = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
@@ -514,7 +526,7 @@ if __name__ == "__main__":
         mass_inclu["tt"],
         mass_inclu["dy"],
     ]
-    name = "dimuon_mass_inclu"
+    name = "dimuon_mass_inclu_2018"
     axes_mass = setFrame(
         "$\mathrm{m}(\mu^{+}\mu^{-})$ [GeV]",
         "Events/GeV",
@@ -561,7 +573,7 @@ if __name__ == "__main__":
         cs_2j["tt"],
         cs_2j["dy"],
     ]
-    name = "dimuon_cs_2nbjets"
+    name = "dimuon_cs_2nbjets_2018"
     axes_cs2j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
@@ -585,7 +597,7 @@ if __name__ == "__main__":
         cs_1j["tt"],
         cs_1j["dy"],
     ]
-    name = "dimuon_cs_1nbjets"
+    name = "dimuon_cs_1nbjets_2018"
     axes_cs1j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
@@ -609,7 +621,7 @@ if __name__ == "__main__":
         cs_0j["tt"],
         cs_0j["dy"],
     ]
-    name = "dimuon_cs_0nbjets"
+    name = "dimuon_cs_0nbjets_2018"
     axes_cs0j = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
@@ -633,7 +645,7 @@ if __name__ == "__main__":
         cs_inclu["tt"],
         cs_inclu["dy"],
     ]
-    name = "dimuon_cs_inclusive"
+    name = "dimuon_cs_inclusive_2018"
     axes_cs = setFrame(
         "$\mathrm{cos}\\theta$",
         "Events",
@@ -665,7 +677,7 @@ if __name__ == "__main__":
         nbjets["tt"],
         nbjets["dy"],
     ]
-    name = "dimuon_nbjets"
+    name = "dimuon_nbjets_2018"
     axes = setFrame(
         "Number of b-jets",
         "Events",

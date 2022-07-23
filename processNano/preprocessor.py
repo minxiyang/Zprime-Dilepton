@@ -27,11 +27,14 @@ def load_sample(dataset, parameters):
         from_das=parameters["from_das"],
         client=parameters["client"],
     )
+    if samp_info.is_missing:
+        return {dataset: "missing"}
     samp_info.finalize()
     return {dataset: samp_info}
 
 
 def load_samples(datasets, parameters):
+    print(parameters["year"])
     args = {
         "year": parameters["year"],
         "out_path": parameters["out_path"],
@@ -44,8 +47,9 @@ def load_samples(datasets, parameters):
     for d in tqdm.tqdm(datasets):
         if d in samp_info_total.samples:
             continue
-        # print(load_sample(d, parameters))
         si = load_sample(d, parameters)[d]
+        if si == "missing":
+            continue
         if "files" not in si.fileset[d].keys():
             continue
         samp_info_total.data_entries += si.data_entries
@@ -87,9 +91,15 @@ class SamplesInfo(object):
         self.timeout = kwargs.pop("timeout", 1200)
         self.debug = kwargs.pop("debug", False)
         datasets_from = kwargs.pop("datasets_from", "Zprime")
-
-        self.parameters = {k: v[self.year] for k, v in parameters.items()}
-
+        self.parameters = {}
+        for k, v in parameters.items():
+            try:
+                if "2018" in self.year:
+                    self.parameters.update({k: v["2018"]})
+                else:
+                    self.parameters.update({k: v[self.year]})
+            except Exception:
+                print(k, v)
         self.is_mc = True
         print(datasets_from)
         if "mu" in datasets_from:
@@ -125,6 +135,7 @@ class SamplesInfo(object):
 
         self.metadata = res["metadata"]
         self.data_entries = res["data_entries"]
+        self.is_missing = res["is_missing"]
 
     def load_sample(self, sample, from_das=False, use_dask=False, client=None):
         if sample not in self.paths:
