@@ -35,7 +35,7 @@ cross_sections = {
     "ZZ2L2Nu": 0.564,
     "ZZ2L2Nu_ext": 0.564,
     "ZZ2L2Q": 1.999,
-    "ttbar_lep_inclusive": 87.31 * (64310000.0 / 145914000.0),
+    "ttbar_lep_inclusive": 87.31,
     "ttbar_lep50to500": 87.31,
     "ttbar_lep_M500to800": 0.32611,
     "ttbar_lep_M500to800_ext": 0.32611,
