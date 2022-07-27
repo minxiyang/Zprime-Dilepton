@@ -15,15 +15,9 @@ def split_into_channels(df, v=""):
     else:
         df["nbjets"].fillna(0, inplace=True)
         df.loc[:, "channel"] = "none"
-        df.loc[
-            (df["nbjets"] == 0) , "channel"
-        ] = "0b"
-        df.loc[
-            ((df["nbjets"] == 1) & (df["min_bl_mass"] > 175)) , "channel"
-        ] = "1b"
-        df.loc[
-            ((df["nbjets"] >= 2) & (df["min_bl_mass"] > 175)) , "channel"
-        ] = "2b"
+        df.loc[(df["nbjets"] == 0), "channel"] = "0b"
+        df.loc[((df["nbjets"] == 1) & (df["min_bl_mass"] > 175)), "channel"] = "1b"
+        df.loc[((df["nbjets"] >= 2) & (df["min_bl_mass"] > 175)), "channel"] = "2b"
 
 
 def categorize_by_score(df, scores, mode="uniform", **kwargs):

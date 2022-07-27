@@ -61,7 +61,7 @@ def make_templates(args, parameters={}):
     templates = []
 
     groups = list(set(parameters["grouping"].values()))
-    #print(hist_df.dataset)
+    # print(hist_df.dataset)
     for group in groups:
         datasets = []
         for d in hist_df.dataset.unique():

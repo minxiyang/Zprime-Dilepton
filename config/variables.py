@@ -129,6 +129,9 @@ variables.append(Variable("nbjets", r"$N_{b-tagged jet}$", 10, -0.5, 9.5, 0.5, 1
 variables.append(
     Variable("met", r"$E_{\mathrm{T}}^{\mathrm{miss}} [GeV]$", 20, 0, 200, 0.5, 1e6)
 )
+variables.append(
+    Variable("dimuon_cos_theta_cs", r"$cos\theta_{\mathrm{CS}}$", 20, -1, 1, 0.5, 1e6)
+)
 
 variables_lookup = {}
 for v in variables:

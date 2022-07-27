@@ -40,19 +40,19 @@ parameters = {
     # < general settings >
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
-    "global_path": "/depot/cms/users/schul105/Zprime-Dilepton/output/",
-    "label": "normFixesWCut",
+    "global_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
+    "label": "2018pre-UL",
     "channels": ["inclusive", "0b", "1b", "2b"],
-    "regions": ["bb", "be"],
-    "syst_variations": ["nominal"],
+    "regions": ["inclusive", "bb", "be"],
+    "syst_variations": ["btag_sf_wp"],
     #
     # < plotting settings >
-    "plot_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen", 'njets', 'nbjets'],  # "dimuon_mass"],
+    "plot_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen", "njets", "nbjets", "dimuon_cos_theta_cs"],  # "dimuon_mass"],
     "plot_vars_2d": [["dimuon_mass", "met"]],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
-    "plots_path": "./plots/2022june8",
+    "plots_path": "./plots/2018pre-UL/",
     "dnn_models": {},
     "bdt_models": {},
     #
@@ -66,10 +66,10 @@ parameters["grouping"] = {
     "data_B": "Data",
     "data_C": "Data",
     "data_D": "Data",
-    "data_E": "Data",
-    "data_F": "Data",
-    "data_G": "Data",
-    "data_H": "Data",
+    #"data_E": "Data",
+    #"data_F": "Data",
+    #"data_G": "Data",
+    #"data_H": "Data",
     "dy120to200" : "DY",
     "dy200to400" : "DY",
     "dy400to800" : "DY",
@@ -86,26 +86,28 @@ parameters["grouping"] = {
     "ttbar_lep_M1800toInf" : "Top",
     "tW" : "Top",
     "Wantitop" : "Top",
-    "WWinclusive" : "Other",
-    "WW200to600" : "Other",
-    "WW600to1200" : "Other",
-    "WW1200to2500" : "Other",
+    #"tW2" : "Top",
+    #"Wantitop2" : "Top",
+    "WWinclusive" : "WW",
+    "WW200to600" : "WW",
+    "WW600to1200" : "WW",
+    "WW1200to2500" : "WW",
     "WW2500" : "Other",
     "WZ2L2Q" : "Other",
     "WZ3LNu" : "Other",
     "ZZ2L2Nu" : "Other",
     "ZZ4L" : "Other",
-    "dyInclusive50" : "Other",
-    "bbll_4TeV_M400_posLL" : "bbll_4TeV_posLL",
-    "bbll_4TeV_M1000_posLL" : "bbll_4TeV_posLL",
-    "bbll_8TeV_M400_posLL" : "bbll_8TeV_posLL",
-    "bbll_8TeV_M1000_posLL" : "bbll_8TeV_posLL",
+    "dyInclusive50" : "DYTauTau",
+    #"bbll_4TeV_M400_posLL" : "bbll_4TeV_posLL",
+    #"bbll_4TeV_M1000_posLL" : "bbll_4TeV_posLL",
+    #"bbll_8TeV_M400_posLL" : "bbll_8TeV_posLL",
+    #"bbll_8TeV_M1000_posLL" : "bbll_8TeV_posLL",
 
 }
 
 parameters["plot_groups"] = {
-    "stack": ["DY", "Top", "Other"],
-    "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
+    "stack": ["DY", "Top", "Other", "WW", "DYTauTau"],
+    #"step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
     "errorbar": ["Data"],
     #"2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
     #"2D": ["DY","Other"],
@@ -132,9 +134,9 @@ if __name__ == "__main__":
         client = Client(
             processes=True,
             #dashboard_address=dashboard_address,
-            n_workers=ncpus_local,
+            n_workers=1,
             threads_per_worker=1,
-            memory_limit="4GB",
+            memory_limit="40GB",
         )
     else:
         print(
@@ -159,10 +161,10 @@ if __name__ == "__main__":
     yields = plotter(client, parameters)
 
     # make 2D plots
-    yields2D = plotter2D(client, parameters)
+    #yields2D = plotter2D(client, parameters)
 
     # save templates to ROOT files
-    yield_df = to_templates(client, parameters)
+    #yield_df = to_templates(client, parameters)
 
     # make datacards
     #build_datacards("score_pytorch_test", yield_df, parameters)

@@ -35,7 +35,7 @@ def normalize2D(hist, nBinsX, nBinsY):
 
     for i in range(0, nBinsX):
         for y in range(0, nBinsY):
-            hist[i][y] = hist[i][y]/normFac
+            hist[i][y] = hist[i][y] / normFac
 
     return hist
 
@@ -89,6 +89,7 @@ def plotter(client, parameters, hist_df=None, timer=None):
             "var_name": parameters["plot_vars"],
             "dataset": parameters["datasets"],
         }
+        print(arg_load)
         hist_dfs = parallelize(load_stage2_output_hists, arg_load, client, parameters)
         hist_df = pd.concat(hist_dfs).reset_index(drop=True)
         if hist_df.shape[0] == 0:
@@ -104,7 +105,6 @@ def plotter(client, parameters, hist_df=None, timer=None):
         ],
         "df": [hist_df],
     }
-
     yields = parallelize(plot, arg_plot, client, parameters, seq=True)
 
     return yields
@@ -117,7 +117,9 @@ def plotter2D(client, parameters, hist_df=None, timer=None):
             "var_names": parameters["plot_vars_2d"],
             "dataset": parameters["datasets"],
         }
-        hist_dfs = parallelize(load_stage2_output_hists_2D, arg_load, client, parameters)
+        hist_dfs = parallelize(
+            load_stage2_output_hists_2D, arg_load, client, parameters
+        )
         hist_df = pd.concat(hist_dfs).reset_index(drop=True)
         if hist_df.shape[0] == 0:
             print("Nothing to plot!")
@@ -127,10 +129,14 @@ def plotter2D(client, parameters, hist_df=None, timer=None):
         "region": parameters["regions"],
         "channel": parameters["channels"],
         "var_name1": [
-            v for v in hist_df.var_name1.unique() if any(v in entry for entry in parameters["plot_vars_2d"])
+            v
+            for v in hist_df.var_name1.unique()
+            if any(v in entry for entry in parameters["plot_vars_2d"])
         ],
         "var_name2": [
-            v for v in hist_df.var_name2.unique() if any(v in entry for entry in parameters["plot_vars_2d"])
+            v
+            for v in hist_df.var_name2.unique()
+            if any(v in entry for entry in parameters["plot_vars_2d"])
         ],
         "df": [hist_df],
     }
@@ -157,19 +163,24 @@ def plot(args, parameters={}):
     ratio_plot_size = 0.25
 
     # temporary
-    variation = "nominal"
+    # variation = "nominal"
+    variation = parameters["syst_variations"]
 
-    slicer = {"region": region, "channel": channel, "variation": variation}
+    # slicer = {"region": region, "channel": channel, "variation": variation}
 
     fig = plt.figure()
 
-    if parameters["plot_ratio"]:
+    if parameters["plot_ratio"] or parameters["plot_var"]:
         fig.set_size_inches(plotsize * 1.2, plotsize * (1 + ratio_plot_size))
         gs = fig.add_gridspec(
             2, 1, height_ratios=[(1 - ratio_plot_size), ratio_plot_size], hspace=0.07
         )
+        # ax1.set_xlabel("")
+        # ax1.tick_params(axis="x", labelbottom=False)
         # Top panel: Data/MC
         ax1 = fig.add_subplot(gs[0])
+        ax1.set_xlabel("")
+        ax1.tick_params(axis="x", labelbottom=False)
     else:
         fig, ax1 = plt.subplots()
         fig.set_size_inches(plotsize, plotsize)
@@ -178,55 +189,121 @@ def plot(args, parameters={}):
     entries = {et: Entry(et, parameters) for et in parameters["plot_groups"].keys()}
 
     total_yield = 0
-    for entry in entries.values():
-        if len(entry.entry_list) == 0:
-            continue
-        plottables_df = get_plottables(hist, entry, year, var_name, slicer)
-        plottables = plottables_df["hist"].values.tolist()
-        sumw2 = plottables_df["sumw2"].values.tolist()
-        labels = plottables_df["label"].values.tolist()
-        colors = []
-        for label in labels:
-            colors.append(parameters["color_dict"][label])
-        total_yield += sum([p.sum() for p in plottables])
-        if len(plottables) == 0:
-            continue
-        yerr = np.sqrt(sum(plottables).values()) if entry.yerr else None
-        hep.histplot(
-            plottables,
-            label=labels,
-            ax=ax1,
-            yerr=yerr,
-            stack=entry.stack,
-            color=colors,
-            #sort='yield',
-            histtype=entry.histtype,
-            **entry.plot_opts,
-        )
+    for wgt in variation:
+        slicer = {"region": region, "channel": channel, "variation": wgt}
+        for entry in entries.values():
+            print(entry)
+            if len(entry.entry_list) == 0:
+                continue
+            plottables_df = get_plottables(hist, entry, year, var_name, slicer)
+            plottables = plottables_df["hist"].values.tolist()
+            sumw2 = plottables_df["sumw2"].values.tolist()
+            labels = plottables_df["label"].values.tolist()
+            colors = []
+            labels_new = []
+            for label in labels:
+                colors.append(parameters["color_dict"][label])
+            #    if "up" in wgt:
+            #        labels_new = [label+"_up"]
+            #        colors = ["b"]
+            #    elif "down" in wgt:
+            #        labels_new = [label+"_down"]
+            #        colors = ["g"]
+            #    else:
+            #        labels_new = [label]
+            #        colors = ["r"]
 
-        # MC errors
-        if entry.entry_type == "stack":
-            total_bkg = sum(plottables).values()
-            total_sumw2 = sum(sumw2).values()
-            if sum(total_bkg) > 0:
-                err = poisson_interval(total_bkg, total_sumw2)
-                ax1.fill_between(
-                    x=plottables[0].axes[0].edges,
-                    y1=np.r_[err[0, :], err[0, -1]],
-                    y2=np.r_[err[1, :], err[1, -1]],
-                    **stat_err_opts,
-                )
+            # print(labels_new)
+            total_yield += sum([p.sum() for p in plottables])
+            print(total_yield)
+            if len(plottables) == 0:
+                continue
+            yerr = np.sqrt(sum(plottables).values()) if entry.yerr else None
+            hep.histplot(
+                plottables,
+                label=labels,
+                ax=ax1,
+                yerr=yerr,
+                stack=entry.stack,
+                color=colors,
+                sort="yield",
+                histtype=entry.histtype,
+                **entry.plot_opts,
+            )
+
+            # MC errors
+            if entry.entry_type == "stack":
+                total_bkg = sum(plottables).values()
+                total_sumw2 = sum(sumw2).values()
+                if sum(total_bkg) > 0:
+                    err = poisson_interval(total_bkg, total_sumw2)
+                    ax1.fill_between(
+                        x=plottables[0].axes[0].edges,
+                        y1=np.r_[err[0, :], err[0, -1]],
+                        y2=np.r_[err[1, :], err[1, -1]],
+                        **stat_err_opts,
+                    )
+    print(parameters["plot_vars"])
+    if parameters["plot_vars"]:
+        ax2 = fig.add_subplot(gs[1], sharex=ax1)
+        num = den = []
+        # get Data yields
+        for wgt in variation:
+            slicer = {"region": region, "channel": channel, "variation": wgt}
+            for entry in entries.values():
+                if len(entry.entry_list) == 0:
+                    continue
+
+                if ("up" in wgt) or ("down" in wgt):
+                    num_df = get_plottables(hist, entry, year, var.name, slicer)
+                    num = num_df["hist"].values.tolist()
+                    if len(num) > 0:
+                        num = sum(num).values()
+
+                # get MC yields and sumw2
+                else:
+                    den_df = get_plottables(hist, entry, year, var.name, slicer)
+                    den = den_df["hist"].values.tolist()
+                    den_sumw2 = den_df["sumw2"].values.tolist()
+                    if len(den) > 0:
+                        edges = den[0].axes[0].edges
+                        den = sum(den).values()  # total MC
+                        den_sumw2 = sum(den_sumw2).values()
+
+                if len(num) * len(den) > 0:
+                    # compute Data/MC ratio
+                    ratio = np.divide(num, den)
+                    ratio = np.nan_to_num(ratio)
+                    yerr = np.zeros_like(num)
+                    yerr[den > 0] = np.sqrt(num[den > 0]) / den[den > 0]
+                    hep.histplot(
+                        ratio,
+                        bins=edges,
+                        ax=ax2,
+                        yerr=yerr,
+                        color=["xkcd:black"],
+                        histtype="errorbar",
+                        # **entries["errorbar"].plot_opts,
+                    )
+
+        ax2.axhline(1, ls="--")
+        ax2.set_ylim([0.5, 1.5])
+        ax2.set_ylabel("Data/MC", loc="center")
+        ax2.set_xlabel(var.caption, loc="right")
+        # ax2.legend(prop={"size": "x-small"})
 
     ax1.set_yscale("log")
     ax1.set_ylim(var.ymin, var.ymax)
     ax1.set_xlim(var.xminPlot, var.xmaxPlot)
     ax1.legend(prop={"size": "x-small"})
+    ax1.set_xlabel("")
+    ax1.tick_params(axis="x", labelbottom=False)
 
     if parameters["plot_ratio"]:
         ax1.set_xlabel("")
         ax1.tick_params(axis="x", labelbottom=False)
-    else:
-        ax1.set_xlabel(var.caption, loc="right")
+    # else:
+    #    ax1.set_xlabel(var.caption, loc="right")
 
     if parameters["plot_ratio"]:
         # Bottom panel: Data/MC ratio plot
@@ -261,7 +338,7 @@ def plot(args, parameters={}):
                 bins=edges,
                 ax=ax2,
                 yerr=yerr,
-                color=['xkcd:black'],
+                color=["xkcd:black"],
                 histtype="errorbar",
                 **entries["errorbar"].plot_opts,
             )
@@ -309,7 +386,11 @@ def plot2D(args, parameters={}):
     var_name1 = args["var_name1"]
     var_name2 = args["var_name2"]
 
-    hist = args["df"].loc[(args["df"].var_name1 == var_name1) & (args["df"].var_name2 == var_name2) & (args["df"].year == year)]
+    hist = args["df"].loc[
+        (args["df"].var_name1 == var_name1)
+        & (args["df"].var_name2 == var_name2)
+        & (args["df"].year == year)
+    ]
 
     if var_name1 in parameters["variables_lookup"].keys():
         var1 = parameters["variables_lookup"][var_name1]
@@ -335,7 +416,9 @@ def plot2D(args, parameters={}):
     for entry in entries.values():
         if len(entry.entry_list) == 0:
             continue
-        plottables_df = get_plottables_2D(hist, entry, year, var_name1, var_name2, slicer)
+        plottables_df = get_plottables_2D(
+            hist, entry, year, var_name1, var_name2, slicer
+        )
         plottables = plottables_df["hist"].values.tolist()
         sumw2 = plottables_df["sumw2"].values.tolist()
         labels = plottables_df["label"].values.tolist()
@@ -343,7 +426,7 @@ def plot2D(args, parameters={}):
         total_yield += sum([p.sum() for p in plottables])
         if len(plottables) == 0:
             continue
-        #plot each process on a seperate plot
+        # plot each process on a seperate plot
         for i in range(0, len(plottables)):
             label = labels[i]
 
@@ -364,7 +447,7 @@ def plot2D(args, parameters={}):
             ax1.set_xlim(var1.xminPlot, var1.xmaxPlot)
             ax1.legend(prop={"size": "x-small"})
 
-    #ax1.set_xlabel(var.caption, loc="right")
+            # ax1.set_xlabel(var.caption, loc="right")
 
             hep.cms.label(ax=ax1, data=True, label="Preliminary", year=year)
 
@@ -379,7 +462,7 @@ def plot2D(args, parameters={}):
                 fig.savefig(out_name)
                 print(f"Saved: {out_name}")
 
-        #plot all processes onto the same plot
+        # plot all processes onto the same plot
 
         plotsize = 8
         fig = plt.figure()
@@ -390,7 +473,25 @@ def plot2D(args, parameters={}):
         entry.plot_opts["cmin"] = 1e-2
 
         entry.plot_opts["norm"] = LogNorm(1e-2, 1e3)
-        plot_color_gradients = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples', 'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu', 'GnBu', 'PuBu', 'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn']
+        plot_color_gradients = [
+            "Reds",
+            "Blues",
+            "Greens",
+            "Oranges",
+            "Purples",
+            "YlOrBr",
+            "YlOrRd",
+            "OrRd",
+            "PuRd",
+            "RdPu",
+            "BuPu",
+            "GnBu",
+            "PuBu",
+            "YlGnBu",
+            "PuBuGn",
+            "BuGn",
+            "YlGn",
+        ]
         for i in range(0, len(plottables)):
 
             label = labels[i]
@@ -413,10 +514,14 @@ def plot2D(args, parameters={}):
         if save_plots:
             path = parameters["plots_path"]
             mkdir(path)
-            out_name = f"{path}/{var1.name}_{var2.name}_stacked_{region}_{channel}_{year}.png"
+            out_name = (
+                f"{path}/{var1.name}_{var2.name}_stacked_{region}_{channel}_{year}.png"
+            )
             fig.savefig(out_name)
             print(f"Saved: {out_name}")
-            out_name = f"{path}/{var1.name}_{var2.name}_stacked_{region}_{channel}_{year}.pdf"
+            out_name = (
+                f"{path}/{var1.name}_{var2.name}_stacked_{region}_{channel}_{year}.pdf"
+            )
             fig.savefig(out_name)
             print(f"Saved: {out_name}")
 

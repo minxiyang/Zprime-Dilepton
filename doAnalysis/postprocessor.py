@@ -8,7 +8,8 @@ from copperhead.python.io import (
     save_stage2_output_parquet,
 )
 from doAnalysis.categorizer import split_into_channels
-#from doAnalysis.mva_evaluators import evaluate_pytorch_dnn, evaluate_bdt
+
+# from doAnalysis.mva_evaluators import evaluate_pytorch_dnn, evaluate_bdt
 from doAnalysis.histogrammer import make_histograms, make_histograms2D
 
 import warnings
@@ -78,9 +79,9 @@ def on_partition(args, parameters):
     # < categorization into channels (ggH, VBF, etc.) >
     split_into_channels(df, v="nominal")
     regions = [r for r in parameters["regions"] if r in df.r.unique()]
-    channels = [
-        c for c in parameters["channels"] if c in df["channel"].unique()
-    ]
+    if "inclusive" in parameters["regions"]:
+        regions.append("inclusive")
+    channels = [c for c in parameters["channels"] if c in df["channel"].unique()]
     if "inclusive" in parameters["channels"]:
         channels.append("inclusive")
     # < convert desired columns to histograms >
@@ -101,7 +102,15 @@ def on_partition(args, parameters):
     hist_info_rows_2d = []
     for vars_2d in parameters["hist_vars_2d"]:
         hist_info_row_2d = make_histograms2D(
-            df, vars_2d[0], vars_2d[1], year, dataset, regions, channels, npart, parameters
+            df,
+            vars_2d[0],
+            vars_2d[1],
+            year,
+            dataset,
+            regions,
+            channels,
+            npart,
+            parameters,
         )
         if hist_info_row_2d is not None:
             hist_info_rows_2d.append(hist_info_row_2d)
