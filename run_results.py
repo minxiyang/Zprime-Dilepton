@@ -1,10 +1,11 @@
 import argparse
 import dask
 from dask.distributed import Client
-
 from config.variables import variables_lookup
-from produceResults.plotter import plotter #, plotter2D
-#from produceResults.make_templates import to_templates
+from produceResults.plotter import plotter
+
+# , plotter2D
+# from produceResults.make_templates import to_templates
 
 __all__ = ["dask"]
 
@@ -47,7 +48,16 @@ parameters = {
     "syst_variations": ["btag_sf_wp"],
     #
     # < plotting settings >
-    "plot_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen", "njets", "nbjets", "dimuon_cos_theta_cs"],  # "dimuon_mass"],
+    "plot_vars": [
+        "min_bl_mass",
+        "min_b1l_mass",
+        "min_b2l_mass",
+        "dimuon_mass",
+        "dimuon_mass_gen",
+        "njets",
+        "nbjets",
+        "dimuon_cos_theta_cs",
+    ],  # "dimuon_mass"],
     "plot_vars_2d": [["dimuon_mass", "met"]],  # "dimuon_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
@@ -58,7 +68,13 @@ parameters = {
     #
     # < templates and datacards >
     "save_templates": True,
-    "templates_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen"],  # "dimuon_mass"],
+    "templates_vars": [
+        "min_bl_mass",
+        "min_b1l_mass",
+        "min_b2l_mass",
+        "dimuon_mass",
+        "dimuon_mass_gen",
+    ],  # "dimuon_mass"],
 }
 
 parameters["grouping"] = {
@@ -66,63 +82,61 @@ parameters["grouping"] = {
     "data_B": "Data",
     "data_C": "Data",
     "data_D": "Data",
-    #"data_E": "Data",
-    #"data_F": "Data",
-    #"data_G": "Data",
-    #"data_H": "Data",
-    "dy120to200" : "DY",
-    "dy200to400" : "DY",
-    "dy400to800" : "DY",
-    "dy800to1400" : "DY",
-    "dy1400to2300" : "DY",
-    "dy2300to3500" : "DY",
-    "dy3500to4500" : "DY",
-    "dy4500to6000" : "DY",
-    "dy6000toInf" : "DY",
-    "ttbar_lep_inclusive" : "Top",
-    "ttbar_lep_M500to800" : "Top",
-    "ttbar_lep_M800to1200" : "Top",
-    "ttbar_lep_M1200to1800" : "Top",
-    "ttbar_lep_M1800toInf" : "Top",
-    "tW" : "Top",
-    "Wantitop" : "Top",
-    #"tW2" : "Top",
-    #"Wantitop2" : "Top",
-    "WWinclusive" : "WW",
-    "WW200to600" : "WW",
-    "WW600to1200" : "WW",
-    "WW1200to2500" : "WW",
-    "WW2500" : "Other",
-    "WZ2L2Q" : "Other",
-    "WZ3LNu" : "Other",
-    "ZZ2L2Nu" : "Other",
-    "ZZ4L" : "Other",
-    "dyInclusive50" : "DYTauTau",
-    #"bbll_4TeV_M400_posLL" : "bbll_4TeV_posLL",
-    #"bbll_4TeV_M1000_posLL" : "bbll_4TeV_posLL",
-    #"bbll_8TeV_M400_posLL" : "bbll_8TeV_posLL",
-    #"bbll_8TeV_M1000_posLL" : "bbll_8TeV_posLL",
-
+    # "data_E": "Data",
+    # "data_F": "Data",
+    # "data_G": "Data",
+    # "data_H": "Data",
+    "dy120to200": "DY",
+    "dy200to400": "DY",
+    "dy400to800": "DY",
+    "dy800to1400": "DY",
+    "dy1400to2300": "DY",
+    "dy2300to3500": "DY",
+    "dy3500to4500": "DY",
+    "dy4500to6000": "DY",
+    "dy6000toInf": "DY",
+    "ttbar_lep_inclusive": "Top",
+    "ttbar_lep_M500to800": "Top",
+    "ttbar_lep_M800to1200": "Top",
+    "ttbar_lep_M1200to1800": "Top",
+    "ttbar_lep_M1800toInf": "Top",
+    "tW": "Top",
+    "Wantitop": "Top",
+    # "tW2" : "Top",
+    # "Wantitop2" : "Top",
+    "WWinclusive": "WW",
+    "WW200to600": "WW",
+    "WW600to1200": "WW",
+    "WW1200to2500": "WW",
+    "WW2500": "Other",
+    "WZ2L2Q": "Other",
+    "WZ3LNu": "Other",
+    "ZZ2L2Nu": "Other",
+    "ZZ4L": "Other",
+    "dyInclusive50": "DYTauTau",
+    # "bbll_4TeV_M400_posLL" : "bbll_4TeV_posLL",
+    # "bbll_4TeV_M1000_posLL" : "bbll_4TeV_posLL",
+    # "bbll_8TeV_M400_posLL" : "bbll_8TeV_posLL",
+    # "bbll_8TeV_M1000_posLL" : "bbll_8TeV_posLL",
 }
 
 parameters["plot_groups"] = {
     "stack": ["DY", "Top", "Other", "WW", "DYTauTau"],
-    #"step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
+    # "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
     "errorbar": ["Data"],
-    #"2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
-    #"2D": ["DY","Other"],
+    # "2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],
+    # "2D": ["DY","Other"],
 }
-#ways to specificy colors for matplotlib are here: https://matplotlib.org/3.5.0/tutorials/colors/colors.html Using the xkcd color survey for now: https://xkcd.com/color/rgb/
+# ways to specificy colors for matplotlib are here: https://matplotlib.org/3.5.0/tutorials/colors/colors.html Using the xkcd color survey for now: https://xkcd.com/color/rgb/
 parameters["color_dict"] = {
-
-    "DY": 'xkcd:water blue',
-    "Top": 'xkcd:pastel orange',
-    "Other": 'xkcd:shamrock green',
-    "WW": 'xkcd:red',
-    "DYTauTau": 'xkcd:blue',
-    "Data": 'xkcd:black',
-    "bbll_4TeV_posLL": 'xkcd:red',
-    "bbll_8TeV_posLL": 'xkcd:violet',
+    "DY": "xkcd:water blue",
+    "Top": "xkcd:pastel orange",
+    "Other": "xkcd:shamrock green",
+    "WW": "xkcd:red",
+    "DYTauTau": "xkcd:blue",
+    "Data": "xkcd:black",
+    "bbll_4TeV_posLL": "xkcd:red",
+    "bbll_8TeV_posLL": "xkcd:violet",
 }
 
 if __name__ == "__main__":
@@ -133,7 +147,7 @@ if __name__ == "__main__":
         )
         client = Client(
             processes=True,
-            #dashboard_address=dashboard_address,
+            # dashboard_address=dashboard_address,
             n_workers=1,
             threads_per_worker=1,
             memory_limit="40GB",
@@ -161,10 +175,10 @@ if __name__ == "__main__":
     yields = plotter(client, parameters)
 
     # make 2D plots
-    #yields2D = plotter2D(client, parameters)
+    # yields2D = plotter2D(client, parameters)
 
     # save templates to ROOT files
-    #yield_df = to_templates(client, parameters)
+    # yield_df = to_templates(client, parameters)
 
     # make datacards
-    #build_datacards("score_pytorch_test", yield_df, parameters)
+    # build_datacards("score_pytorch_test", yield_df, parameters)
