@@ -14,8 +14,9 @@ from processNano.weights import Weights
 
 # correction helpers included from copperhead
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
-from copperhead.stage1.corrections.lepton_sf import musf_lookup, musf_evaluator
-from copperhead.stage1.corrections.jec import jec_factories, apply_jec
+#from copperhead.stage1.corrections.lepton_sf import musf_lookup
+
+# from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
 
 # from copperhead.stage1.corrections.lhe_weights import lhe_weights
@@ -47,11 +48,12 @@ class DimuonProcessor(processor.ProcessorABC):
         self.year = self.samp_info.year
         self.parameters = {k: v[self.year] for k, v in parameters.items()}
 
-        self.do_btag_syst = kwargs.pop("do_btag_syst", None)
-        if self.do_btag_syst:
-            self.btag_systs = self.parameters["btag_systs"]
-        else:
-            self.btag_systs = []
+        # self.do_btag_syst = kwargs.pop("do_btag_syst", None)
+        self.do_btag = True
+        # if self.do_btag_syst:
+        #    self.btag_systs = self.parameters["btag_systs"]
+        # else:
+        #    self.btag_systs = []
 
         if self.samp_info is None:
             print("Samples info missing!")
@@ -79,20 +81,20 @@ class DimuonProcessor(processor.ProcessorABC):
         self.channels = ["mumu"]
 
         self.lumi_weights = self.samp_info.lumi_weights
-        if self.do_btag_syst:
-            self.btag_systs = [
-                "jes",
-                "lf",
-                "hfstats1",
-                "hfstats2",
-                "cferr1",
-                "cferr2",
-                "hf",
-                "lfstats1",
-                "lfstats2",
-            ]
-        else:
-            self.btag_systs = []
+        # if self.do_btag_syst:
+        #    self.btag_systs = [
+        #        "jes",
+        #        "lf",
+        #        "hfstats1",
+        #        "hfstats2",
+        #        "cferr1",
+        #        "cferr2",
+        #        "hf",
+        #        "lfstats1",
+        #        "lfstats2",
+        #    ]
+        # else:
+        #    self.btag_systs = []
 
         self.prepare_lookups()
 
@@ -104,7 +106,9 @@ class DimuonProcessor(processor.ProcessorABC):
         # Dataset name (see definitions in config/datasets.py)
         dataset = df.metadata["dataset"]
 
-        is_mc = "data" not in dataset
+        is_mc = True
+        if "data" in dataset:
+            is_mc = False
 
         # ------------------------------------------------------------#
         # Apply HLT, lumimask, genweights, PU weights
@@ -378,25 +382,25 @@ class DimuonProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
 
         jets = df.Jet
-        self.do_jec = False
+        # self.do_jec = False
 
         # We only need to reapply JEC for 2018 data
         # (unless new versions of JEC are released)
-        if ("data" in dataset) and ("2018" in self.year):
-            self.do_jec = False
+        # if ("data" in dataset) and ("2018" in self.year):
+        #    self.do_jec = False
 
-        apply_jec(
-            df,
-            jets,
-            dataset,
-            is_mc,
-            self.year,
-            self.do_jec,
-            self.do_jecunc,
-            self.do_jerunc,
-            self.jec_factories,
-            self.jec_factories_data,
-        )
+        # apply_jec(
+        #    df,
+        #    jets,
+        #    dataset,
+        #    is_mc,
+        #    self.year,
+        #    self.do_jec,
+        #    self.do_jecunc,
+        #    self.do_jerunc,
+        #    self.jec_factories,
+        #    self.jec_factories_data,
+        # )
         output.columns = pd.MultiIndex.from_product(
             [output.columns, [""]], names=["Variable", "Variation"]
         )
@@ -426,7 +430,7 @@ class DimuonProcessor(processor.ProcessorABC):
         if self.timer:
             self.timer.add_checkpoint("Jet loop")
 
-        if is_mc:
+            # if is_mc:
             """
             do_zpt = ('dy' in dataset)
             if do_zpt:
@@ -437,19 +441,6 @@ class DimuonProcessor(processor.ProcessorABC):
                     ).flatten()
                 weights.add_weight('zpt_wgt', zpt_weight)
             """
-
-            do_musf = False
-            if do_musf:
-                muID, muIso, muTrig = musf_evaluator(
-                    self.musf_lookup, self.year, numevents, mu1, mu2
-                )
-                weights.add_weight("muID", muID, how="all")
-                weights.add_weight("muIso", muIso, how="all")
-                weights.add_weight("muTrig", muTrig, how="all")
-            else:
-                weights.add_weight("muID", how="dummy_all")
-                weights.add_weight("muIso", how="dummy_all")
-                weights.add_weight("muTrig", how="dummy_all")
 
         if self.timer:
             self.timer.add_checkpoint("Computed event weights")
@@ -467,94 +458,100 @@ class DimuonProcessor(processor.ProcessorABC):
 
         output["year"] = int(self.year)
 
-        for wgt in weights.df.columns:
-            if wgt != "nominal":
-                continue
-            output[f"wgt_{wgt}"] = weights.get_weight(wgt)
+        # for wgt in weights.df.columns:
+        #    output[f"wgt_{wgt}"] = weights.get_weight(wgt)
 
         if is_mc and "dy" in dataset and self.applykFac:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
-            output.loc[
-                ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
-                "wgt_nominal",
-            ] = (
+            for key in output.columns:
+                if "wgt" not in key[0]:
+                    continue
                 output.loc[
                     ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
-                    "wgt_nominal",
-                ]
-                * kFac(mass_bb, "bb", "mu")
-            ).values
-            output.loc[
-                ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
-                "wgt_nominal",
-            ] = (
+                    key[0],
+                ] = (
+                    output.loc[
+                        ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
+                        key[0],
+                    ]
+                    * kFac(mass_bb, "bb", "mu")
+                ).values
                 output.loc[
                     ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
-                    "wgt_nominal",
-                ]
-                * kFac(mass_be, "be", "mu")
-            ).values
+                    key[0],
+                ] = (
+                    output.loc[
+                        ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
+                        key[0],
+                    ]
+                    * kFac(mass_be, "be", "mu")
+                ).values
 
         if is_mc and "dy" in dataset and self.applyNNPDFWeight:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
             leadingPt_bb = output[output["r"] == "bb"].mu1_pt_gen.to_numpy()
             leadingPt_be = output[output["r"] == "be"].mu1_pt_gen.to_numpy()
-            output.loc[
-                ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
-                "wgt_nominal",
-            ] = (
+            for key in output.columns:
+                if "wgt" not in key[0]:
+                    continue
                 output.loc[
                     ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
-                    "wgt_nominal",
-                ]
-                * NNPDFWeight(
-                    mass_bb, leadingPt_bb, "bb", "mu", float(self.year), DY=True
-                )
-            ).values
-            output.loc[
-                ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
-                "wgt_nominal",
-            ] = (
+                    key[0],
+                ] = (
+                    output.loc[
+                        ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
+                        key[0],
+                    ]
+                    * NNPDFWeight(
+                        mass_bb, leadingPt_bb, "bb", "mu", float(self.year), DY=True
+                    )
+                ).values
                 output.loc[
                     ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
-                    "wgt_nominal",
-                ]
-                * NNPDFWeight(
-                    mass_be, leadingPt_be, "be", "mu", float(self.year), DY=True
-                )
-            ).values
+                    key[0],
+                ] = (
+                    output.loc[
+                        ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
+                        key[0],
+                    ]
+                    * NNPDFWeight(
+                        mass_be, leadingPt_be, "be", "mu", float(self.year), DY=True
+                    )
+                ).values
         if is_mc and "ttbar" in dataset and self.applyNNPDFWeight:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
             leadingPt_bb = output[output["r"] == "bb"].mu1_pt_gen.to_numpy()
             leadingPt_be = output[output["r"] == "be"].mu1_pt_gen.to_numpy()
-
-            output.loc[
-                ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
-                "wgt_nominal",
-            ] = (
+            for key in output.columns:
+                if "wgt" not in key[0]:
+                    continue
                 output.loc[
                     ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
-                    "wgt_nominal",
-                ]
-                * NNPDFWeight(
-                    mass_bb, leadingPt_bb, "bb", "mu", float(self.year), DY=False
-                )
-            ).values
-            output.loc[
-                ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
-                "wgt_nominal",
-            ] = (
+                    key[0],
+                ] = (
+                    output.loc[
+                        ((abs(output.mu1_eta) < 1.2) & (abs(output.mu2_eta) < 1.2)),
+                        key[0],
+                    ]
+                    * NNPDFWeight(
+                        mass_bb, leadingPt_bb, "bb", "mu", float(self.year), DY=False
+                    )
+                ).values
                 output.loc[
                     ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
-                    "wgt_nominal",
-                ]
-                * NNPDFWeight(
-                    mass_be, leadingPt_be, "be", "mu", float(self.year), DY=False
-                )
-            ).values
+                    key[0],
+                ] = (
+                    output.loc[
+                        ((abs(output.mu1_eta) > 1.2) | (abs(output.mu2_eta) > 1.2)),
+                        key[0],
+                    ]
+                    * NNPDFWeight(
+                        mass_be, leadingPt_be, "be", "mu", float(self.year), DY=False
+                    )
+                ).values
 
         output = output.loc[output.event_selection, :]
         output = output.reindex(sorted(output.columns), axis=1)
@@ -606,11 +603,11 @@ class DimuonProcessor(processor.ProcessorABC):
                 "phi_gen",
             ]
 
-        if variation == "nominal":
-            if self.do_jec:
-                jet_branches_local += ["pt_jec", "mass_jec"]
-            if is_mc and self.do_jerunc:
-                jet_branches_local += ["pt_orig", "mass_orig"]
+        # if variation == "nominal":
+        #    if self.do_jec:
+        #        jet_branches_local += ["pt_jec", "mass_jec"]
+        #    if is_mc and self.do_jerunc:
+        #        jet_branches_local += ["pt_orig", "mass_orig"]
 
         # Find jets that have selected muons within dR<0.4 from them
         matched_mu_pt = jets.matched_muons.pt
@@ -634,47 +631,40 @@ class DimuonProcessor(processor.ProcessorABC):
             self.timer.add_checkpoint("Clean jets from matched muons")
 
         # Select particular JEC variation
-        if "_up" in variation:
-            unc_name = "JES_" + variation.replace("_up", "")
-            if unc_name not in jets.fields:
-                return
-            jets = jets[unc_name]["up"][jet_branches_local]
-        elif "_down" in variation:
-            unc_name = "JES_" + variation.replace("_down", "")
-            if unc_name not in jets.fields:
-                return
-            jets = jets[unc_name]["down"][jet_branches_local]
-        else:
-            jets = jets[jet_branches_local]
+        # if "_up" in variation:
+        #    unc_name = "JES_" + variation.replace("_up", "")
+        #    if unc_name not in jets.fields:
+        #        return
+        #    jets = jets[unc_name]["up"][jet_branches_local]
+        # elif "_down" in variation:
+        #    unc_name = "JES_" + variation.replace("_down", "")
+        #    if unc_name not in jets.fields:
+        #        return
+        #    jets = jets[unc_name]["down"][jet_branches_local]
+        # else:
+
+        jets = jets[jet_branches_local]
 
         # --- conversion from awkward to pandas --- #
         jets = ak.to_pandas(jets)
-        if is_mc:
-
-            btagSF(jets, self.year, correction="shape", is_UL=True)
-            btagSF(jets, self.year, correction="wp", is_UL=True)
-
-            if self.timer:
-                self.timer.add_checkpoint("Applied btaging")
-        jets = jets.dropna()
 
         if jets.index.nlevels == 3:
             # sometimes there are duplicates?
             jets = jets.loc[pd.IndexSlice[:, :, 0], :]
             jets.index = jets.index.droplevel("subsubentry")
 
-        if variation == "nominal":
-            # Update pt and mass if JEC was applied
-            if self.do_jec:
-                jets["pt"] = jets["pt_jec"]
-                jets["mass"] = jets["mass_jec"]
+        # if variation == "nominal":
+        # Update pt and mass if JEC was applied
+        #    if self.do_jec:
+        #        jets["pt"] = jets["pt_jec"]
+        #        jets["mass"] = jets["mass_jec"]
 
-            # We use JER corrections only for systematics, so we shouldn't
-            # update the kinematics. Use original values,
-            # unless JEC were applied.
-            if is_mc and self.do_jerunc and not self.do_jec:
-                jets["pt"] = jets["pt_orig"]
-                jets["mass"] = jets["mass_orig"]
+        # We use JER corrections only for systematics, so we shouldn't
+        # update the kinematics. Use original values,
+        # unless JEC were applied.
+        # if is_mc and self.do_jerunc and not self.do_jec:
+        #    jets["pt"] = jets["pt_orig"]
+        #    jets["mass"] = jets["mass_orig"]
 
         # ------------------------------------------------------------#
         # Apply jetID
@@ -686,25 +676,74 @@ class DimuonProcessor(processor.ProcessorABC):
             names=["entry", "subentry"],
         )
         # Select two jets with highest pT
-        if is_mc:
-            variables["btag_sf_shape"] = (
-                jets.loc[jets.pre_selection == 1, "btag_sf_shape"]
-                .groupby("entry")
-                .prod()
-            )
-            variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
-            for key in jets.columns:
-                if "btag_sf_wp" not in key:
-                    continue
-                else:
+        # if is_mc:
+        #    variables["btag_sf_shape"] = (
+        #        jets.loc[jets.pre_selection == 1, "btag_sf_shape"]
+        #        .groupby("entry")
+        #        .prod()
+        #    )
+        #    variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
 
-                    variables["wgt_" + key] = (
-                        jets.loc[jets.pre_selection == 1, key].groupby("entry").prod()
+        if is_mc:
+            if self.do_btag:
+
+                btagSF(jets, self.year, correction="shape", is_UL=True)
+                btagSF(jets, self.year, correction="wp", is_UL=True)
+                jets = jets.dropna()
+
+                variables["wgt_nominal"] = (
+                    jets.loc[jets.pre_selection == 1, "btag_sf_wp"]
+                    .groupby("entry")
+                    .prod()
+                )
+                variables["wgt_nominal"] = variables["wgt_nominal"].fillna(1.0)
+                variables["wgt_nominal"] = variables[
+                    "wgt_nominal"
+                ] * weights.get_weight("nominal")
+                variables["wgt_btag_up"] = (
+                    jets.loc[jets.pre_selection == 1, "btag_sf_wp_up"]
+                    .groupby("entry")
+                    .prod()
+                )
+                variables["wgt_btag_up"] = variables["wgt_btag_up"].fillna(1.0)
+                variables["wgt_btag_up"] = variables[
+                    "wgt_btag_up"
+                ] * weights.get_weight("nominal")
+                variables["wgt_btag_down"] = (
+                    jets.loc[jets.pre_selection == 1, "btag_sf_wp_down"]
+                    .groupby("entry")
+                    .prod()
+                )
+                variables["wgt_btag_down"] = variables["wgt_btag_down"].fillna(1.0)
+                variables["wgt_btag_down"] = variables[
+                    "wgt_btag_down"
+                ] * weights.get_weight("nominal")
+
+                for s in ["_up", "_down"]:
+
+                    variables["wgt_recowgt" + s] = (
+                        jets.loc[jets.pre_selection == 1, "btag_sf_wp"]
+                        .groupby("entry")
+                        .prod()
                     )
-                    variables["wgt_" + key] = variables["wgt_" + key].fillna(1.0)
-                    variables["wgt_" + key] = variables[
-                        "wgt_" + key
-                    ] * weights.get_weight("nominal")
+                    variables["wgt_recowgt" + s] = variables["wgt_recowgt" + s].fillna(
+                        1.0
+                    )
+                    variables["wgt_recowgt" + s] = variables[
+                        "wgt_recowgt" + s
+                    ] * weights.get_weight("recowgt" + s)
+            else:
+                variables["wgt_nominal"] = 1.0
+                variables["wgt_nominal"] = variables[
+                    "wgt_nominal"
+                ] * weights.get_weight("nominal")
+
+                for s in ["_up", "_down"]:
+
+                    variables["wgt_recowgt" + s] = 1.0
+                    variables["wgt_recowgt" + s] = variables[
+                        "wgt_recowgt" + s
+                    ] * weights.get_weight("recowgt" + s)
 
         jets["selection"] = 0
         jets.loc[
@@ -785,9 +824,9 @@ class DimuonProcessor(processor.ProcessorABC):
         return output
 
     def prepare_lookups(self):
-        self.jec_factories, self.jec_factories_data = jec_factories(self.year)
+        # self.jec_factories, self.jec_factories_data = jec_factories(self.year)
         # Muon scale factors
-        self.musf_lookup = musf_lookup(self.parameters)
+        # self.musf_lookup = musf_lookup(self.parameters)
         # Pile-up reweighting
         self.pu_lookups = pu_lookups(self.parameters)
         # Btag weights
