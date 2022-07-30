@@ -14,7 +14,8 @@ from processNano.weights import Weights
 
 # correction helpers included from copperhead
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
-#from copperhead.stage1.corrections.lepton_sf import musf_lookup
+
+# from copperhead.stage1.corrections.lepton_sf import musf_lookup
 
 # from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
@@ -684,9 +685,8 @@ class DimuonProcessor(processor.ProcessorABC):
         #    )
         #    variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
 
-        if is_mc:
-            if self.do_btag:
-
+        if self.do_btag:
+            if is_mc:
                 btagSF(jets, self.year, correction="shape", is_UL=True)
                 btagSF(jets, self.year, correction="wp", is_UL=True)
                 jets = jets.dropna()
@@ -734,6 +734,13 @@ class DimuonProcessor(processor.ProcessorABC):
                     ] * weights.get_weight("recowgt" + s)
             else:
                 variables["wgt_nominal"] = 1.0
+                variables["wgt_btag_up"] = 1.0
+                variables["wgt_btag_down"] = 1.0
+                variables["wgt_recowgt_up"] = 1.0
+                variables["wgt_recowgt_down"] = 1.0
+        else:
+            if is_mc:
+                variables["wgt_nominal"] = 1.0
                 variables["wgt_nominal"] = variables[
                     "wgt_nominal"
                 ] * weights.get_weight("nominal")
@@ -744,6 +751,10 @@ class DimuonProcessor(processor.ProcessorABC):
                     variables["wgt_recowgt" + s] = variables[
                         "wgt_recowgt" + s
                     ] * weights.get_weight("recowgt" + s)
+            else:
+                variables["wgt_nominal"] = 1.0
+                variables["wgt_recowgt_up"] = 1.0
+                variables["wgt_recowgt_down"] = 1.0
 
         jets["selection"] = 0
         jets.loc[

@@ -42,10 +42,10 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
-    "label": "2018pre-UL",
+    "label": "2018pre-UL_v2",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],
-    "syst_variations": ["btag_sf_wp"],
+    "syst_variations": ["nominal"],
     #
     # < plotting settings >
     "plot_vars": [

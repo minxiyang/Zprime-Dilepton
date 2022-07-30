@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("copperhead/")
 import glob
 import tqdm
@@ -48,19 +49,38 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "global_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
     "years": args.years,
-    #"label": "moreKiller",
-    #"label": "noGenWeight",
-    "label": "2018pre-UL",
+    # "label": "moreKiller",
+    # "label": "noGenWeight",
+    "label": "2018pre-UL_v2",
     "channels": ["inclusive", "0b", "1b", "2b"],
-    "regions": ["inclusive" ,"bb", "be"],
-    #"syst_variations": ["nominal", "resUnc", "scaleUncUp", "scaleUncDown"],
-    "syst_variations": ["nominal" ,"btag_sf_wp", "btag_sf_wp_up", "btag_sf_wp_down"],
+    "regions": ["inclusive", "bb", "be"],
+    # "syst_variations": ["nominal"],
+    # "syst_variations": ["nominal", "resUnc", "scaleUncUp", "scaleUncDown"],
+    "syst_variations": [
+        "nominal",
+        "btag_up",
+        "btag_down",
+        "recowgt_up",
+        "recowgt_down",
+        "resUnc",
+        "scaleUncUp",
+        "scaleUncDown",
+    ],
     # "custom_npartitions": {
     #     "vbf_powheg_dipole": 1,
     # },
     #
     # < settings for histograms >
-    "hist_vars": ["min_bl_mass", "min_b1l_mass", "min_b2l_mass", "dimuon_mass", "dimuon_mass_gen", "njets", "nbjets", "dimuon_cos_theta_cs"],
+    "hist_vars": [
+        "min_bl_mass",
+        "min_b1l_mass",
+        "min_b2l_mass",
+        "dimuon_mass",
+        "dimuon_mass_gen",
+        "njets",
+        "nbjets",
+        "dimuon_cos_theta_cs",
+    ],
     "hist_vars_2d": [["dimuon_mass", "met"]],
     "variables_lookup": variables_lookup,
     "save_hists": True,
@@ -83,10 +103,10 @@ parameters["datasets"] = [
     "data_B",
     "data_C",
     "data_D",
-    #"data_E",
-    #"data_F",
-    #"data_G",
-    #"data_H",
+    # "data_E",
+    # "data_F",
+    # "data_G",
+    # "data_H",
     "dy120to200",
     "dy200to400",
     "dy400to800",
@@ -104,10 +124,10 @@ parameters["datasets"] = [
     "ttbar_lep_M1800toInf",
     "tW",
     "Wantitop",
-    #"tW1",
-    #"Wantitop1",
-    #"tW2",
-    #"Wantitop2",
+    # "tW1",
+    # "Wantitop1",
+    # "tW2",
+    # "Wantitop2",
     "WWinclusive",
     "WW200to600",
     "WW600to1200",
@@ -117,11 +137,11 @@ parameters["datasets"] = [
     "WZ3LNu",
     "ZZ2L2Nu",
     "ZZ4L",
-    #"bbll_4TeV_M1000_negLL",
-    #"bbll_4TeV_M1000_negLR",
-    #"bbll_4TeV_M1000_posLL",
-    #"bbll_4TeV_M1000_posLR",
-    #"bbll_4TeV_M400_negLL",
+    # "bbll_4TeV_M1000_negLL",
+    # "bbll_4TeV_M1000_negLR",
+    # "bbll_4TeV_M1000_posLL",
+    # "bbll_4TeV_M1000_posLR",
+    # "bbll_4TeV_M400_negLL",
     "bbll_4TeV_M400_negLR",
     "bbll_4TeV_M400_posLL",
     "bbll_4TeV_M400_posLR",
@@ -146,7 +166,7 @@ if __name__ == "__main__":
         )
         client = Client(
             processes=True,
-            #dashboard_address=dashboard_address,
+            # dashboard_address=dashboard_address,
             n_workers=ncpus_local,
             threads_per_worker=1,
             memory_limit="4GB",
@@ -185,7 +205,7 @@ if __name__ == "__main__":
         for dataset, path in tqdm.tqdm(all_paths[year].items()):
             if len(path) == 0:
                 continue
-            if "data" in dataset:
+            if "data" not in dataset:
                 continue
             # read stage1 outputs
             df = load_dataframe(client, parameters, inputs=[path], dataset=dataset)
