@@ -107,9 +107,9 @@ parameters = {
     "global_path": global_path,
     "out_path": f"{args.year}_{args.label}_{local_time}",
     # "server": "root://xrootd.rcac.purdue.edu/",
-    # "server": "root://cmsxrootd.fnal.gov//",
+    "server": "root://cmsxrootd.fnal.gov//",
     "xrootd": False,
-    "server": "/mnt/hadoop/",
+    #"server": "/mnt/hadoop/",
     "datasets_from": "Zprime",
     "from_das": True,
     "chunksize": int(args.chunksize),
@@ -183,6 +183,10 @@ def submit_job(parameters):
         from processNano.dimuon_eff_processor import (
             DimuonEffProcessor as event_processor,
         )
+    elif parameters["channel"] == "preselection_mu":
+        from processNano.dimuon_preselector import (
+            DimuonProcessor as event_processor,
+        )
     else:
         print("wrong channel input")
 
@@ -225,7 +229,7 @@ if __name__ == "__main__":
             "WZ3LNu",
             "WZ2L2Q",
             "ZZ",
-            "ZZ2L2Nu",
+            #"ZZ2L2Nu",
             "ZZ2L2Nu_ext",
             "ZZ2L2Q",
             "ZZ4L",
@@ -239,12 +243,16 @@ if __name__ == "__main__":
             "Wjets",
             "ttbar_lep_inclusive",
             "ttbar_lep_M500to800_ext",
-            "ttbar_lep_M500to800",
-            "ttbar_lep_M800to1200",
+            "WW600to1200",
+            "WW1200to2500",
             "ttbar_lep_M1200to1800",
             "ttbar_lep_M1800toInf",
             "Wantitop",
+            "Wantitop1",
+            "Wantitop2",
             "tW",
+            "tW1",
+            "tW2",
         ],
         "dy": [
             # "dy50to120",
@@ -282,10 +290,10 @@ if __name__ == "__main__":
         # create local cluster
         parameters["client"] = Client(
             processes=True,
-            n_workers=40,
+            n_workers=24,
             # dashboard_address=dash_local,
             threads_per_worker=1,
-            memory_limit="3.6GB",
+            memory_limit="6GB",
         )
     else:
         # connect to existing Slurm cluster
@@ -301,15 +309,16 @@ if __name__ == "__main__":
             #    continue
             # if "WWinclusive" not in sample:
             # if "dy200to400" not in sample:
-            # if "dy" not in sample:
+            # if sample != "ttbar_lep_inclusive":
+            #    continue
             # if "ttbar_lep_M500to800" not in sample:
             # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
             #    continue
 
-            # if group != "CI":
-            #    continue
-            if sample not in ["dy400to800"]:
+            if group != "other_mc":
                 continue
+            #if sample not in ["data_A"]:
+            #    continue
             # if group != "data":
             #    continue
             if group == "data":
