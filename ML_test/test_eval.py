@@ -84,7 +84,9 @@ df_data = df_data.compute()
 df_sig = df_sig[load_features]
 df_bkg = df_bkg[load_features]
 df_data = df_data[load_features]
-
+df_sig = df_sig.loc[(abs(df_sig["jet1_eta"])<2.4) & (abs(df_sig["jet2_eta"])<2.4), :]
+df_bkg = df_bkg.loc[(abs(df_bkg["jet1_eta"])<2.4) & (abs(df_bkg["jet2_eta"])<2.4), :]
+df_data = df_data.loc[(abs(df_data["jet1_eta"])<2.4) & (abs(df_data["jet2_eta"])<2.4), :]
 bkg_yield = sum(df_bkg.wgt_nominal)
 sig_yield = sum(df_sig.wgt_nominal)
 df_sig["wgt_nominal"] = df_sig["wgt_nominal"]*(bkg_yield/sig_yield)

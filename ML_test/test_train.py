@@ -63,7 +63,7 @@ class NeuralNet(nn.Module):
 input_size = len(load_features) - 2
 hidden_sizes = [128, 64, 32, 16, 16, 16, 16, 16, 16]
 num_classes = 1
-num_epochs = 5
+num_epochs = 20
 batch_size = 100
 learning_rate = 0.0001
 
@@ -71,7 +71,7 @@ model = NeuralNet(input_size, hidden_sizes, num_classes).to(device)
 model = model.double()
 criterion = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-decayRate = 0.9
+decayRate = 0.8
 my_lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=decayRate)
 sig_path = "output/trainData_v1/2018/sig/bbll_4TeV_*_posLL/*parquet"
 bkg_path = "output/trainData_v1/2018/bkg/*/*parquet"
@@ -79,8 +79,10 @@ sig_files = glob.glob(sig_path)
 bkg_files = glob.glob(bkg_path)
 df_sig = dd.read_parquet(sig_files)
 df_sig = df_sig.compute()
+df_sig = df_sig.loc[(abs(df_sig["jet1_eta"])<2.4) & (abs(df_sig["jet2_eta"])<2.4), :]
 df_bkg = dd.read_parquet(bkg_files)
 df_bkg = df_bkg.compute()
+df_bkg = df_bkg.loc[(abs(df_bkg["jet1_eta"])<2.4) & (abs(df_bkg["jet2_eta"])<2.4), :]
 df_sig = df_sig[load_features]
 df_bkg = df_bkg[load_features]
 df_sig["label"] = 1.0

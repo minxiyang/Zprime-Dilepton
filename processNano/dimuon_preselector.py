@@ -31,7 +31,7 @@ class DimuonProcessor(processor.ProcessorABC):
 
         self.year = self.samp_info.year
         self.parameters = {k: v[self.year] for k, v in parameters.items()}
-        self.do_btag = True
+        self.do_btag = False
 
         if self.samp_info is None:
             print("Samples info missing!")
@@ -490,10 +490,12 @@ class DimuonProcessor(processor.ProcessorABC):
             "jet1_pt",
             "jet1_eta",
             "jet1_phi",
+            "jet1_mass",
             "jet1_btagDeepFlavB",
             "jet2_pt",
             "jet2_eta",
             "jet2_phi",
+            "jet2_mass",
             "jet2_btagDeepFlavB",
             "njets",
             "met",
@@ -547,8 +549,9 @@ class DimuonProcessor(processor.ProcessorABC):
         output_reduce["mu2_pt_log"] = np.log10(output_reduce["mu2_pt"])
         output_reduce["jet1_pt_log"] = np.log10(output_reduce["jet1_pt"])
         output_reduce["jet2_pt_log"] = np.log10(output_reduce["jet2_pt"])
+        output_reduce["jet1_mass_log"] = np.log10(output_reduce["jet1_mass"])
+        output_reduce["jet2_mass_log"] = np.log10(output_reduce["jet2_mass"])
         output_reduce["met_log"] = np.log10(output_reduce["met"])
-        print(output_reduce.head())
         if self.timer:
             self.timer.add_checkpoint("Filled outputs")
             self.timer.summary()
@@ -627,10 +630,8 @@ class DimuonProcessor(processor.ProcessorABC):
             [jets.index.get_level_values(0), jets.groupby(level=0).cumcount()],
             names=["entry", "subentry"],
         )
-
-        if is_mc:
-            if self.do_btag:
-
+        if self.do_btag:
+            if is_mc:
                 btagSF(jets, self.year, correction="shape", is_UL=True)
                 btagSF(jets, self.year, correction="wp", is_UL=True)
                 jets = jets.dropna()
@@ -678,6 +679,13 @@ class DimuonProcessor(processor.ProcessorABC):
                     ] * weights.get_weight("recowgt" + s)
             else:
                 variables["wgt_nominal"] = 1.0
+                variables["wgt_btag_up"] = 1.0
+                variables["wgt_btag_down"] = 1.0
+                variables["wgt_recowgt_up"] = 1.0
+                variables["wgt_recowgt_down"] = 1.0
+        else:
+            if is_mc:
+                variables["wgt_nominal"] = 1.0
                 variables["wgt_nominal"] = variables[
                     "wgt_nominal"
                 ] * weights.get_weight("nominal")
@@ -688,6 +696,10 @@ class DimuonProcessor(processor.ProcessorABC):
                     variables["wgt_recowgt" + s] = variables[
                         "wgt_recowgt" + s
                     ] * weights.get_weight("recowgt" + s)
+            else:
+                variables["wgt_nominal"] = 1.0
+                variables["wgt_recowgt_up"] = 1.0
+                variables["wgt_recowgt_down"] = 1.0
 
         jets["selection"] = 0
         jets.loc[
@@ -719,7 +731,8 @@ class DimuonProcessor(processor.ProcessorABC):
         bJets = [bjet1, bjet2]
         muons = [mu1, mu2]
         fill_bjets(output, variables, bJets, muons, is_mc=is_mc)
-
+        
+        jets = jets.query("selection==1")
         jets = jets.sort_values(["entry", "btagDeepFlavB"], ascending=[True, False])
         jet1 = jets.groupby("entry").nth(0)
         jet2 = jets.groupby("entry").nth(1)
