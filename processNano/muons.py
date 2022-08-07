@@ -196,8 +196,10 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
         "dxy",
         "dz",
         "genPartFlav",
-        "ip3d" "sip3d",
+        "ip3d",
+        "sip3d",
         "tkRelIso",
+        "charge",
     ]:
 
         try:
@@ -249,70 +251,73 @@ def fill_muons(processor, output, mu1, mu2, is_mc, year, weights):
 
     # calculate mass values smeared by mass resolution uncertainty
     output["dimuon_mass_resUnc"] = output.dimuon_mass.values
-    output.loc[
-        ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
-        "dimuon_mass_resUnc",
-    ] = (
+    if is_mc:
+
         output.loc[
             ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
             "dimuon_mass_resUnc",
-        ]
-        * smearMass(genMassBB, year, bb=True)
-    ).values
-    output.loc[
-        ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
-        "dimuon_mass_resUnc",
-    ] = (
+        ] = (
+            output.loc[
+                ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+                "dimuon_mass_resUnc",
+            ]
+            * smearMass(genMassBB, year, bb=True)
+        ).values
         output.loc[
             ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
             "dimuon_mass_resUnc",
-        ]
-        * smearMass(genMassBE, year, bb=False)
-    ).values
+        ] = (
+            output.loc[
+                ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+                "dimuon_mass_resUnc",
+            ]
+            * smearMass(genMassBE, year, bb=False)
+        ).values
 
     # calculate mass values shifted by mass scale uncertainty
     output["dimuon_mass_scaleUncUp"] = output.dimuon_mass.values
     output["dimuon_mass_scaleUncDown"] = output.dimuon_mass.values
-    output.loc[
-        ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
-        "dimuon_mass_scaleUncUp",
-    ] = (
+    if is_mc:
         output.loc[
             ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
             "dimuon_mass_scaleUncUp",
-        ]
-        * muonScaleUncert(recoMassBB, True, year)
-    ).values
-    output.loc[
-        ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
-        "dimuon_mass_scaleUncUp",
-    ] = (
+        ] = (
+            output.loc[
+                ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+                "dimuon_mass_scaleUncUp",
+            ]
+            * muonScaleUncert(recoMassBB, True, year)
+        ).values
         output.loc[
             ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
             "dimuon_mass_scaleUncUp",
-        ]
-        * muonScaleUncert(recoMassBE, False, year)
-    ).values
-    output.loc[
-        ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
-        "dimuon_mass_scaleUncDown",
-    ] = (
+        ] = (
+            output.loc[
+                ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+                "dimuon_mass_scaleUncUp",
+            ]
+            * muonScaleUncert(recoMassBE, False, year)
+        ).values
         output.loc[
             ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
             "dimuon_mass_scaleUncDown",
-        ]
-        * muonScaleUncert(recoMassBB, True, year, up=False)
-    ).values
-    output.loc[
-        ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
-        "dimuon_mass_scaleUncDown",
-    ] = (
+        ] = (
+            output.loc[
+                ((abs(output.mu1_eta < 1.2)) & (abs(output.mu2_eta < 1.2))),
+                "dimuon_mass_scaleUncDown",
+            ]
+            * muonScaleUncert(recoMassBB, True, year, up=False)
+        ).values
         output.loc[
             ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
             "dimuon_mass_scaleUncDown",
-        ]
-        * muonScaleUncert(recoMassBE, False, year, up=False)
-    ).values
+        ] = (
+            output.loc[
+                ((abs(output.mu1_eta > 1.2)) | (abs(output.mu2_eta > 1.2))),
+                "dimuon_mass_scaleUncDown",
+            ]
+            * muonScaleUncert(recoMassBE, False, year, up=False)
+        ).values
 
     # calculate event weights for muon reconstruction efficiency uncertainty
     eta1 = output["mu1_eta"].to_numpy()

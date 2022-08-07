@@ -206,6 +206,7 @@ def fill_jets(output, variables, jets, flavor="mu", is_mc=True):
         "pt",
         "eta",
         "phi",
+        "mass",
         "pt_gen",
         "eta_gen",
         "phi_gen",

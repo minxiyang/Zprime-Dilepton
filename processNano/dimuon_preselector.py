@@ -486,23 +486,23 @@ class DimuonProcessor(processor.ProcessorABC):
         output = output[output.r.isin(self.regions)]
         output.columns = output.columns.droplevel("Variation")
         output = output.loc[(output.njets >= 2) & (output.dimuon_mass > 500.0), :]
-        branch = [
-            "jet1_pt",
-            "jet1_eta",
-            "jet1_phi",
-            "jet1_mass",
-            "jet1_btagDeepFlavB",
-            "jet2_pt",
-            "jet2_eta",
-            "jet2_phi",
-            "jet2_mass",
-            "jet2_btagDeepFlavB",
-            "njets",
-            "met",
-            "wgt_nominal",
-            "dataset",
-        ]
-        output_reduce = output[branch].copy()
+        # branch = [
+        #    "jet1_pt",
+        #    "jet1_eta",
+        #    "jet1_phi",
+        #    "jet1_mass",
+        #    "jet1_btagDeepFlavB",
+        #    "jet2_pt",
+        #    "jet2_eta",
+        #    "jet2_phi",
+        #    "jet2_mass",
+        #    "jet2_btagDeepFlavB",
+        #    "njets",
+        #    "met",
+        #    "wgt_nominal",
+        #    "dataset",
+        # ]
+        output_reduce = output.copy()
         output_reduce["mu1_pt"] = 0.0
         output_reduce.loc[output.mu1_charge == 1, "mu1_pt"] = output.loc[
             output.mu1_charge == 1, "mu1_pt"
@@ -731,7 +731,7 @@ class DimuonProcessor(processor.ProcessorABC):
         bJets = [bjet1, bjet2]
         muons = [mu1, mu2]
         fill_bjets(output, variables, bJets, muons, is_mc=is_mc)
-        
+
         jets = jets.query("selection==1")
         jets = jets.sort_values(["entry", "btagDeepFlavB"], ascending=[True, False])
         jet1 = jets.groupby("entry").nth(0)
